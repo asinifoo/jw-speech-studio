@@ -4143,20 +4143,27 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <button key={k} onClick={() => {
                   const isFree = k === 'free';
                   if (isFree === siNoOutline) return;
-                  const hasStt = !!siSourceSttJobId && !!siSttOriginalText;
-                  // 데이터 손실 경고
+                  const hasOrigin = !!siSttOriginalText;
+                  // 데이터 손실 경고 — 빈 상태면 confirm 생략
                   if (isFree) {
+                    // 골자 → 자유: 골자 입력 내용 (골자 선택, 간단 메모, 상세 내용/태그) 삭제됨
                     const hasOutlineData = siOutline || Object.keys(siNotes || {}).length > 0 || Object.values(siDetails || {}).some(d => (d?.text || d?.tags || '').trim());
-                    if (hasOutlineData && !window.confirm('골자 모드의 입력 내용이 모두 사라집니다. 계속하시겠습니까?')) return;
+                    if (hasOutlineData) {
+                      const msg = '자유 입력으로 전환하면 선택한 골자와 입력 내용(간단/상세)이 삭제됩니다.'
+                        + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
+                        + '\n계속하시겠습니까?';
+                      if (!window.confirm(msg)) return;
+                    }
                   } else {
+                    // 자유 → 골자: 자유 구조 (주제/자유구조/소주제/요점) 삭제됨
                     const hasFreeData = (siFreeText || '').trim() || (siFreeTopic || '').trim() || (siFreeSubtopics || []).some(s =>
                       (s.title || '').trim() || (s.memo || '').trim() ||
                       (s.points || []).some(pt => (pt.title || pt.content || pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim())
                     );
                     if (hasFreeData) {
-                      const msg = hasStt
-                        ? '자유 입력의 편집 내용이 사라집니다. (STT 원본은 상단에 유지됩니다.) 계속하시겠습니까?'
-                        : '자유 입력 내용이 모두 사라집니다. 계속하시겠습니까?';
+                      const msg = '골자 선택으로 전환하면 입력한 자유 구조(주제, 소주제, 요점)가 삭제됩니다.'
+                        + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
+                        + '\n계속하시겠습니까?';
                       if (!window.confirm(msg)) return;
                     }
                   }
