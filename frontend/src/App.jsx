@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { parseOutline, searchPoints, filterResults, generateSpeechStream, healthCheck, abortGeneration, getMyStyles, saveMyStyles, searchSpeakerMemo, getPrompts, dbAdd } from './api';
 import PresetPills from './components/PresetPills';
 import KoreanTextarea from './components/KoreanTextarea';
@@ -10,13 +10,13 @@ import AiModelSelector from './components/AiModelSelector';
 import GenerateButton from './components/GenerateButton';
 import RefinePanel from './components/RefinePanel';
 import useAiModel from './hooks/useAiModel';
-import BibleSearchPage from './pages/BibleSearchPage';
-import TranscriptPage from './pages/TranscriptPage';
-import FreeSearchPage from './pages/FreeSearchPage';
-import ChatSearchPage from './pages/ChatSearchPage';
-import ServiceMeetingPage from './pages/ServiceMeetingPage';
-import VisitPage from './pages/VisitPage';
-import ManagePage from './pages/ManagePage';
+const BibleSearchPage = lazy(() => import('./pages/BibleSearchPage'));
+const TranscriptPage = lazy(() => import('./pages/TranscriptPage'));
+const FreeSearchPage = lazy(() => import('./pages/FreeSearchPage'));
+const ChatSearchPage = lazy(() => import('./pages/ChatSearchPage'));
+const ServiceMeetingPage = lazy(() => import('./pages/ServiceMeetingPage'));
+const VisitPage = lazy(() => import('./pages/VisitPage'));
+const ManagePage = lazy(() => import('./pages/ManagePage'));
 
 export default function App() {
   // 마운트 완료 시 페이드인 + 스크롤 복원
@@ -579,6 +579,8 @@ textarea { resize: vertical; }
         })}
       </div>
       </div>
+
+      <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--c-muted)', fontSize: '0.857rem' }}>로딩 중...</div>}>
 
       {page === 'search' && (<>
         <div style={{
@@ -1144,6 +1146,7 @@ textarea { resize: vertical; }
             }}>↓</button>
         </div>
       )}
+      </Suspense>
       {/* 플로팅 메모 버튼 */}
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 50 }}>
         <button onClick={() => setMemoOpen(true)} style={{
