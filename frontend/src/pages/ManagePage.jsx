@@ -114,7 +114,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [pubExactMatch, setPubExactMatch] = useState(null); // 완전 중복 항목
   useEffect(() => {
     const code = pubForm.pub_code?.trim();
-    if (!code || code.length < 3) { setPubLookupHint(''); setPubExactMatch(null); return; }
+    // 코드 3자 미만 → 힌트/참조 모두 clear (이전 값 잔류 방지)
+    if (!code || code.length < 3) {
+      setPubLookupHint('');
+      setPubExactMatch(null);
+      setPubForm(p => (p.reference ? { ...p, reference: '' } : p));
+      return;
+    }
     const t = setTimeout(() => {
       lookupPubTitle(code).then(r => {
         setPubExactMatch(r.exact_match || null);
@@ -122,15 +128,21 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           setPubLookupHint(r.pub_title);
           setPubForm(p => ({
             ...p,
+            // pub_title / pub_type 은 사용자 편집 보호 (기존 가드 유지)
             pub_title: p.pub_title || r.pub_title,
             pub_type: p.pub_type || r.pub_type || '',
-            reference: p.reference || r.reference || '',
+            // reference 는 힌트 전용 → 항상 API 응답으로 덮어씀
+            reference: r.reference || '',
           }));
         } else {
           setPubLookupHint('');
-          if (r.reference) setPubForm(p => ({ ...p, reference: p.reference || r.reference }));
+          setPubForm(p => ({ ...p, reference: r.reference || '' }));
         }
-      }).catch(() => { setPubLookupHint(''); setPubExactMatch(null); });
+      }).catch(() => {
+        setPubLookupHint('');
+        setPubExactMatch(null);
+        setPubForm(p => (p.reference ? { ...p, reference: '' } : p));
+      });
     }, 500);
     return () => clearTimeout(t);
   }, [pubForm.pub_code]);
