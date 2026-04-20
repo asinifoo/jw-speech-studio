@@ -1,5 +1,5 @@
 import { S } from '../styles';
-import { useState, useCallback, Fragment } from 'react';
+import { useState, useCallback, useRef, useEffect, Fragment } from 'react';
 import ScoreBar from './ScoreBar';
 import KoreanTextarea from './KoreanTextarea';
 import { parseDocument, tagColor, tagLabel, sourceLabel, cleanMd, parseKeywords } from './utils';
@@ -31,7 +31,14 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
   const isFiltered = item.filtered;
   const isEdited = editedText !== undefined && editedText !== null && editedText !== originalText;
   const content = parsed?.content || displayText || '';
-  const isLong = content.length > 150;
+  const contentRef = useRef(null);
+  const [overflows, setOverflows] = useState(false);
+  const COLLAPSED_HEIGHT = 96; // ~4줄 (lineHeight 1.8 × fontSize 0.929rem ≈ 24px × 4)
+  useEffect(() => {
+    if (!contentRef.current) return;
+    setOverflows(contentRef.current.scrollHeight > COLLAPSED_HEIGHT + 4);
+  }, [content]);
+  const isLong = overflows;
 
   // rem 단위 (기준 14px)
   const rem = (px) => `${+(px / 14).toFixed(3)}rem`;
@@ -389,18 +396,19 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
       ) : (
         content && !parsed?.isReference && (
           <div style={{ padding: '0 10px 8px' }}>
-            <div className={expanded ? 'chat-input' : ''} style={{
-              fontSize: rem(13), lineHeight: 1.8, color: 'var(--c-text)',
-              borderTop: '1px solid var(--bd-light)', paddingTop: 8,
-              whiteSpace: 'pre-wrap', wordBreak: 'keep-all',
-              maxHeight: expanded ? 400 : '4.2em',
-              overflow: expanded ? 'auto' : 'hidden',
-              transition: 'max-height 0.2s ease',
-              position: isLong && !expanded ? 'relative' : undefined,
-            }}>
-              {content}
+            <div style={{ position: 'relative' }}>
+              <div ref={contentRef} className={expanded ? 'chat-input' : ''} style={{
+                fontSize: rem(13), lineHeight: 1.8, color: 'var(--c-text)',
+                borderTop: '1px solid var(--bd-light)', paddingTop: 8,
+                whiteSpace: 'pre-wrap', wordBreak: 'keep-all',
+                maxHeight: expanded ? 400 : isLong ? COLLAPSED_HEIGHT : undefined,
+                overflow: expanded ? 'auto' : isLong ? 'hidden' : undefined,
+                transition: 'max-height 0.2s ease',
+              }}>
+                {content}
+              </div>
               {isLong && !expanded && (
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2em', background: `linear-gradient(transparent, ${cardBg})`, pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 32, background: `linear-gradient(transparent, ${cardBg})`, pointerEvents: 'none' }} />
               )}
             </div>
             {isLong && (
