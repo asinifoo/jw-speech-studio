@@ -1533,9 +1533,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
   useEffect(() => {
     if (!pendingPub) return;
+    // Phase 5-3B-2: pub_input → [가져오기]>[출판물]
     setMode('add');
-    setAddTab('structure');
-    setInputMode('pub_input');
+    setAddTab('gather');
+    setPrepMode('pub_input');
     setFromPub(true);
     // pub_code 전체를 그대로 전달 (면/항 분리는 백엔드 lookup이 처리)
     setPubForm(p => ({
@@ -1681,10 +1682,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           {/* 입력 하위 — 카드 헤더 언더라인 (Phase 5-3A: [입력] 탑레벨에선 숨김) */}
           {pageType !== 'input' && (
           <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
-            {/* Phase 5-3B-1: quick_input 버튼 제거 (최상단 [입력] 탭 전용) */}
+            {/* Phase 5-3B-1: quick_input 제거. 5-3B-2: pub_input 제거 (→ [가져오기]로 이동) */}
             {(pageType === 'input'
               ? [['quick_input', '빠른 입력', '#D85A30']]
-              : [['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']]
+              : [['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30']]
             ).map(([k, l, c]) => {
               const active = inputMode === k;
               return (
@@ -2105,134 +2106,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
-          {/* 출판물 입력 */}
-          {inputMode === 'pub_input' && (<>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: '#c44' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>
-                <input value={pubForm.pub_code} onChange={e => setPubForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파10」 11/15 7면 2항" style={{ ...iS, width: '100%' }} />
-                {(pubLookupHint || pubForm.reference) && (
-                  <div style={{ marginTop: 3, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
-                    {pubLookupHint && <span style={{ color: '#1D9E75' }}>{pubLookupHint}</span>}
-                    {pubLookupHint && pubForm.reference && <span> </span>}
-                    {pubForm.reference && <span style={{ color: '#7F77DD' }}>{pubForm.reference}</span>}
-                  </div>
-                )}
-                {pubExactMatch && (
-                  <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 6, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', fontSize: '0.714rem', color: '#D85A30', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontSize: '0.857rem' }}>⚠️</span>
-                    <span style={{ fontWeight: 600 }}>이미 저장됨:</span>
-                    <span>{pubExactMatch.pub_title || pubExactMatch.pub_code}</span>
-                    {pubExactMatch.reference && <span style={{ color: '#7F77DD' }}>{pubExactMatch.reference}</span>}
-                  </div>
-                )}
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물명 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>자동 생성됨, 수정 가능</span></div>
-                <input value={pubForm.pub_title} onChange={e => setPubForm(p => ({ ...p, pub_title: e.target.value }))} placeholder={pubLookupHint || "출판물명 자동 생성"} style={{ ...iS, width: '100%' }} />
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  {['정기 간행물', '서책', '팜플렛', '소책자', '성경', '웹 연재 기사', '색인'].map(t => (
-                    <button key={t} onClick={() => setPubForm(p => ({ ...p, pub_type: t }))} style={{
-                      padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (pubForm.pub_type === t ? '#7F77DD' : 'var(--bd)'),
-                      background: pubForm.pub_type === t ? '#7F77DD10' : 'var(--bg-card)', color: pubForm.pub_type === t ? '#7F77DD' : 'var(--c-faint)',
-                      fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                    }}>{t}</button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                <input value={pubForm.outline_title} onChange={e => setPubForm(p => ({ ...p, outline_title: e.target.value }))} placeholder="골자 제목 또는 주제" style={{ ...iS, width: '100%' }} />
-              </div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점 (한줄) <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                  <input value={pubForm.point_summary} onChange={e => setPubForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="1.1.2 - 요점" style={{ ...iS, width: '100%' }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                  <input value={pubForm.scriptures} onChange={e => setPubForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="마 5:3; 시 37:11" style={{ ...iS, width: '100%' }} />
-                </div>
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                <input value={pubForm.keywords} onChange={e => setPubForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
-              </div>
-              {/* 참조 골자 정보 (접기 블록) */}
-              <div style={{ marginBottom: 8, borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', overflow: 'hidden' }}>
-                <div onClick={() => setPubRefOpen(v => !v)} style={{
-                  padding: '6px 10px', cursor: 'pointer', userSelect: 'none',
-                  display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.786rem', color: 'var(--c-sub)',
-                }}>
-                  <span>📚 참조 골자 정보</span>
-                  <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>(선택)</span>
-                  <span style={{ marginLeft: 'auto', fontSize: '0.643rem', color: 'var(--c-dim)' }}>{pubRefOpen ? '▲' : '▼'}</span>
-                </div>
-                {pubRefOpen && (() => {
-                  const showYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(pubForm.outline_type);
-                  const typeOpts = [
-                    { code: '', name: '(선택 안 함)' },
-                    { code: 'S-34', name: '공개 강연 (S-34)' },
-                    { code: 'SB', name: '생활과 봉사 (SB)' },
-                    { code: 'S-31', name: '기념식 (S-31)' },
-                    { code: 'S-123', name: '특별 강연 (S-123)' },
-                    { code: 'S-211', name: 'RP 모임 (S-211)' },
-                    { code: 'CO_C', name: '순회 대회 (CO_C)' },
-                    { code: 'CO_R', name: '지역 대회 (CO_R)' },
-                    { code: 'ETC', name: '기타 (ETC)' },
-                  ];
-                  return (
-                    <div style={{ padding: '8px 10px', borderTop: '1px solid var(--bd-light)', background: 'var(--bg-card)' }}>
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>유형</div>
-                          <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(e.target.value) ? p.outline_year : '' }))} style={{ ...iS, width: '100%' }}>
-                            {typeOpts.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
-                          </select>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>번호</div>
-                          <input value={pubForm.outline_num} onChange={e => setPubForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...iS, width: '100%' }} />
-                        </div>
-                        {showYear && (
-                          <div style={{ width: 60, flexShrink: 0 }}>
-                            <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>년도</div>
-                            <input value={pubForm.outline_year} onChange={e => setPubForm(p => ({ ...p, outline_year: e.target.value }))} placeholder="26" style={{ ...iS, width: '100%', textAlign: 'center' }} />
-                          </div>
-                        )}
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>버전</div>
-                          <input value={pubForm.version} onChange={e => setPubForm(p => ({ ...p, version: e.target.value }))} placeholder="10/24" style={{ ...iS, width: '100%' }} />
-                        </div>
-                      </div>
-                      <div style={{ marginBottom: 8 }}>
-                        <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>소주제</div>
-                        <input value={pubForm.subtopic} onChange={e => setPubForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제 제목" style={{ ...iS, width: '100%' }} />
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
-                        <div style={{ width: 80, flexShrink: 0 }}>
-                          <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>요점 번호</div>
-                          <input value={pubForm.point_id} onChange={e => setPubForm(p => ({ ...p, point_id: e.target.value }))} placeholder="1.1.2" style={{ ...iS, width: '100%', textAlign: 'center' }} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
-                <KoreanTextarea value={pubForm.content} onChange={v => setPubForm(p => ({ ...p, content: v }))}
-                  placeholder="출판물 내용을 입력하세요" rows={8}
-                  style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
-              </div>
-              <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, _dfPub)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#7F77DD', color: '#fff',
-                fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-              }}>{saving ? '저장 중...' : '저장'}</button>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
-          </>)}
+          {/* 출판물 입력 블록은 Phase 5-3B-2에서 [가져오기] 탭으로 이동됨 */}
           </div>
         </div>
         )}
@@ -2242,15 +2116,15 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden' }}>
           {/* 전처리 상위 탭 — 카드 헤더 언더라인 */}
             <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
-              {[['file', '파일 업로드'], ['text', '텍스트 입력'], ['stt', 'STT 업로드']].map(([k, l]) => {
+              {[['file', '파일 업로드', '#1D9E75'], ['text', '텍스트 입력', '#1D9E75'], ['stt', 'STT 업로드', '#1D9E75'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => {
                 const active = prepMode === k;
                 return (
                   <button key={k} onClick={() => setPrepMode(k)} style={{
-                    flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? '2px solid #1D9E75' : '2px solid transparent',
+                    flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? `2px solid ${c}` : '2px solid transparent',
                     background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
                   }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? '#1D9E75' : 'var(--c-muted)', lineHeight: 1.2 }}>{l}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? c : 'var(--c-muted)', lineHeight: 1.2 }}>{l}</span>
                     <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                   </button>
                 );
@@ -3384,6 +3258,135 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   )}
                 </div>
               )}
+
+              {/* 출판물 입력 (Phase 5-3B-2: [구조화]에서 [가져오기]로 이동) */}
+              {prepMode === 'pub_input' && (<>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: '#c44' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>
+                  <input value={pubForm.pub_code} onChange={e => setPubForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파10」 11/15 7면 2항" style={{ ...iS, width: '100%' }} />
+                  {(pubLookupHint || pubForm.reference) && (
+                    <div style={{ marginTop: 3, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
+                      {pubLookupHint && <span style={{ color: '#1D9E75' }}>{pubLookupHint}</span>}
+                      {pubLookupHint && pubForm.reference && <span> </span>}
+                      {pubForm.reference && <span style={{ color: '#7F77DD' }}>{pubForm.reference}</span>}
+                    </div>
+                  )}
+                  {pubExactMatch && (
+                    <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 6, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', fontSize: '0.714rem', color: '#D85A30', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: '0.857rem' }}>⚠️</span>
+                      <span style={{ fontWeight: 600 }}>이미 저장됨:</span>
+                      <span>{pubExactMatch.pub_title || pubExactMatch.pub_code}</span>
+                      {pubExactMatch.reference && <span style={{ color: '#7F77DD' }}>{pubExactMatch.reference}</span>}
+                    </div>
+                  )}
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물명 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>자동 생성됨, 수정 가능</span></div>
+                  <input value={pubForm.pub_title} onChange={e => setPubForm(p => ({ ...p, pub_title: e.target.value }))} placeholder={pubLookupHint || "출판물명 자동 생성"} style={{ ...iS, width: '100%' }} />
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {['정기 간행물', '서책', '팜플렛', '소책자', '성경', '웹 연재 기사', '색인'].map(t => (
+                      <button key={t} onClick={() => setPubForm(p => ({ ...p, pub_type: t }))} style={{
+                        padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (pubForm.pub_type === t ? '#7F77DD' : 'var(--bd)'),
+                        background: pubForm.pub_type === t ? '#7F77DD10' : 'var(--bg-card)', color: pubForm.pub_type === t ? '#7F77DD' : 'var(--c-faint)',
+                        fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
+                      }}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
+                  <input value={pubForm.outline_title} onChange={e => setPubForm(p => ({ ...p, outline_title: e.target.value }))} placeholder="골자 제목 또는 주제" style={{ ...iS, width: '100%' }} />
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점 (한줄) <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
+                    <input value={pubForm.point_summary} onChange={e => setPubForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="1.1.2 - 요점" style={{ ...iS, width: '100%' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
+                    <input value={pubForm.scriptures} onChange={e => setPubForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="마 5:3; 시 37:11" style={{ ...iS, width: '100%' }} />
+                  </div>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
+                  <input value={pubForm.keywords} onChange={e => setPubForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
+                </div>
+                {/* 참조 골자 정보 (접기 블록) */}
+                <div style={{ marginBottom: 8, borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', overflow: 'hidden' }}>
+                  <div onClick={() => setPubRefOpen(v => !v)} style={{
+                    padding: '6px 10px', cursor: 'pointer', userSelect: 'none',
+                    display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.786rem', color: 'var(--c-sub)',
+                  }}>
+                    <span>📚 참조 골자 정보</span>
+                    <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>(선택)</span>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.643rem', color: 'var(--c-dim)' }}>{pubRefOpen ? '▲' : '▼'}</span>
+                  </div>
+                  {pubRefOpen && (() => {
+                    const showYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(pubForm.outline_type);
+                    const typeOpts = [
+                      { code: '', name: '(선택 안 함)' },
+                      { code: 'S-34', name: '공개 강연 (S-34)' },
+                      { code: 'SB', name: '생활과 봉사 (SB)' },
+                      { code: 'S-31', name: '기념식 (S-31)' },
+                      { code: 'S-123', name: '특별 강연 (S-123)' },
+                      { code: 'S-211', name: 'RP 모임 (S-211)' },
+                      { code: 'CO_C', name: '순회 대회 (CO_C)' },
+                      { code: 'CO_R', name: '지역 대회 (CO_R)' },
+                      { code: 'ETC', name: '기타 (ETC)' },
+                    ];
+                    return (
+                      <div style={{ padding: '8px 10px', borderTop: '1px solid var(--bd-light)', background: 'var(--bg-card)' }}>
+                        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>유형</div>
+                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(e.target.value) ? p.outline_year : '' }))} style={{ ...iS, width: '100%' }}>
+                              {typeOpts.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
+                            </select>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>번호</div>
+                            <input value={pubForm.outline_num} onChange={e => setPubForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...iS, width: '100%' }} />
+                          </div>
+                          {showYear && (
+                            <div style={{ width: 60, flexShrink: 0 }}>
+                              <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>년도</div>
+                              <input value={pubForm.outline_year} onChange={e => setPubForm(p => ({ ...p, outline_year: e.target.value }))} placeholder="26" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                            </div>
+                          )}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>버전</div>
+                            <input value={pubForm.version} onChange={e => setPubForm(p => ({ ...p, version: e.target.value }))} placeholder="10/24" style={{ ...iS, width: '100%' }} />
+                          </div>
+                        </div>
+                        <div style={{ marginBottom: 8 }}>
+                          <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>소주제</div>
+                          <input value={pubForm.subtopic} onChange={e => setPubForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제 제목" style={{ ...iS, width: '100%' }} />
+                        </div>
+                        <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
+                          <div style={{ width: 80, flexShrink: 0 }}>
+                            <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>요점 번호</div>
+                            <input value={pubForm.point_id} onChange={e => setPubForm(p => ({ ...p, point_id: e.target.value }))} placeholder="1.1.2" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
+                  <KoreanTextarea value={pubForm.content} onChange={v => setPubForm(p => ({ ...p, content: v }))}
+                    placeholder="출판물 내용을 입력하세요" rows={8}
+                    style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
+                </div>
+                <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, _dfPub)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
+                  width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#7F77DD', color: '#fff',
+                  fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                }}>{saving ? '저장 중...' : '저장'}</button>
+                {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
+              </>)}
             </div>
           )}
 
@@ -4957,8 +4960,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     } else if (k === 'pub_input') {
                       setPubForm(p => ({ ...p, content: m.body, point_summary: m.topic }));
                     }
-                    setAddTab('structure');
-                    setInputMode(k);
+                    // Phase 5-3B-2: pub_input → [가져오기], 나머지 → [구조화]
+                    if (k === 'pub_input') {
+                      setAddTab('gather'); setPrepMode('pub_input');
+                    } else {
+                      setAddTab('structure'); setInputMode(k);
+                    }
                     setMemoMoveModal(null);
                   }} style={{
                     padding: '10px 14px', borderRadius: 10, border: '1px solid var(--bd)',
