@@ -271,11 +271,12 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
             speaker_memo = memo_match.group(1).strip()
 
         def _extract_field(block, name):
-            m = _re.search(rf"- \*\*{name}\*\*:\s*(.*?)(?:\n|$)", block)
+            # Build-6A: \s* → [ \t]*  (\s가 \n을 소비해 다음 라벨까지 먹던 버그 수정)
+            m = _re.search(rf"- \*\*{name}\*\*:[ \t]*(.*?)(?:\n|$)", block)
             return m.group(1).strip() if m else ""
 
         def _extract_bold_field(block, name):
-            m = _re.search(rf"\*\*\[{name}\]\*\*:?\s*(.*)", block)
+            m = _re.search(rf"\*\*\[{name}\]\*\*:?[ \t]*(.*)", block)
             return m.group(1).strip() if m else ""
 
         for i, block_raw in enumerate(section_blocks[1:], 1):
