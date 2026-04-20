@@ -122,11 +122,53 @@ const BTN_XS_DANGER = {
   color: 'var(--c-danger)',
 };
 
+// ── 카드 프리셋별 XS 버튼 ────────────────────────────────
+
+const BTN_XS_ACCENT = {
+  ...BTN_XS,
+  border: '1px solid var(--tint-green-bd)',
+  color: 'var(--accent)',
+};
+
+const BTN_XS_ORANGE = {
+  ...BTN_XS,
+  border: '1px solid var(--tint-orange-bd)',
+  color: 'var(--accent-orange)',
+};
+
+const BTN_XS_PURPLE = {
+  ...BTN_XS,
+  border: '1px solid var(--tint-purple-bd)',
+  color: 'var(--accent-purple)',
+};
+
 // ── 카드 / 입력 ──────────────────────────────────────────
 
+/** 컨테이너 카드 (탭+폼 래퍼): borderRadius 12 */
 const CARD = {
   borderRadius: 12, border: '1px solid var(--bd)',
   background: 'var(--bg-card)', overflow: 'hidden',
+};
+
+/** 데이터 아이템 카드: borderRadius 8 */
+const CARD_ITEM = {
+  borderRadius: 8, border: '1px solid var(--bd-soft)',
+  background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 6,
+};
+
+const CARD_ITEM_HEADER = {
+  padding: '8px 10px', background: 'var(--bg-subtle)',
+  borderBottom: '1px solid var(--bd-light)',
+  cursor: 'pointer',
+};
+
+const CARD_ITEM_BODY = {
+  padding: '8px 10px',
+};
+
+const CARD_ITEM_META = {
+  display: 'grid', gridTemplateColumns: 'auto 1fr',
+  gap: '2px 8px', alignItems: 'baseline',
 };
 
 const INPUT = {
@@ -163,9 +205,20 @@ export const S = {
   btnDanger: BTN_DANGER,
   btnXs: BTN_XS,
   btnXsDanger: BTN_XS_DANGER,
+  btnXsAccent: BTN_XS_ACCENT,
+  btnXsOrange: BTN_XS_ORANGE,
+  btnXsPurple: BTN_XS_PURPLE,
 
-  // 카드 / 입력
+  // 카드 컨테이너
   card: CARD,
+
+  // 데이터 카드
+  cardItem: CARD_ITEM,
+  cardItemHeader: CARD_ITEM_HEADER,
+  cardItemBody: CARD_ITEM_BODY,
+  cardItemMeta: CARD_ITEM_META,
+
+  // 입력
   input: INPUT,
   textarea: TEXTAREA,
 };

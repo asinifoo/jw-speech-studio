@@ -1,13 +1,20 @@
 import { S } from '../styles';
-import { useState, Fragment } from 'react';
+import { useState, useCallback, Fragment } from 'react';
 import ScoreBar from './ScoreBar';
 import KoreanTextarea from './KoreanTextarea';
 import { parseDocument, tagColor, tagLabel, sourceLabel, cleanMd, parseKeywords } from './utils';
 import { dbUpdate, dbDelete } from '../api';
 
-export default function SearchCard({ item, checked, onToggle, editedText, onEditText, cardKey, cardPubs, setCardPub, onDbDelete, onItemUpdate }) {
+const PRESETS = {
+  default:  { actionBtn: S.btnXsAccent,  dangerBtn: S.btnXsDanger },
+  readonly: { actionBtn: S.btnXsPurple,  dangerBtn: S.btnXsDanger },
+  raw:      { actionBtn: S.btnXsOrange,  dangerBtn: S.btnXsDanger },
+};
+
+export default function SearchCard({ item, checked, onToggle, editedText, onEditText, cardKey, cardPubs, setCardPub, onDbDelete, onItemUpdate, preset = 'default' }) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
+  const P = PRESETS[preset] || PRESETS.default;
   const [editValue, setEditValue] = useState('');
   const [viewingPubs, setViewingPubs] = useState({});
   const [viewingTexts, setViewingTexts] = useState({});
@@ -83,20 +90,27 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
     } catch (err) { setDbStatus('오류: ' + err.message); }
   };
 
+  const headerClick = useCallback((e) => {
+    if (e.target.closest('button') || e.target.closest('input[type="checkbox"]')) return;
+    if (preset !== 'readonly' && onToggle) onToggle();
+  }, [preset, onToggle]);
+
+  const cardBg = isFiltered ? 'var(--tint-red-soft)' : isEdited ? 'var(--tint-blue-soft)' : 'var(--bg-card)';
+
   return (
     <div style={{
-      borderRadius: 8, overflow: 'hidden',
-      border: isFiltered ? '1px solid var(--tint-red-bd)' : isEdited ? '1px solid var(--tint-blue-bd)' : '1px solid var(--bd-soft)',
-      background: isFiltered ? 'var(--tint-red-soft)' : isEdited ? 'var(--tint-blue-soft)' : 'var(--bg-card)',
+      ...S.cardItem,
+      border: isFiltered ? '1px solid var(--tint-red-bd)' : isEdited ? '1px solid var(--tint-blue-bd)' : S.cardItem.border,
+      background: cardBg,
       opacity: checked ? 1 : 0.5,
     }}>
-      <div onClick={onToggle} style={{
-        padding: '8px 10px', cursor: 'pointer',
-        background: isFiltered ? 'var(--tint-red)' : 'var(--bg-subtle)',
-        borderBottom: '1px solid var(--bd-light)',
+      <div onClick={headerClick} style={{
+        ...S.cardItemHeader,
+        cursor: preset !== 'readonly' ? 'pointer' : 'default',
+        background: isFiltered ? 'var(--tint-red)' : S.cardItemHeader.background,
       }}>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-          <input type="checkbox" checked={checked} readOnly style={{ cursor: 'pointer', accentColor: tagColor[col] || 'var(--c-muted)' }} />
+          {preset !== 'readonly' && <input type="checkbox" checked={checked} readOnly onClick={(e) => { e.stopPropagation(); if (onToggle) onToggle(); }} style={{ cursor: 'pointer', accentColor: tagColor[col] || 'var(--c-muted)' }} />}
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: tagColor[col] || 'var(--c-muted)', flexShrink: 0 }} />
           <span style={{ fontSize: rem(11), fontWeight: 600, color: 'var(--c-hint)' }}>{sourceLabel[meta.source] || meta.source || tagLabel[col] || col}</span>
           {meta.source === 'discussion' && (meta.discussion_type || meta.sub_source) && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: 'var(--accent-blue)', fontWeight: 600 }}>{meta.discussion_type || meta.sub_source}</span>}
@@ -127,10 +141,14 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
           {meta.search_source && <span style={{ fontSize: rem(9), color: 'var(--c-dim)', padding: '0 4px', borderRadius: 3, background: 'var(--bg)' }}>{meta.search_source}</span>}
           <div style={{ flex: 1 }} />
           {!editing && !dbEditing && (
-            <>
-              <button onClick={startEdit} style={S.btnXs}>수정</button>
-              <button onClick={startDbEdit} style={S.btnXsDanger}>DB</button>
-            </>
+            preset === 'readonly' ? (
+              <button onClick={(e) => { e.stopPropagation(); if (navigator.clipboard) navigator.clipboard.writeText(content); }} style={P.actionBtn}>복사</button>
+            ) : (
+              <>
+                <button onClick={startEdit} style={P.actionBtn}>수정</button>
+                <button onClick={startDbEdit} style={P.dangerBtn}>DB</button>
+              </>
+            )
           )}
         </div>
       </div>
@@ -188,7 +206,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
             })(),
           ].filter(Boolean);
           return metaRows.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 8px', alignItems: 'baseline' }}>
+            <div style={S.cardItemMeta}>
               {metaRows.map((row, mi) => (
                 <Fragment key={mi}>
                   <span style={{ fontSize: rem(9), color: 'var(--c-dim)', whiteSpace: 'nowrap' }}>{row.label}</span>
@@ -375,13 +393,19 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
               fontSize: rem(13), lineHeight: 1.8, color: 'var(--c-text)',
               borderTop: '1px solid var(--bd-light)', paddingTop: 8,
               whiteSpace: 'pre-wrap', wordBreak: 'keep-all',
-              ...(expanded ? { maxHeight: 280, overflowY: 'auto' } : {}),
+              maxHeight: expanded ? 400 : '4.2em',
+              overflow: expanded ? 'auto' : 'hidden',
+              transition: 'max-height 0.2s ease',
+              position: isLong && !expanded ? 'relative' : undefined,
             }}>
-              {expanded || !isLong ? content : content.slice(0, 150) + '...'}
+              {content}
+              {isLong && !expanded && (
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2em', background: `linear-gradient(transparent, ${cardBg})`, pointerEvents: 'none' }} />
+              )}
             </div>
             {isLong && (
               <button onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
-                style={{ marginTop: 4, padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', fontSize: rem(11), cursor: 'pointer' }}>
+                style={{ marginTop: 4, padding: '4px 12px', borderRadius: 8, border: '1px solid var(--bd-light)', background: 'var(--bg-card)', color: 'var(--c-sub)', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                 {expanded ? '접기' : '전체 보기'}
               </button>
             )}
