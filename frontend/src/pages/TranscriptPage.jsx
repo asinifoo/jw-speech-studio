@@ -65,7 +65,13 @@ export default function TranscriptPage({ fontSize }) {
   return (
     <div>
       {loading && <div style={{ textAlign: 'center', color: 'var(--c-muted)', fontSize: '0.857rem', padding: 20 }}>로딩...</div>}
-      {!loading && Object.keys(transcripts).length === 0 && <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.857rem', padding: 20 }}>저장된 원문이 없습니다. Manage {'>'} Add에서 원문을 추가하세요.</div>}
+      {!loading && Object.keys(transcripts).length === 0 && (
+        <div style={{ textAlign: 'center', padding: 20 }}>
+          <div style={{ color: 'var(--c-dim)', fontSize: '0.857rem', marginBottom: 8 }}>저장된 원문이 없습니다. Manage {'>'} Add에서 원문을 추가하세요.</div>
+          <button onClick={() => { setLoading(true); listTranscripts().then(r => setTranscripts(r.transcripts || {})).catch(() => {}).finally(() => setLoading(false)); }}
+            style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>새로고침</button>
+        </div>
+      )}
       {!loading && Object.keys(transcripts).length > 0 && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', marginBottom: 14, overflow: 'hidden' }}>
           {/* 카드 헤더 언더라인 */}

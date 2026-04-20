@@ -5748,7 +5748,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               </div>
             );
           })}
-          {!spMemoLoading && speakerMemos.length === 0 && <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>연사메모가 없습니다.</div>}
+          {memoViewMode === '목록' && !spMemoLoading && speakerMemos.length === 0 && <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>연사메모가 없습니다.</div>}
         </div>
         </>)}
 

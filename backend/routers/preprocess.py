@@ -411,10 +411,7 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
         if not meta["outline_num"]:
             warnings.append("골자 번호가 감지되지 않았습니다")
 
-        # 파일명 검증
-        fn_std = _re.match(r"^(golza_)?(S-\d+|CO|SB|ETC|JWBC[\w-]*)_", fn_clean) or _re.match(r"^\d{3}_", fn_clean)
-        if not fn_std and filename:
-            warnings.append(f"파일명 형식 비표준: {filename}")
+        # 파일명 형식 검증 제거 (사용자 수정 파일명 false positive 방지)
 
         # 요점별 검증
         def _validate_scripture(scr, pt_num):
