@@ -5,6 +5,25 @@ import { getBody } from '../utils/textHelpers';
 import { S } from '../styles';
 import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, listManualEntries, listOriginals, listSpeakerMemos, listCollection, batchAdd, batchList, batchDelete, getApiKeys, saveApiKeys, ollamaModels, ollamaPull, ollamaDelete, getPasswordStatus, changePassword, getFilterModel, setFilterModel, getOllamaCtx, setOllamaCtx, getOllamaThink, setOllamaThink, getChatTurns, setChatTurns, setChatSearchTopK, getPrompts, setPrompt, resetPrompt, savePromptDefault, getAiModels, saveAiModels as saveAiModelsAPI, getApiVersions, saveApiVersions, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, deleteOutline, getCategories, saveCategories, lookupPubTitle, sttCorrectionsGet, sttCorrectionsSave, sttCorrectionsValidate, sttCorrectionsReload, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave } from '../api';
 
+/** 쉼표로 참조 분리하되, 따옴표("" 또는 \u201c\u201d) 안의 쉼표는 무시 */
+function _splitCommaRefs(text) {
+  const parts = [];
+  let buf = '';
+  let inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"' || ch === '\u201c') inQ = true;
+    else if (ch === '"' || ch === '\u201d') inQ = false;
+    else if (ch === ',' && !inQ) {
+      const rest = text.slice(i + 1).trimStart();
+      if (rest && /[가-힣「]/.test(rest[0])) { parts.push(buf.trim()); buf = ''; continue; }
+    }
+    buf += ch;
+  }
+  if (buf.trim()) parts.push(buf.trim());
+  return parts;
+}
+
 const OUTLINE_TYPES = [
   { name: '공개 강연', code: 'S-34', numPh: '001~196', verPh: '10/24' },
   { name: '생활과 봉사', code: 'SB', numPh: '041 (4월 1주차)', verPh: '2604 (년월)', timePh: '10분' },
@@ -129,10 +148,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           setPubLookupHint(r.pub_title);
           setPubForm(p => ({
             ...p,
-            // pub_title / pub_type 은 사용자 편집 보호 (기존 가드 유지)
-            pub_title: p.pub_title || r.pub_title,
+            pub_title: r.pub_title,
             pub_type: p.pub_type || r.pub_type || '',
-            // reference 는 힌트 전용 → 항상 API 응답으로 덮어씀
             reference: r.reference || '',
           }));
         } else {
@@ -1804,10 +1821,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         setSaveMsg(`저장 완료 (${res.collection})${actionLabel}`);
       }
       resetFn(dflt);
-      // 출판물 저장 후 연설 준비로 자동 복귀
+      // 출판물 저장 후 연설 준비로 자동 복귀 (저장 데이터 콜백 전달)
       if (source === '출판물' && fromPub && onSaveReturn) {
+        const savedData = { pub_code: form.pub_code, pub_title: form.pub_title, reference: form.reference, content: form.content, point: form.point_summary };
         setFromPub(false);
-        setTimeout(() => onSaveReturn(), 800);
+        setTimeout(() => onSaveReturn(savedData), 800);
       }
     } catch (e) { setSaveMsg('오류: ' + e.message); }
     finally { setSaving(false); }
@@ -3262,7 +3280,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             const scrList = [];
                             const pubList = [];
                             for (let part of parts) {
-                              const subs = part.split(/,\s*(?=[가-힣「])/);
+                              const subs = _splitCommaRefs(part);
                               for (let s of subs) {
                                 s = s.trim();
                                 if (s.startsWith('「') || s.startsWith("'")) pubList.push(s);

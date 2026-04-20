@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import KoreanTextarea from './KoreanTextarea';
 
-export default function PriorityMaterial({ value, onChange, publications, onPubAdd }) {
+export default function PriorityMaterial({ value, onChange, publications, autoPubs, onPubAdd }) {
   const [editing, setEditing] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
+  const _norm = (s) => (s || '').replace(/[「」\s]/g, '').toLowerCase();
+  const _hasAutoPub = (pubCode) => {
+    if (!autoPubs || !autoPubs.length) return false;
+    const n = _norm(pubCode);
+    return autoPubs.some(a => { const an = _norm(a.pub_code); return n === an || n.includes(an) || an.includes(n); });
+  };
 
   const pubTags = publications && publications.length > 0 ? (
     <div style={{
@@ -18,9 +25,13 @@ export default function PriorityMaterial({ value, onChange, publications, onPubA
             padding: '1px 6px',
             borderRadius: 4, background: 'var(--tint-purple-badge)', fontWeight: 600,
           }}>{p}</span>
-          {onPubAdd && <button onClick={() => onPubAdd(p)} style={{
-            padding: '0px 3px', borderRadius: 3, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.571rem', cursor: 'pointer', fontWeight: 800, lineHeight: '14px',
-          }}>+</button>}
+          {onPubAdd && (_hasAutoPub(p) ? (
+            <span style={{ padding: '0px 3px', fontSize: '0.571rem', color: 'var(--accent)', fontWeight: 800, lineHeight: '14px' }}>✓</span>
+          ) : (
+            <button onClick={() => onPubAdd(p)} style={{
+              padding: '0px 3px', borderRadius: 3, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.571rem', cursor: 'pointer', fontWeight: 800, lineHeight: '14px',
+            }}>+</button>
+          ))}
         </span>
       ))}
     </div>

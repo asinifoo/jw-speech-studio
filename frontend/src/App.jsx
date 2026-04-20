@@ -38,6 +38,7 @@ export default function App() {
 
   const [page, setPage] = useState(() => { try { return localStorage.getItem('jw-page') || 'speech'; } catch(e) { return 'speech'; } });
   const [pendingPub, setPendingPub] = useState(null);
+  const pendingPubRef = useRef(null);
   const [resetKey, setResetKey] = useState(0);
   const [prepareMode, setPrepareMode] = useState(() => { try { return localStorage.getItem('jw-prep') || 'speech'; } catch(e) { return 'speech'; } });
   const [searchMode, setSearchMode] = useState(() => { try { return localStorage.getItem('jw-search-mode') || 'free'; } catch(e) { return 'free'; } });
@@ -591,8 +592,40 @@ textarea { resize: vertical; }
         {searchMode === 'original' && <TranscriptPage fontSize={fontSize} />}
         {searchMode === 'free' && <FreeSearchPage fontSize={fontSize} />}
       </>)}
-      {page === 'input' && <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />}
-      {page === 'add' && <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />}
+      {page === 'input' && <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={(savedPubData) => {
+        setPage('speech');
+        const ref = pendingPubRef.current;
+        pendingPubRef.current = null;
+        const pi = ref?.pointIndex;
+        if (pi !== undefined && savedPubData) {
+          setPoints(prev => prev.map((pt, i) => i !== pi ? pt : {
+            ...pt,
+            auto_publications: [...(pt.auto_publications || []), {
+              pub_code: savedPubData.pub_code || ref.pub_code || '',
+              point_content: savedPubData.point || pt.title || '',
+              text: savedPubData.content || '',
+              matched_ref: ref.pub_code || savedPubData.pub_code || '',
+            }],
+          }));
+        }
+      }} />}
+      {page === 'add' && <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={(savedPubData) => {
+        setPage('speech');
+        const ref = pendingPubRef.current;
+        pendingPubRef.current = null;
+        const pi = ref?.pointIndex;
+        if (pi !== undefined && savedPubData) {
+          setPoints(prev => prev.map((pt, i) => i !== pi ? pt : {
+            ...pt,
+            auto_publications: [...(pt.auto_publications || []), {
+              pub_code: savedPubData.pub_code || ref.pub_code || '',
+              point_content: savedPubData.point || pt.title || '',
+              text: savedPubData.content || '',
+              matched_ref: ref.pub_code || savedPubData.pub_code || '',
+            }],
+          }));
+        }
+      }} />}
       {page === 'manage' && <ManagePage pageType="manage" key={'manage-' + resetKey} fontSize={fontSize} onGoAdd={() => setPage('add')} />}
 
       {page === 'speech' && (<>
@@ -829,6 +862,7 @@ textarea { resize: vertical; }
               value={priorityMats[pi] || ''}
               onChange={(val) => setPriorityMat(pi, val)}
               publications={pt.publications || []}
+              autoPubs={pt.auto_publications || []}
               onPubAdd={(pubCode) => {
                 const ap = (pt.auto_publications || []).find(a => a.pub_code === pubCode);
                 const content = ap ? (ap.text || '').split('\n').filter(l => !l.startsWith('[') && l.trim()).join('\n').trim() : '';
@@ -836,7 +870,9 @@ textarea { resize: vertical; }
                 const pointNum = pt.point_num || '';
                 const outlineId = pt.outline_id || '';
                 const linked = outlineId && pointNum ? `${outlineId}:${pointNum}` : '';
-                setPendingPub({ pub_code: pubCode, point: ap?.point_content || pt.title || '', content, topic: speechTitle || '', scriptures, pointNum, linked_outlines: linked });
+                const pub = { pub_code: pubCode, point: ap?.point_content || pt.title || '', content, topic: speechTitle || '', scriptures, pointNum, linked_outlines: linked, pointIndex: pi };
+                setPendingPub(pub);
+                pendingPubRef.current = pub;
                 setPage('add');
               }}
             />
