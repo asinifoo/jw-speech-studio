@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite:*)",
+      "Bash(grep -n \"borderRadius: 4\" /home/nifo/jw-system/jw-speech-ui/frontend/src/**/*.jsx)",
+      "Bash(find /home/nifo/jw-system/jw-speech-ui/frontend/src -name \"*.jsx\" -exec grep -l \"padding: '4px 10px'\" {} \\\\;)",
+      "Bash(grep -n \"borderRadius: [56]\" /home/nifo/jw-system/jw-speech-ui/frontend/src/**/*.jsx)",
+      "Bash(rm ~/jw-system/golza/S-34_001_v9-15.json ~/jw-system/golza/S-34_S-34_v9-15.json)",
+      "Read(//home/nifo/jw-system/golza/**)",
+      "Bash(python3 -c ':*)"
+    ]
+  }
+}

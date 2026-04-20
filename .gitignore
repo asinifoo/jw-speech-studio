@@ -1,0 +1,40 @@
+# 노드
+node_modules/
+frontend/node_modules/
+
+# 빌드 결과
+frontend/dist/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+
+# 환경
+.env
+.env.local
+*.log
+
+# 파이썬
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+
+# 큰 데이터 파일 (리포에 올리지 말 것)
+stt_uploads/
+stt_drafts/
+speech_drafts/
+chromadb_data/
+*.mp3
+*.wav
+*.m4a
+
+# STT 모델 가중치
+models/
+*.safetensors
+*.bin

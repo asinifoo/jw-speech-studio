@@ -1,0 +1,442 @@
+import { useState, useEffect, useRef, Fragment } from 'react';
+import KoreanTextarea from '../components/KoreanTextarea';
+import PresetPills from '../components/PresetPills';
+import EditableBlock from '../components/EditableBlock';
+import AiModelSelector from '../components/AiModelSelector';
+import RefinePanel from '../components/RefinePanel';
+import GenerateButton from '../components/GenerateButton';
+import WolFiltersPanel from '../components/WolFiltersPanel';
+import { parseDocument, cleanMd, sourceLabel } from '../components/utils';
+import { getBody } from '../utils/textHelpers';
+import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getServiceTypes, searchPast, abortGeneration } from '../api';
+
+export default function ServiceMeetingPage({ fontSize, ai }) {
+  const _ss = (() => { try { return JSON.parse(localStorage.getItem('jw-svc-state')); } catch(e) { return null; } })();
+  const [selTypes, setSelTypes] = useState(() => new Set(_ss?.selTypes || []));
+  const [scriptures, setScriptures] = useState(_ss?.scriptures || '');
+  const [duration, setDuration] = useState(_ss?.duration || '');
+  const [notes, setNotes] = useState(_ss?.notes || '');
+  const [svcPreset, setSvcPreset] = useState('');
+  const [pastMeetings, setPastMeetings] = useState(_ss?.pastMeetings || []);
+  const [pastLoading, setPastLoading] = useState(false);
+  const [selectedPast, setSelectedPast] = useState(_ss?.selectedPast || {});
+  const [searchQuery, setSearchQuery] = useState(_ss?.searchQuery || '');
+  const [searchResults, setSearchResults] = useState(_ss?.searchResults || []);
+  const [useLLMFilter, setUseLLMFilter] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showAllResults, setShowAllResults] = useState(false);
+  const [showAllPast, setShowAllPast] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedSearch, setSelectedSearch] = useState(_ss?.selectedSearch || {});
+  const [expandedPast, setExpandedPast] = useState({});
+  const [expandedSearch, setExpandedSearch] = useState({});
+  const [autoScriptures, setAutoScriptures] = useState(_ss?.autoScriptures || []);
+  const [script, setScript] = useState(() => { try { return localStorage.getItem('jw-svc-script') || ''; } catch(e) { return ''; } });
+  useEffect(() => { try { if (script) localStorage.setItem('jw-svc-script', script); else localStorage.removeItem('jw-svc-script'); } catch(e) {} }, [script]);
+  const [generating, setGenerating] = useState(false);
+  const abortRef = useRef(null);
+  const [streamProgress, setStreamProgress] = useState(0);
+  const [streamMsg, setStreamMsg] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [error, setError] = useState('');
+  const [extraMat, setExtraMat] = useState('');
+  const [phase, setPhase] = useState(() => { if (_ss?.phase >= 1) return _ss.phase; try { return localStorage.getItem('jw-svc-script') ? 2 : 0; } catch(e) { return 0; } });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('jw-svc-state', JSON.stringify({
+        selTypes: [...selTypes], scriptures, duration, notes, searchQuery, searchResults, selectedSearch, selectedPast, pastMeetings, autoScriptures, phase,
+      }));
+    } catch(e) {}
+  }, [selTypes, scriptures, duration, notes, searchQuery, searchResults, selectedSearch, selectedPast, pastMeetings, autoScriptures, phase]);
+
+  const [serviceTypes, setServiceTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-stypes')) || ['일반', '재방문', '기념식', '지역대회', '특별활동']; } catch(e) { return ['일반', '재방문', '기념식', '지역대회', '특별활동']; } });
+  useEffect(() => { getServiceTypes().then(r => { const remote = r.service_types || []; if (remote.length) { setServiceTypes(prev => { const merged = [...prev]; remote.forEach(t => { if (!merged.includes(t)) merged.push(t); }); return merged; }); } }).catch(() => {}); }, []);
+
+  const toggleType = (t) => setSelTypes(prev => { const next = new Set(prev); if (next.has(t)) next.delete(t); else next.add(t); return next; });
+
+  const doSearch = async () => {
+    const q = [[...selTypes].join(' '), scriptures, searchQuery].filter(Boolean).join(' ').trim();
+    if (!q) return;
+    setSearchLoading(true); setPastLoading(true);
+    setShowAllResults(false); setShowAllPast(false); setSelectedPast({});
+    try {
+      const [res, pastRes] = await Promise.all([
+        freeSearch(q, 40),
+        searchPast(q, '봉사 모임', selTypes.size === 1 ? [...selTypes][0] : '', 30),
+      ]);
+      let results = (res.results || []).filter(r => {
+        const src = r.metadata?.source || '';
+        const col = r.collection || '';
+        return col !== 'speech_points' && src !== 'speaker_memo' && src !== 'outline';
+      });
+      if (useLLMFilter && results.length > 0) {
+        const filtered = await filterResults([{ title: q, search_results: results }]);
+        results = filtered.points?.[0]?.search_results || results;
+      } else {
+        results = results.map(r => ({ ...r, filtered: false }));
+      }
+      // LLM 필터 결과에 따라 기본 선택 상태 설정
+      const initSel = {};
+      results.forEach((r, i) => { initSel[i] = !r.filtered; });
+      setSelectedSearch(initSel);
+      setSearchResults(results);
+      setPastMeetings(pastRes.entries || []);
+    } catch (e) { alert('검색 오류: ' + e.message); }
+    finally { setSearchLoading(false); setPastLoading(false); }
+    if (scriptures.trim()) {
+      try { const bRes = await bibleSearch(scriptures); setAutoScriptures(bRes.results || []); } catch(e) { setAutoScriptures([]); }
+    }
+    setPhase(1);
+  };
+
+  const doGenerate = async () => {
+    if (!password) { setError('비밀번호를 입력하세요'); return; }
+    setGenerating(true); setError(''); setScript(''); setStreamProgress(0); setStreamMsg('준비 중...');
+    try {
+      const selPast = pastMeetings.filter((_, i) => selectedPast[i]);
+      const selSearch = searchResults.filter((_, i) => selectedSearch[i] !== false);
+      let streamedText = '';
+      const ac = new AbortController();
+      abortRef.current = ac;
+      await generateServiceMeetingStream(password, {
+        topic: [...selTypes].join(', '), scriptures,
+        notes: [duration ? `시간: ${/^\d+$/.test(duration.trim()) ? duration.trim() + '분' : duration}` : '', svcPreset, notes].filter(Boolean).join('\n'),
+        past_meetings: selPast, search_results: selSearch, auto_scriptures: autoScriptures, model: ai.aiModel,
+        extra_materials: extraMat,
+      }, (ev) => {
+        if (ev.stage === 'calling') { setStreamProgress(ev.progress); setStreamMsg('AI 호출 중…'); }
+        else if (ev.stage === 'streaming') { streamedText += ev.chunk; setStreamProgress(ev.progress); setStreamMsg('생성 중...'); setScript(streamedText); }
+        else if (ev.stage === 'done') { setStreamProgress(100); setStreamMsg('완료'); setScript(ev.script); }
+        else if (ev.stage === 'error') { setError('생성 오류: ' + ev.message); }
+      }, ac.signal);
+      setPhase(2);
+    } catch (e) { if (e.name !== 'AbortError') setError('생성 오류: ' + e.message); }
+    finally { abortRef.current = null; setGenerating(false); setStreamProgress(0); setStreamMsg(''); }
+  };
+
+  const iS = { padding: '6px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
+
+  return (
+    <div>
+      {/* 입력 폼 */}
+      <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', marginBottom: 14, overflow: 'hidden' }}>
+        {/* 입력 영역 */}
+        <div style={{ padding: '12px 14px 8px' }}>
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 종류</div>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 2,
+              background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
+              overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+            }} className="chat-input">
+              {serviceTypes.map(t => (
+                <button key={t} onClick={() => toggleType(t)} style={{
+                  padding: '5px 12px', borderRadius: 8, fontSize: '0.821rem', fontWeight: selTypes.has(t) ? 700 : 500,
+                  border: 'none',
+                  background: selTypes.has(t) ? 'var(--bg-card, #fff)' : 'transparent',
+                  color: selTypes.has(t) ? '#1D9E75' : 'var(--c-muted)',
+                  cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
+                  transition: 'all 0.2s ease',
+                  boxShadow: selTypes.has(t) ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                }}>{t}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input value={scriptures} onChange={e => setScriptures(e.target.value)} placeholder="핵심 성구: 막 4:14, 15; 마 5:37"
+              style={{ flex: 1, minWidth: 0, padding: '8px 12px', border: 'none', borderRadius: 8, fontSize: '0.929rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' }} />
+            <input value={duration} onChange={e => setDuration(e.target.value)} placeholder="시간"
+              style={{ width: 70, flexShrink: 0, padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.929rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box', textAlign: 'center' }} />
+          </div>
+          <textarea value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="추가 검색어 (선택)" rows={3}
+            style={{ width: '100%', padding: '8px 12px', border: 'none', borderRadius: 8, fontSize: '0.929rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box', resize: 'vertical', lineHeight: 1.7 }} />
+        </div>
+        {/* 하단 바 */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 4, padding: '6px 14px',
+          borderTop: '1px solid var(--bd-light)',
+        }}>
+          <button onClick={() => { const next = !useLLMFilter; setUseLLMFilter(next); if (!next) setShowFilters(false); }} style={{
+            padding: '4px 10px', borderRadius: 8, border: 'none',
+            background: useLLMFilter ? '#7F77DD15' : 'var(--bg-subtle, #EFEFF4)',
+            color: useLLMFilter ? '#7F77DD' : 'var(--c-muted)',
+            fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', gap: 3,
+          }}>
+            {useLLMFilter ? '✓' : '○'} LLM 필터
+            {useLLMFilter && <span onClick={e => { e.stopPropagation(); setShowFilters(p => !p); }}
+              style={{ color: showFilters ? '#C7842D' : '#7F77DD80', fontSize: '1.286rem', lineHeight: 0 }}>▾</span>}
+          </button>
+          <div style={{ flex: 1 }} />
+          {(selTypes.size > 0 || scriptures.trim() || searchQuery.trim() || searchResults.length > 0) && (
+            <button onClick={() => { setPhase(0); setScript(''); setSearchResults([]); setAutoScriptures([]); setSelectedPast({}); setSelectedSearch({}); setExpandedPast({}); setExpandedSearch({}); setSelTypes(new Set()); setScriptures(''); setNotes(''); setSearchQuery(''); setError(''); setPastMeetings([]); }}
+              style={{
+                width: 22, height: 22, borderRadius: 11, border: 'none', padding: 0,
+                background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)',
+                fontSize: '0.929rem', cursor: 'pointer', transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>✕</button>
+          )}
+          <button onClick={doSearch} disabled={searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())} style={{
+            width: 80, padding: '5px 0', borderRadius: 8, border: 'none', textAlign: 'center',
+            background: (searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())) ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+            fontSize: '0.786rem', fontWeight: 700, cursor: (searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())) ? 'default' : 'pointer',
+            transition: 'background 0.15s', position: 'relative', overflow: 'hidden',
+          }}>
+            {searchLoading && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', borderRadius: 8, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
+            <span style={{ position: 'relative', zIndex: 1 }}>검색</span>
+          </button>
+        </div>
+        {showFilters && <div style={{ padding: '4px 14px 8px' }}><WolFiltersPanel compact={false} /></div>}
+        {useLLMFilter && ai.llmSettings && (
+          <div style={{ padding: '2px 14px 6px', fontSize: '0.786rem', color: 'var(--c-muted)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <span>필터: <b style={{ color: '#7F77DD' }}>{Object.values(ai.aiModels).flat().find(m => m.value === ai.llmSettings.filter_model)?.label || ai.llmSettings.filter_model}</b></span>
+            <span>·</span>
+            <span>CTX: <b>{(ai.llmSettings.filter_ctx / 1024).toFixed(0)}K</b></span>
+            <span>·</span>
+            <span>🧠 <b>{ai.llmSettings.filter_no_think ? 'OFF' : 'ON'}</b></span>
+          </div>
+        )}
+      </div>
+
+      {/* 성구 자동 조회 */}
+      {autoScriptures.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: '0.857rem', fontWeight: 600, color: 'var(--c-hint)', marginBottom: 6 }}>성구</div>
+          {autoScriptures.map((a, i) => (
+            <div key={i} style={{ padding: '8px 10px', borderRadius: 7, background: 'var(--tint-blue)', border: '1px solid var(--tint-blue-bd)', marginBottom: 6 }}>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
+                <span style={{ width: 16, height: 16, borderRadius: 3, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.571rem', fontWeight: 800, color: '#fff', background: '#D85A30' }}>B</span>
+                <span style={{ fontSize: '0.857rem', fontWeight: 700, color: '#2a7ab5' }}>{a.original || a.book}</span>
+              </div>
+              <div style={{ paddingLeft: 22, fontSize: '0.929rem', lineHeight: 1.7 }}>
+                {(a.verses || []).map((v, vi) => (
+                  <div key={vi} style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
+                    {(a.verses || []).length > 1 && <span style={{ color: '#2a7ab5', fontWeight: 700, minWidth: 16, textAlign: 'right', flexShrink: 0 }}>{v.verse}</span>}
+                    <span>{v.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 과거 봉사 모임 */}
+      {phase >= 1 && pastLoading && <div style={{ textAlign: 'center', color: 'var(--c-muted)', fontSize: '0.857rem', marginBottom: 14 }}>과거 봉사 모임 검색 중...</div>}
+      {phase >= 1 && !pastLoading && pastMeetings.length === 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: '0.857rem', fontWeight: 600, color: 'var(--c-hint)', marginBottom: 6 }}>과거 봉사 모임 (0건)</div>
+          <div style={{ fontSize: '0.786rem', color: 'var(--c-dim)', padding: 8 }}>저장된 봉사 모임이 없습니다.</div>
+        </div>
+      )}
+      {phase >= 1 && !pastLoading && pastMeetings.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: '0.857rem', fontWeight: 600, color: 'var(--c-hint)', marginBottom: 6 }}>
+            과거 봉사 모임 ({pastMeetings.length}건)
+          </div>
+          {(showAllPast ? pastMeetings : pastMeetings.slice(0, 10)).map((pm, i) => {
+            const meta = pm.metadata || {};
+            const parsed = parseDocument(pm.text || '');
+            const body = getBody(pm.text || '');
+            const sel = !!selectedPast[i];
+            return (
+              <div key={i} onClick={() => setSelectedPast(p => ({ ...p, [i]: !p[i] }))}
+                style={{ borderRadius: 8, border: '1px solid ' + (sel ? '#1D9E75' : 'var(--bd-soft)'), background: sel ? 'var(--tint-green-bg)' : 'var(--bg-card)', marginBottom: 6, overflow: 'hidden', cursor: 'pointer', opacity: sel ? 1 : 0.6 }}>
+                <div style={{ padding: '6px 10px', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', background: sel ? 'var(--tint-green)' : 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)' }}>
+                  <input type="checkbox" checked={sel} readOnly style={{ accentColor: '#1D9E75' }} />
+                  <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>📌</span>
+                  <span style={{ fontSize: '0.786rem', color: 'var(--c-hint)', fontWeight: 600 }}>{meta.date || '?'}</span>
+                  {meta.service_type && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: 'var(--tint-green-soft)', color: '#2e7d32', fontWeight: 600 }}>{meta.service_type}</span>}
+                  <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{meta.outline_title || meta.topic || ''}</span>
+                </div>
+                <div style={{ padding: '8px 10px', fontSize: '0.786rem', color: 'var(--c-faint)' }}>
+                  {parsed?.scripture && <span style={{ marginRight: 8 }}>성구: {parsed.scripture}</span>}
+                  {parsed?.keywords && parsed.keywords.split(',').map((kw, ki) => (
+                    <span key={ki} style={{ display: 'inline-block', fontSize: '0.786rem', padding: '0 5px', borderRadius: 3, background: 'var(--bg-muted)', color: '#777', marginRight: 3, marginBottom: 2 }}>{kw.trim()}</span>
+                  ))}
+                </div>
+                <div style={{ padding: '6px 10px 10px', fontSize: '0.929rem', lineHeight: 1.8, color: 'var(--c-sub)', maxHeight: expandedPast[i] ? 400 : 80, overflow: expandedPast[i] ? 'auto' : 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+                  {body.length > 150 && !expandedPast[i] ? body.slice(0, 150) + '...' : body}
+                </div>
+                {body.length > 150 && (
+                  <div style={{ padding: '2px 10px 6px' }}>
+                    <button onClick={(e) => { e.stopPropagation(); setExpandedPast(p => ({ ...p, [i]: !p[i] })); }} style={{
+                      padding: '2px 10px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer',
+                    }}>{expandedPast[i] ? '접기' : '전체 보기'}</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {!showAllPast && pastMeetings.length > 10 && (
+            <button onClick={() => setShowAllPast(true)} style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-sub)', fontSize: '0.786rem', cursor: 'pointer', marginTop: 6 }}>
+              더 보기 (+{pastMeetings.length - 10}건)
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* DB 검색 결과 */}
+      {phase >= 1 && searchResults.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: '0.857rem', fontWeight: 600, color: 'var(--c-hint)', marginBottom: 6 }}>DB 검색 결과 ({searchResults.length}건)</div>
+          {(showAllResults ? searchResults : searchResults.slice(0, 20)).map((r, i) => {
+            const meta = r.metadata || {};
+            const col = r.collection || '';
+            const parsed = parseDocument(r.text || '');
+            const body = getBody(r.text || '');
+            const sel = selectedSearch[i] !== false;
+            const cColor = { speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD' }[col] || 'var(--c-muted)';
+            const score = Math.round((r.score || 0) / 0.035 * 100);
+            const isPub = col === 'publications';
+            const gt = meta.outline_type || '', gn = meta.outline_num || '';
+            let prefix = '';
+            if (gt === '공개강연' || gt.startsWith('S-34')) prefix = 'S-34_' + (gn || '').replace(/^0+/, '').padStart(3, '0');
+            else if (gt === '기념식' || gt.startsWith('S-31')) prefix = 'S-31_기념식';
+            else if (gn) prefix = gn;
+            return (
+              <div key={i} onClick={() => setSelectedSearch(p => ({ ...p, [i]: p[i] === false ? true : false }))}
+                style={{ borderRadius: 8, border: r.filtered ? '1px solid var(--tint-red-bd)' : '1px solid var(--bd-soft)', background: r.filtered ? 'var(--tint-red-soft)' : 'var(--bg-card)', marginBottom: 6, overflow: 'hidden', cursor: 'pointer', opacity: sel ? 1 : 0.5 }}>
+                <div style={{ padding: '8px 10px', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', background: r.filtered ? 'var(--tint-red)' : 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)' }}>
+                  <input type="checkbox" checked={sel} readOnly style={{ cursor: 'pointer', accentColor: cColor }} />
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: cColor, flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--c-hint)' }}>{sourceLabel[meta.source] || meta.source || (col === 'speech_expressions' ? '연설' : '출판물')}</span>
+                  {!isPub && meta.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{meta.speaker}</span>}
+                  {meta.date && meta.date !== '0000' && <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)' }}>{meta.date}</span>}
+                  {meta.service_type && meta.service_type !== '일반' && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: 'var(--tint-green-soft)', color: '#2e7d32', fontWeight: 600 }}>{meta.service_type}</span>}
+                  {r.filtered && <span style={{ fontSize: '0.786rem', fontWeight: 700, color: '#c44' }}>LLM 제외</span>}
+                  {meta.tags && (() => {
+                    const t = meta.tags;
+                    const badges = [];
+                    if (t.includes('표현')) badges.push({ label: '표현', bg: '#D85A30' });
+                    if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: '#C7842D' });
+                    if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: '#C7842D' });
+                    if (t.includes('예시(성경)')) badges.push({ label: '예시·성경', bg: '#2D8FC7' });
+                    if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: '#C7842D' });
+                    return badges.map((b, bi) => <span key={bi} style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: b.bg, color: '#fff', fontWeight: 700 }}>{b.label}</span>);
+                  })()}
+                  <div style={{ flex: 1 }} />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ width: 44, height: 4, borderRadius: 2, background: 'var(--bg-dim)', overflow: 'hidden' }}>
+                      <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? '#1D9E75' : score > 50 ? '#BA7517' : '#c44' }} />
+                    </span>
+                    <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', minWidth: 26 }}>{Math.min(score, 100)}%</span>
+                  </span>
+                </div>
+                {(() => {
+                  const cColor = { speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD' }[col] || 'var(--c-muted)';
+                  const isPub = col === 'publications';
+                  const title = isPub ? (meta.outline_title || '') : (meta.outline_title || '');
+                  const metaRows = [
+                    isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+                    isPub && meta.pub_title && { label: '출판물명', value: meta.pub_title },
+                    !isPub && title && { label: '주제', value: (prefix ? prefix + ' ' : '') + title },
+                    (parsed?.subtopic || meta.sub_topic || meta.subtopic) && { label: '소주제', value: parsed?.subtopic || meta.sub_topic || meta.subtopic },
+                    (parsed?.point || meta.point_content) && { label: '요점', value: parsed?.point || meta.point_content, color: cColor },
+                    cleanMd(parsed?.scripture || meta.scriptures || '') && { label: '성구', value: cleanMd(parsed?.scripture || meta.scriptures || ''), color: '#2D8FC7' },
+                    (parsed?.keywords || meta.keywords) && { label: '키워드', value: parsed?.keywords || meta.keywords },
+                  ].filter(Boolean);
+                  return metaRows.length > 0 ? (
+                    <div style={{ padding: '4px 10px', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '2px 8px', alignItems: 'baseline' }}>
+                      {metaRows.map((row, mi) => (
+                        <Fragment key={mi}>
+                          <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', whiteSpace: 'nowrap' }}>{row.label}</span>
+                          <span style={{ fontSize: '0.786rem', color: row.color || 'var(--c-text)', lineHeight: 1.5, wordBreak: 'keep-all' }}>{row.value}</span>
+                        </Fragment>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
+                <div style={{ padding: '6px 10px 10px', fontSize: '0.929rem', lineHeight: 1.8, color: 'var(--c-sub)', maxHeight: expandedSearch[i] ? 300 : 80, overflow: expandedSearch[i] ? 'auto' : 'hidden', whiteSpace: 'pre-wrap', wordBreak: 'keep-all' }}>
+                  {body.length > 150 && !expandedSearch[i] ? body.slice(0, 150) + '...' : body}
+                </div>
+                {body.length > 150 && (
+                  <div style={{ padding: '2px 10px 6px' }}>
+                    <button onClick={(e) => { e.stopPropagation(); setExpandedSearch(p => ({ ...p, [i]: !p[i] })); }} style={{
+                      padding: '2px 10px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer',
+                    }}>{expandedSearch[i] ? '접기' : '전체 보기'}</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {!showAllResults && searchResults.length > 20 && (
+            <button onClick={() => setShowAllResults(true)} style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-sub)', fontSize: '0.786rem', cursor: 'pointer', marginTop: 6 }}>
+              더 보기 (+{searchResults.length - 20}건)
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 생성 옵션 */}
+      {phase >= 1 && !script && (
+        <div style={{ borderRadius: 10, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, marginBottom: 14 }}>
+          <div style={{ marginBottom: 12 }}>
+            <EditableBlock value={extraMat} onChange={setExtraMat} label="추가 자료" icon="+" color="#1D9E75" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
+              placeholder={"일반 추가 자료\n\n예: 배경 정보, 참고 기사 등"} buttonLabel="+ 추가 자료" />
+          </div>
+          <div style={{ borderRadius: 8, border: '1px solid var(--opt-bd)', background: 'var(--opt-bg)', padding: 12, marginBottom: 12 }}>
+            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: '#D85A30', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: '0.857rem' }}>⚙</span> AI 생성 옵션
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <AiModelSelector ai={ai} />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <PresetPills storageKey="jw-svc-preset" label="AI 프리셋" onChange={setSvcPreset} />
+            </div>
+            <EditableBlock value={notes} onChange={setNotes} label="AI 지시사항" icon="!" color="#D85A30" borderColor="var(--tint-orange-bd)" bgColor="var(--tint-orange-light)" headerBg="var(--tint-orange-header)"
+              placeholder={"AI에게 전달할 지시사항\n\n예:\n- 질문-답변 형식으로\n- 서론 예시 2개 포함"} buttonLabel="+ AI 지시사항" />
+          </div>
+
+          <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-subtle)', marginBottom: 12, fontSize: '0.857rem', color: 'var(--c-sub)', lineHeight: 1.8 }}>
+            <div>봉사 종류: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{[...selTypes].join(', ') || '(없음)'}</span></div>
+            <div>성구: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{scriptures || '없음'}</span></div>
+            <div>과거 참고: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedPast).filter(Boolean).length}건</span> | DB 자료: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedSearch).filter(Boolean).length}건</span></div>
+            {extraMat && <div>추가 자료: <span style={{ color: '#1D9E75', fontWeight: 600 }}>있음</span></div>}
+            {notes && <div>AI 지시: <span style={{ color: '#D85A30', fontWeight: 600 }}>있음</span></div>}
+            <div>모델: <span style={{ color: '#D85A30', fontWeight: 600 }}>{ai.aiPlatform} / {(ai.aiModels[ai.aiPlatform] || []).find(m => m.value === ai.aiModel)?.label || ai.aiModel}</span></div>
+          </div>
+
+          {error && (
+            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--tint-red)', border: '1px solid var(--tint-red-bd)', color: '#c44', fontSize: '0.857rem', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{error}</span>
+              <button onClick={() => setError('')} style={{ border: 'none', background: 'none', color: '#c44', fontSize: '1.143rem', cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}>×</button>
+            </div>
+          )}
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 0, marginBottom: 10,
+            borderRadius: 10, background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)', overflow: 'hidden',
+          }}>
+            <span style={{ padding: '0 10px', fontSize: '1.0rem', color: password ? '#1D9E75' : 'var(--c-dim)', flexShrink: 0 }}>🔒</span>
+            <input type={showPw ? 'text' : 'password'} placeholder="비밀번호" autoComplete="off" value={password} onChange={e => setPassword(e.target.value)}
+              style={{ flex: 1, padding: '9px 0', border: 'none', fontSize: '0.929rem', outline: 'none', fontFamily: 'inherit', background: 'transparent', color: 'var(--c-text-dark)', minWidth: 0 }} />
+            {password && (
+              <button onClick={() => setShowPw(!showPw)} style={{
+                padding: '6px 12px', border: 'none', background: 'transparent',
+                color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0,
+              }}>{showPw ? '숨김' : '표시'}</button>
+            )}
+          </div>
+          <GenerateButton onClick={doGenerate} disabled={!password} generating={generating}
+            streamProgress={streamProgress} streamMsg={streamMsg} label="봉사 모임 스크립트 생성" abortRef={abortRef} />
+        </div>
+      )}
+
+      {/* 생성된 스크립트 */}
+      {script && (
+        <RefinePanel
+          script={script} onScriptChange={setScript} password={password} aiModel={ai.aiModel}
+          presetStorageKey="jw-svc-refine-preset" title="봉사 모임 스크립트"
+          generating={generating} streamProgress={streamProgress} streamMsg={streamMsg}
+          error={error} onError={setError} onClearError={() => setError('')}
+          onRegenerate={() => { setScript(''); setPhase(1); }}
+        />
+      )}
+    </div>
+  );
+}
