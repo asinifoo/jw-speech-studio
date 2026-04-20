@@ -227,6 +227,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   useEffect(() => { try { localStorage.setItem('jw-qi-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
   const [qiSaving, setQiSaving] = useState(false);
   const [qiSaveMsg, setQiSaveMsg] = useState('');
+  // Hotfix 9: 편집 모드 — 설정되면 저장 시 같은 outline_num 재사용 → draft 덮어쓰기
+  const [qiEditingOutlineNum, setQiEditingOutlineNum] = useState('');
   const [draftsFilter, setDraftsFilter] = useState('draft'); // draft | memo
   const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-si-state')) || {}; } catch { return {}; } })();
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
@@ -1802,6 +1804,20 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.929rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
             </div>
 
+            {/* Hotfix 9: 편집 모드 배너 */}
+            {qiEditingOutlineNum && (
+              <div style={{ marginBottom: 8, padding: '8px 10px', borderRadius: 8, background: '#D85A3010', border: '1px solid #D85A3040', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.714rem', color: '#D85A30', fontWeight: 700 }}>📝 수정 중</span>
+                <span style={{ fontSize: '0.714rem', color: 'var(--c-sub)', fontFamily: 'monospace' }}>QUICK_{qiEditingOutlineNum}</span>
+                <div style={{ flex: 1 }} />
+                <button onClick={() => { setQiEditingOutlineNum(''); setQiForm(_qiDefault); setQiSaveMsg(''); }}
+                  style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #D85A30', background: 'var(--bg-card)', color: '#D85A30', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
+                  새로 만들기
+                </button>
+                <div style={{ flexBasis: '100%', fontSize: '0.643rem', color: 'var(--c-dim)' }}>※ 연사/날짜 변경 시 새 draft로 저장됩니다</div>
+              </div>
+            )}
+
             {/* 저장 버튼 */}
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={async () => {
@@ -1810,12 +1826,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 try {
                   // 백엔드 _draft_id는 outline_num 없으면 ETC로 붕괴 → 타입 토큰을 outline_num에 실어 prefix 생성
                   // 결과 draft_id 패턴: QUICK_{타입코드}_{timestamp}_{speaker|target|pub_code}_{date}
+                  // Hotfix 9: 편집 모드면 기존 outline_num 재사용 → 같은 draft_id 덮어쓰기
                   const typeCode = { speech: 'SP', discussion: 'DC', service: 'SV', visit: 'VS', publication: 'PB', other: 'ET' }[qiForm.type] || 'ET';
-                  const uniq = String(Date.now()).slice(-8);
+                  const outlineNumForSave = qiEditingOutlineNum || `${typeCode}_${String(Date.now()).slice(-8)}`;
                   const idPart = (qiForm.speaker || qiForm.target || qiForm.pub_code || qiForm.pub_title || 'unknown').trim() || 'unknown';
                   const resp = await draftSave({
                     outline_type: 'QUICK',
-                    outline_num: `${typeCode}_${uniq}`,
+                    outline_num: outlineNumForSave,
                     outline_title: qiForm.topic || '',
                     speaker: idPart,
                     date: qiForm.date || '',
@@ -1829,8 +1846,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     notes: {}, details: {}, free_subtopics: [],
                   });
                   const savedId = (resp && resp.draft_id) || '';
-                  setQiSaveMsg(`✓ 저장됨 — [전처리] > [임시저장]에서 확인 가능 (${savedId})`);
+                  const wasEditing = !!qiEditingOutlineNum;
+                  setQiSaveMsg(wasEditing
+                    ? `✓ 수정 저장됨 (${savedId})`
+                    : `✓ 저장됨 — [전처리] > [임시저장]에서 확인 가능 (${savedId})`);
                   setQiForm(_qiDefault);
+                  setQiEditingOutlineNum('');
                   setTimeout(() => setQiSaveMsg(''), 4000);
                 } catch (e) {
                   setQiSaveMsg('오류: ' + e.message);
@@ -1842,7 +1863,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 background: qiSaving || !qiForm.content.trim() ? 'var(--bd-medium)' : '#D85A30', color: '#fff',
                 fontSize: '0.929rem', fontWeight: 700, cursor: qiSaving || !qiForm.content.trim() ? 'default' : 'pointer',
               }}>
-                {qiSaving ? '저장 중...' : '저장'}
+                {qiSaving ? '저장 중...' : (qiEditingOutlineNum ? '수정 저장' : '저장')}
               </button>
             </div>
 
@@ -4779,6 +4800,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         return;
                       }
                       // Hotfix 8: 빠른 입력 draft 이어서 편집 — 같은 인스턴스 내 [입력]>[빠른 입력] 으로 이동 + qiForm 복원
+                      // Hotfix 9: 편집 상태 추적 → 저장 시 같은 draft 덮어쓰기
                       if (isQuickInput) {
                         let full = dr;
                         try {
@@ -4796,6 +4818,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           pub_title: full.pub_title || '',
                           content: full.free_text || '',
                         });
+                        setQiEditingOutlineNum(dr.outline_num || '');
                         setAddTab('input'); setInputMode('quick_input');
                         return;
                       }

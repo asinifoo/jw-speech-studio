@@ -315,6 +315,7 @@ def list_drafts():
                 "source_stt_job_id": data.get("source_stt_job_id", ""),
                 "source_type": data.get("source_type", ""),
                 "free_topic": data.get("free_topic", ""),
+                "free_text": data.get("free_text", ""),  # Hotfix 9: 카드 글자수 표시용
             })
         except Exception:
             continue
