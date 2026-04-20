@@ -1,0 +1,93 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:12px;background:var(--bg);font-family:var(--font-sans);color:var(--c-text);display:flex;gap:10px;flex-wrap:wrap}
+.card{flex:1;min-width:200px;border-radius:8px;overflow:hidden;font-size:0.786rem}
+.hd{padding:8px 10px;border-bottom:1px solid var(--bd-light);cursor:pointer}
+.r1{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.r2{display:flex;gap:6px;align-items:center;margin-top:4px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.src{font-size:0.786rem;font-weight:600;color:var(--c-hint);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-wrap{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.bar{width:50px;height:4px;background:var(--bg-muted);border-radius:2px;overflow:hidden}
+.bar div{height:100%;border-radius:2px}
+.pct{font-size:0.786rem;font-variant-numeric:tabular-nums;font-weight:700;min-width:28px}
+.xs{height:20px;padding:0 8px;border-radius:5px;background:var(--bg-card);font-size:0.643rem;cursor:pointer;font-family:inherit;min-width:36px;display:inline-flex;align-items:center;justify-content:center}
+.bd{padding:8px 10px;font-size:0.857rem;line-height:1.8;color:var(--c-sub)}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:1px 6px;font-size:0.714rem;margin-bottom:4px}
+.meta dt{color:var(--c-dim)}
+.meta dd{margin:0;color:var(--c-text)}
+.expand{position:relative;max-height:3.6em;overflow:hidden}
+.fade{position:absolute;bottom:0;left:0;right:0;height:1.8em;pointer-events:none}
+.eb{margin-top:4px;padding:4px 12px;border-radius:8px;border:1px solid var(--bd-light);background:var(--bg-card);color:var(--c-sub);font-size:0.786rem;font-weight:600;cursor:pointer;font-family:inherit}
+.lab{font-size:0.643rem;font-weight:700;padding:2px 6px;border-radius:3px;margin-bottom:4px;display:inline-block}
+.tag-sm{font-size:0.643rem;padding:0 4px;border-radius:3px;background:var(--bg)}
+</style></head><body>
+
+<!-- Preset 1: 일반 (green) -->
+<div class="card" style="border:1px solid var(--bd-soft);background:var(--bg-card)">
+  <div style="padding:2px 10px"><span class="lab" style="background:var(--tint-green);color:var(--accent)">프리셋 1 · 일반 (초록)</span></div>
+  <div class="hd" style="background:var(--bg-subtle)">
+    <div class="r1">
+      <input type="checkbox" checked style="accent-color:var(--accent)">
+      <span class="dot" style="background:var(--accent)"></span>
+      <span class="src">연설 · 유하진 · 2506</span>
+      <div class="bar-wrap"><div class="bar"><div style="width:48%;background:var(--accent)"></div></div><span class="pct" style="color:var(--accent)">48%</span></div>
+    </div>
+    <div class="r2">
+      <span class="tag-sm">키워드#1</span>
+      <div style="flex:1"></div>
+      <button class="xs" style="color:var(--accent);border:1px solid var(--tint-green-bd)">수정</button>
+      <button class="xs" style="color:var(--c-danger);border:1px solid var(--tint-red-bd)">DB</button>
+    </div>
+  </div>
+  <div class="bd">
+    <dl class="meta"><dt>주제</dt><dd>S-34_006 노아 시대의 홍수와 당신</dd><dt>성구</dt><dd style="color:var(--accent-blue)">창 6:1, 2</dd></dl>
+    <div class="expand">네, 두 번째로 노아 시대 때는 악귀들의 영향이 세상에 가득했습니다…<div class="fade" style="background:linear-gradient(transparent,var(--bg-card))"></div></div>
+    <button class="eb">전체 보기</button>
+  </div>
+</div>
+
+<!-- Preset 2: 읽기전용 (purple, 복사만) -->
+<div class="card" style="border:1px solid var(--bd-soft);background:var(--bg-card)">
+  <div style="padding:2px 10px"><span class="lab" style="background:var(--tint-purple);color:var(--accent-purple)">프리셋 2 · 읽기전용 (보라)</span></div>
+  <div class="hd" style="background:var(--bg-subtle)">
+    <div class="r1">
+      <span class="dot" style="background:var(--accent-purple)"></span>
+      <span class="src">출판물 · 95%</span>
+      <div class="bar-wrap"><div class="bar"><div style="width:95%;background:var(--accent-purple)"></div></div><span class="pct" style="color:var(--accent-purple)">95%</span></div>
+    </div>
+    <div class="r2">
+      <div style="flex:1"></div>
+      <button class="xs" style="color:var(--accent-purple);border:1px solid var(--tint-purple-bd)">복사</button>
+    </div>
+  </div>
+  <div class="bd">
+    <dl class="meta"><dt>출판물</dt><dd style="color:var(--accent-purple)">「파11」 9/15 25면</dd></dl>
+    <div class="expand">어느 날, 한 바리새인이 예수께 다가와 "율법에서 가장 큰 계명은…"<div class="fade" style="background:linear-gradient(transparent,var(--bg-card))"></div></div>
+    <button class="eb">전체 보기</button>
+  </div>
+</div>
+
+<!-- Preset 3: 원문/메모 (orange) -->
+<div class="card" style="border:1px solid var(--bd-soft);background:var(--bg-card);opacity:0.5">
+  <div style="padding:2px 10px"><span class="lab" style="background:var(--tint-orange);color:var(--accent-orange)">프리셋 3 · 원문 (주황, 미선택)</span></div>
+  <div class="hd" style="background:var(--bg-subtle)">
+    <div class="r1">
+      <input type="checkbox" style="accent-color:var(--accent-orange)">
+      <span class="dot" style="background:var(--accent-orange)"></span>
+      <span class="src">원문 · 손병진 · 2308</span>
+      <div class="bar-wrap"><div class="bar"><div style="width:30%;background:var(--accent-orange)"></div></div><span class="pct" style="color:var(--accent-orange)">30%</span></div>
+    </div>
+    <div class="r2">
+      <div style="flex:1"></div>
+      <button class="xs" style="color:var(--c-danger);border:1px solid var(--tint-red-bd)">삭제</button>
+    </div>
+  </div>
+  <div class="bd">
+    <dl class="meta"><dt>주제</dt><dd>S-34_113 청소년들은 어떻게 행복하고…</dd></dl>
+    <div style="font-size:0.929rem;line-height:1.8;color:var(--c-text)"># 연설 원문 수정본</div>
+    <button class="eb" style="float:right;margin-top:4px">전체 보기</button>
+  </div>
+</div>
+
+</body></html>

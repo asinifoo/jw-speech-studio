@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:16px;background:var(--bg);font-family:var(--font-sans);color:var(--c-text);display:flex;flex-direction:column;gap:14px}
+/* filter panel */
+.fp{background:var(--bg-card);border:1px solid var(--bd);border-radius:10px;overflow:hidden;max-width:500px}
+.fp-hd{padding:8px 12px;background:var(--bg-subtle);border-bottom:1px solid var(--bd-light);display:flex;align-items:center;gap:8px;font-size:0.786rem;font-weight:600;color:var(--c-hint)}
+.fp-hd .toggle{color:var(--c-dim);cursor:pointer;border:none;background:none;font-size:12px;font-family:inherit}
+.fp-bd{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.fp-row{display:flex;gap:6px;align-items:flex-start}
+.fp-label{font-size:0.75rem;color:#8E8E93;font-weight:600;min-width:50px;padding-top:4px}
+textarea.fp-ta{background:var(--bg-subtle);border:1px solid var(--bd-light);border-radius:6px;padding:6px 8px;font-size:0.786rem;font-family:inherit;color:var(--c-text);resize:vertical;min-height:48px;flex:1;outline:none;line-height:1.6}
+.fp-foot{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--bd-light)}
+.fp-btn{padding:4px 10px;border-radius:5px;font-size:0.714rem;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid}
+.fp-test{display:flex;gap:6px;align-items:center}
+.fp-test input{background:var(--bg-subtle);border:1px solid var(--bd-light);border-radius:6px;padding:4px 8px;font-size:0.786rem;font-family:inherit;color:var(--c-text);flex:1;outline:none}
+.fp-test .result{font-size:0.786rem;color:#1D9E75;font-weight:600}
+</style></head><body>
+
+<div class="fp">
+  <div class="fp-hd">
+    <span>▾ 불용어 / WOL 필터</span>
+    <div style="flex:1"></div>
+    <button class="fp-hd toggle">접기</button>
+  </div>
+  <div class="fp-bd">
+    <div class="fp-row">
+      <span class="fp-label">접미사</span>
+      <textarea class="fp-ta" rows="2">은
+는
+이
+가
+을
+를</textarea>
+    </div>
+    <div class="fp-row">
+      <span class="fp-label">불용어</span>
+      <textarea class="fp-ta" rows="2">그리고
+하지만
+그러나
+또한</textarea>
+    </div>
+    <div class="fp-test">
+      <input placeholder="테스트 입력…" value="영적인 양식을 즐깁니다">
+      <button class="fp-btn" style="background:#1D9E75;color:#fff;border-color:transparent">테스트</button>
+      <span class="result">→ 영적 양식 즐기</span>
+    </div>
+  </div>
+  <div class="fp-foot">
+    <button class="fp-btn" style="background:#1D9E75;color:#fff;border-color:transparent">저장</button>
+    <button class="fp-btn" style="background:var(--bg-subtle);color:var(--c-text);border-color:var(--bd)">나의 기본값 저장</button>
+    <button class="fp-btn" style="background:var(--bg-subtle);color:var(--c-muted);border-color:var(--bd)">↺ 초기화</button>
+  </div>
+</div>
+
+</body></html>

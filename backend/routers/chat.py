@@ -49,6 +49,7 @@ def _load_pub_list(client) -> list:
             "pub_code": meta.get("pub_code", ""),
             "pub_title": meta.get("pub_title", ""),
             "reference": meta.get("reference", ""),
+            "point_content": meta.get("point_summary", ""),
             "refs": refs,
             "text": pub_all["documents"][i] if pub_all.get("documents") else "",
         })

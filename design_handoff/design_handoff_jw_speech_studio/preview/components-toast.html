@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:16px;background:var(--bg);font-family:var(--font-sans);display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.toast{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;font-size:0.857rem;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.12)}
+.t-ok{background:#1D9E75;color:#fff}
+.t-err{background:#cc4444;color:#fff}
+.t-warn{background:#F5A623;color:#fff}
+.t-info{background:var(--bg-card);color:var(--c-text);border:1px solid var(--bd)}
+.dot{width:6px;height:6px;border-radius:50%}
+</style></head><body>
+<div class="toast t-ok"><span class="dot" style="background:#fff"></span>저장 완료</div>
+<div class="toast t-err"><span class="dot" style="background:#fff"></span>오류: DB 연결 실패</div>
+<div class="toast t-warn"><span class="dot" style="background:#fff"></span>중단됨</div>
+<div class="toast t-info"><span class="dot" style="background:#1D9E75"></span>파싱 중…</div>
+</body></html>

@@ -1804,6 +1804,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         setSaveMsg(`저장 완료 (${res.collection})${actionLabel}`);
       }
       resetFn(dflt);
+      // 출판물 저장 후 연설 준비로 자동 복귀
+      if (source === '출판물' && fromPub && onSaveReturn) {
+        setFromPub(false);
+        setTimeout(() => onSaveReturn(), 800);
+      }
     } catch (e) { setSaveMsg('오류: ' + e.message); }
     finally { setSaving(false); }
   };
@@ -1939,31 +1944,18 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
           {/* ─── 빠른 입력 (Phase 5-1) ─── */}
           {inputMode === 'quick_input' && (<>
-            {/* 타입 선택 */}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>타입</div>
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {[
-                  ['speech', '연설'],
-                  ['discussion', '토의'],
-                  ['service', '봉사 모임'],
-                  ['visit', '방문'],
-                  ['publication', '출판물'],
-                ].map(([k, l]) => {
-                  const active = qiForm.type === k;
-                  return (
-                    <button key={k} onClick={() => setQiForm(p => ({ ...p, type: k }))}
-                      style={{
-                        flex: '1 1 30%', padding: '6px 4px', borderRadius: 6,
-                        border: '1px solid ' + (active ? 'var(--accent-orange)' : 'var(--bd)'),
-                        background: active ? '#D85A3010' : 'var(--bg-card)',
-                        color: active ? 'var(--accent-orange)' : 'var(--c-faint)',
-                        fontSize: '0.786rem', fontWeight: active ? 700 : 500,
-                        cursor: 'pointer', fontFamily: 'inherit',
-                      }}>{l}</button>
-                  );
-                })}
-              </div>
+            {/* 타입 선택 — Level 2 pill */}
+            <div style={{ ...S.pillContainer, marginBottom: 10 }}>
+              {[
+                ['speech', '연설'],
+                ['discussion', '토의'],
+                ['service', '봉사'],
+                ['visit', '방문'],
+                ['publication', '출판물'],
+              ].map(([k, l]) => (
+                <button key={k} onClick={() => setQiForm(p => ({ ...p, type: k }))}
+                  style={S.pillL2(qiForm.type === k, 'var(--accent-orange)')}>{l}</button>
+              ))}
             </div>
 
             {/* 타입별 필드 */}
@@ -3617,7 +3609,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, _dfPub)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
                   width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-                }}>{saving ? '저장 중...' : '저장'}</button>
+                }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
+                {fromPub && !saving && (
+                  <button onClick={() => { setFromPub(false); if (onSaveReturn) onSaveReturn(); }} style={{
+                    width: '100%', padding: '8px 0', marginTop: 6, borderRadius: 8,
+                    border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)',
+                    fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
+                  }}>← 저장하지 않고 돌아가기</button>
+                )}
                 {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
               </>)}
             </div>

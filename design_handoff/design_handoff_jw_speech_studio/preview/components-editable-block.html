@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:16px;background:var(--bg);font-family:var(--font-sans);color:var(--c-text);display:flex;flex-direction:column;gap:14px}
+/* editable block */
+.eb{border-radius:8px;overflow:hidden;max-width:500px}
+.eb-hd{padding:6px 10px;display:flex;align-items:center;gap:6px}
+.eb-hd .icon{width:20px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.786rem;font-weight:800;color:#fff;flex-shrink:0}
+.eb-hd .lab{font-size:0.786rem;font-weight:600}
+.eb-hd .act{margin-left:auto;display:flex;gap:4px}
+.eb-hd .act button{padding:2px 8px;border-radius:4px;font-size:0.786rem;cursor:pointer;font-family:inherit;font-weight:600}
+.eb-bd{padding:8px 10px;font-size:0.929rem;line-height:1.8;word-break:keep-all;white-space:pre-wrap;color:var(--c-text)}
+.eb-expand{font-size:0.786rem;cursor:pointer;border-radius:8px;padding:3px 10px;font-family:inherit;font-weight:600;margin:4px 10px 8px}
+/* empty add button */
+.eb-add{padding:6px 12px;border-radius:8px;border:1px dashed var(--c-dim);background:transparent;color:var(--c-faint);font-size:0.786rem;cursor:pointer;width:100%;text-align:center;max-width:500px;font-family:inherit}
+</style></head><body>
+
+<!-- Filled state -->
+<div class="eb" style="border:1px solid #e8c0a8;background:#fef5f0">
+  <div class="eb-hd" style="background:#ffeedd">
+    <span class="eb-icon icon" style="background:#D85A30">✎</span>
+    <span class="eb-hd lab" style="color:#D85A30">연사메모</span>
+    <div class="eb-hd act">
+      <button style="border:1px solid #e8c0a8;background:var(--bg-card);color:#D85A30">수정</button>
+      <button style="border:1px solid #e8c0a8;background:var(--bg-card);color:var(--c-muted)">삭제</button>
+    </div>
+  </div>
+  <div class="eb-bd">지난 주 이 요점에서 청중이 특히 집중했던 부분. 성구를 읽기 전에 잠시 멈추고 질문을 던지면 효과적이었음. 다음에는 예시를 좀 더 구체적으로…</div>
+  <button class="eb-expand" style="border:1px solid #e8c0a8;background:#fef5f0;color:#D85A30">전체 보기</button>
+</div>
+
+<!-- Filled state: green (priority material) -->
+<div class="eb" style="border:1px solid #b8e0d0;background:#e6f5ec">
+  <div class="eb-hd" style="background:#e0f5ec">
+    <span class="eb-icon icon" style="background:#1D9E75">★</span>
+    <span class="eb-hd lab" style="color:#1D9E75">우선 자료</span>
+    <div class="eb-hd act">
+      <button style="border:1px solid #b8e0d0;background:var(--bg-card);color:#1D9E75">수정</button>
+      <button style="border:1px solid #b8e0d0;background:var(--bg-card);color:var(--c-muted)">삭제</button>
+    </div>
+  </div>
+  <div class="eb-bd">이 자료를 특별히 강조하여 연설에 포함시킬 것.</div>
+</div>
+
+<!-- Empty add state -->
+<button class="eb-add">+ 연사메모 추가</button>
+
+</body></html>

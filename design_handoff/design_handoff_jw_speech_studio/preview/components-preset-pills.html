@@ -1,0 +1,55 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:16px;background:var(--bg);font-family:var(--font-sans);color:var(--c-text);display:flex;flex-direction:column;gap:14px}
+.pp{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.pill{padding:4px 10px;border-radius:20px;font-size:0.786rem;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:3px;border:1px solid}
+.on{border-color:#1D9E75;background:var(--tint-green);color:#1D9E75;font-weight:600}
+.off{border-color:var(--bd);background:var(--bg-card);color:var(--c-faint)}
+.add{border-style:dashed;border-color:var(--bd-medium);background:var(--bg-card);color:var(--c-dim)}
+.edit{border-color:var(--c-danger);background:var(--tint-red);color:var(--c-danger);font-size:0.643rem}
+.label{font-size:0.786rem;color:var(--c-muted);margin-bottom:3px}
+/* adding state */
+.add-row{display:flex;gap:3px;align-items:center}
+.add-row input{padding:3px 8px;border:1px solid #1D9E75;border-radius:20px;font-size:0.786rem;width:120px;outline:none;font-family:inherit}
+.add-row button{padding:3px 8px;border-radius:20px;font-size:0.643rem;cursor:pointer;font-family:inherit}
+/* delete badge on edit mode */
+.del{position:relative}
+.del::after{content:'×';position:absolute;top:-5px;right:-5px;width:14px;height:14px;border-radius:50%;background:var(--c-danger);color:#fff;font-size:0.643rem;display:flex;align-items:center;justify-content:center;font-weight:800;line-height:1}
+</style></head><body>
+
+<div>
+  <div class="label">다듬기 프리셋</div>
+  <div class="pp">
+    <button class="pill on">✓ 자연스러운 대화체로</button>
+    <button class="pill on">✓ 예시를 풍부하게</button>
+    <button class="pill off">○ 성구를 더 강조</button>
+    <button class="pill off">○ 간결하게 줄이기</button>
+    <button class="pill off">○ 청중 질문 추가</button>
+    <button class="pill add">+</button>
+    <button class="pill edit">편집</button>
+  </div>
+</div>
+
+<div>
+  <div class="label">편집 모드 (삭제 가능)</div>
+  <div class="pp">
+    <span class="del" style="display:inline-flex"><button class="pill on">✓ 자연스러운 대화체로</button></span>
+    <span class="del" style="display:inline-flex"><button class="pill on">✓ 예시를 풍부하게</button></span>
+    <span class="del" style="display:inline-flex"><button class="pill off">○ 성구를 더 강조</button></span>
+    <button class="pill edit" style="border-color:var(--c-danger)">완료</button>
+  </div>
+</div>
+
+<div>
+  <div class="label">추가 중</div>
+  <div class="pp">
+    <button class="pill on">✓ 자연스러운 대화체로</button>
+    <div class="add-row">
+      <input placeholder="지시사항 입력" value="비유적 표현 사용">
+      <button style="background:var(--tint-green);color:#1D9E75;border:1px solid #1D9E75">추가</button>
+      <button style="background:var(--bg-card);color:var(--c-muted);border:1px solid var(--bd)">×</button>
+    </div>
+  </div>
+</div>
+
+</body></html>

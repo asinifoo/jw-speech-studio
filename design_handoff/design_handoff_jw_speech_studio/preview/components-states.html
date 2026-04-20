@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
+<style>
+body{margin:0;padding:16px;background:var(--bg);font-family:var(--font-sans);display:flex;gap:14px;flex-wrap:wrap}
+.state{flex:1;min-width:200px;background:var(--bg-card);border:1px solid var(--bd);border-radius:12px;padding:24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty-icon{font-size:24px;color:var(--c-dim);opacity:0.5}
+.empty-text{font-size:0.857rem;color:#8E8E93}
+.empty-sub{font-size:0.786rem;color:#AEAEB2}
+/* skeleton */
+.skel{border-radius:6px;background:linear-gradient(90deg,#EFEFF4 25%,#E5E5EA 50%,#EFEFF4 75%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* spinner */
+.spin{width:24px;height:24px;border:3px solid #E5E5EA;border-top-color:#1D9E75;border-radius:50%;animation:rotate 0.8s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+</style></head><body>
+<div class="state">
+  <div class="empty-icon">○</div>
+  <div class="empty-text">검색 결과 없음</div>
+  <div class="empty-sub">다른 키워드로 검색해 보세요</div>
+</div>
+<div class="state">
+  <div class="spin"></div>
+  <div class="empty-text">DB 검색 중…</div>
+</div>
+<div class="state" style="align-items:stretch;gap:10px">
+  <div class="skel" style="height:14px;width:60%"></div>
+  <div class="skel" style="height:10px;width:100%"></div>
+  <div class="skel" style="height:10px;width:85%"></div>
+  <div class="skel" style="height:10px;width:40%"></div>
+</div>
+</body></html>
