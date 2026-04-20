@@ -268,6 +268,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [siSttOriginalText, setSiSttOriginalText] = useState(_siInit.sttOriginalText || '');
   const [siSttOriginalEditing, setSiSttOriginalEditing] = useState(false);
   const [siSttOriginalCollapsed, setSiSttOriginalCollapsed] = useState(false);
+  // Phase 5-2 후속: 원본 텍스트 종류 — '' | 'stt' | 'quick'
+  const [siOriginType, setSiOriginType] = useState(_siInit.originType || '');
   const [siAiToast, setSiAiToast] = useState('');
   useEffect(() => { try { localStorage.setItem('jw-si-state', JSON.stringify({
     outline: siOutline, query: siQuery, speaker: siSpeaker, date: siDate,
@@ -277,7 +279,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     sourceSttJobId: siNoOutline ? siSourceSttJobId : '',
     // STT 원본은 존재만으로 persist (골자 선택 후에도 참조 유지)
     sttOriginalText: siSttOriginalText || '',
-  })); } catch {} }, [siOutline, siQuery, siSpeaker, siDate, siMode, siNotes, siDetails, siNoOutline, siFreeText, siFreeTopic, siFreeSubtopics, siFreeMode, siFreeType, siSourceSttJobId, siSttOriginalText]);
+    originType: siOriginType || '',
+  })); } catch {} }, [siOutline, siQuery, siSpeaker, siDate, siMode, siNotes, siDetails, siNoOutline, siFreeText, siFreeTopic, siFreeSubtopics, siFreeMode, siFreeType, siSourceSttJobId, siSttOriginalText, siOriginType]);
   // 마운트 시 골자 복원 → 소주제 재로드
   useEffect(() => {
     if (!siOutline || !siOutline.outline_num) return;
@@ -306,7 +309,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     setSiExpanded({}); setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사');
     setSiVerseOpen({}); setSiVerseData({}); setSiDraftInfo(null); setSiNoteInfo(null);
     setSiSourceSttJobId('');
-    setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+    setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false); setSiOriginType('');
     setSiSpeaker(t.speaker || '');
     setSiDate(t.date || _siDateDefault);
     setSiSaveMsg('');
@@ -316,13 +319,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     // STT draft 이관: 자유 입력 모드로 바로 진입
     if (t.isSttDraft) {
       setSiNoOutline(true);
-      setSiFreeMode(t.free_mode || 'bulk');
-      setSiFreeText(t.free_text || '');
+      setSiFreeMode('subtopic');  // Phase 5-2 후속: bulk 제거 — 항상 subtopic
+      setSiFreeText('');
       setSiFreeTopic(t.free_topic || '');
       setSiFreeSubtopics(t.free_subtopics || []);
       setSiSourceSttJobId(t.source_stt_job_id || '');
       // STT 원본: 저장되어 있으면 복원, 없으면 free_text 초기값
       setSiSttOriginalText(t.stt_original_text || t.free_text || '');
+      setSiOriginType('stt');
       setSiSttOriginalEditing(false);
       setSiSttOriginalCollapsed(false);
       siDraftLoadedRef.current = true;
@@ -331,8 +335,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     // Build-7 hotfix 1: 자유 입력 draft 이관 (STT 없는 no_outline)
     if (t.isFreeDraft) {
       setSiNoOutline(true);
-      setSiFreeMode(t.free_mode || 'subtopic');
-      setSiFreeText(t.free_text || '');
+      setSiFreeMode('subtopic');  // Phase 5-2 후속: bulk 제거
+      setSiFreeText('');  // Phase 5-2 후속: bulk textarea 제거, 기존 free_text 는 원본 블록으로
       setSiFreeTopic(t.free_topic || '');
       setSiFreeType(t.free_type || '생활과 봉사');  // Hotfix 3: 연설 유형 복원
       // Hotfix 4: 구 draft 구조 마이그레이션 (pt.text → pt.title, _mode 추론)
@@ -353,7 +357,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       }));
       setSiFreeSubtopics(migrated);
       setSiSourceSttJobId(t.source_stt_job_id || '');
-      setSiSttOriginalText(t.stt_original_text || '');
+      // Phase 5-2 후속: 원본 텍스트 복원 + 타입 결정 (stt_original_text 우선, 없으면 legacy free_text)
+      const originText = t.stt_original_text || t.free_text || '';
+      setSiSttOriginalText(originText);
+      setSiOriginType(originText ? (t.source_stt_job_id ? 'stt' : 'quick') : '');
       setSiSttOriginalEditing(false);
       setSiSttOriginalCollapsed(false);
       siDraftLoadedRef.current = true;
@@ -1226,9 +1233,32 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     const isStt = !!dr.source_stt_job_id;
     const isQuickInput = (dr.outline_type === 'QUICK') || /^(SP|DC|SV|VS|PB|ET)_/.test(dr.outline_num || '');
 
-    // 1) STT → 기존 핸들러 그대로
+    // 1) STT → 직접 state 설정 (transfer event 우회, 타이밍 경합 제거)
     if (isStt) {
-      handleStartSttDraftEdit(dr.draft_id, dr.speaker, dr.date, dr.source_stt_job_id);
+      let full = dr;
+      try {
+        const r = await draftLoad({ outline_num: '', speaker: dr.speaker || '', date: dr.date || '', outline_type: 'ETC', source_stt_job_id: dr.source_stt_job_id || '' });
+        if (r && r.exists) full = r;
+      } catch {}
+      // 원본: stt_original_text 우선, 없으면 free_text (기존 draft 호환)
+      const originText = full.stt_original_text || full.free_text || dr.stt_original_text || dr.free_text || '';
+      setSiOutline(null); setSiSubtopics({});
+      setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({});
+      setSiNoOutline(true);
+      setSiFreeTopic(full.free_topic || full.outline_title || '');
+      setSiFreeText('');
+      setSiFreeSubtopics(full.free_subtopics || []);
+      setSiFreeMode('subtopic');
+      setSiFreeType(full.free_type || '생활과 봉사');
+      setSiSpeaker(full.speaker || dr.speaker || '');
+      setSiDate(full.date || dr.date || _siDateDefault);
+      setSiSourceSttJobId(full.source_stt_job_id || dr.source_stt_job_id || '');
+      setSiSttOriginalText(originText);
+      setSiOriginType('stt');
+      setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+      setSiSaveMsg('');
+      siDraftLoadedRef.current = true;
+      setAddTab('structure'); setInputMode('speech_input');
       return;
     }
 
@@ -1243,41 +1273,51 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       const m = (dr.outline_num || '').match(/^([A-Z]{2})_/);
       const qtype = full.quick_type || (m ? (codeMap[m[1]] || 'speech') : 'speech');
 
+      // Phase 5-2 후속: content → 원본 블록, 메타만 form pre-fill
+      const content = full.free_text || '';
+
       if (qtype === 'discussion') {
         setDiscForm(p => ({
           ...p,
           topic: full.outline_title || '',
-          content: full.free_text || '',
           pub_code: full.pub_code || '',
           date: full.date || '',
         }));
+        setSiSttOriginalText(content); setSiOriginType(content ? 'quick' : '');
+        setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+        setSiSourceSttJobId('');
         setAddTab('structure'); setInputMode('discussion');
         return;
       }
       if (qtype === 'service') {
         setSvcForm(p => ({
           ...p,
-          content: full.free_text || '',
           date: full.date || '',
         }));
+        setSiSttOriginalText(content); setSiOriginType(content ? 'quick' : '');
+        setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+        setSiSourceSttJobId('');
         setAddTab('structure'); setInputMode('service');
         return;
       }
       if (qtype === 'visit') {
         setVisitForm(p => ({
           ...p,
-          content: full.free_text || '',
           visit_target: full.target || '',
           date: full.date || '',
           keywords: full.outline_title || '',
         }));
+        setSiSttOriginalText(content); setSiOriginType(content ? 'quick' : '');
+        setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+        setSiSourceSttJobId('');
         setAddTab('structure'); setInputMode('visit_input');
         return;
       }
       if (qtype === 'publication') {
+        // 출판물은 원본/구조화 분리 개념 아님 — pubForm.content 직접 사용
         setPubForm(p => ({
           ...p,
-          content: full.free_text || '',
+          content: content,
           pub_code: full.pub_code || '',
           pub_title: full.pub_title || '',
           outline_title: full.outline_title || '',
@@ -1285,28 +1325,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         setAddTab('gather'); setPrepMode('pub_input');
         return;
       }
-      // 'speech' 또는 'other' → [구조화]>[연설] 자유 입력 모드
-      try {
-        localStorage.setItem('jw-si-transfer', JSON.stringify({
-          speaker: full.speaker || '',
-          date: full.date || '',
-          outline_num: '',
-          outline_title: full.outline_title || '',
-          outline_type: 'ETC',
-          isFreeDraft: true,
-          no_outline: true,
-          free_topic: full.outline_title || '',
-          free_text: full.free_text || '',
-          free_subtopics: [],
-          free_mode: 'bulk',
-          free_type: full.speech_type || '생활과 봉사',
-          stt_original_text: '',
-          source_stt_job_id: '',
-        }));
-        localStorage.setItem('jw-add-tab', 'structure');
-        localStorage.setItem('jw-input-mode', 'speech_input');
-        window.dispatchEvent(new Event('si-transfer'));
-      } catch {}
+      // 'speech' 또는 'other' → [구조화]>[연설] 자유 입력 모드 + content는 원본 블록
+      setSiNoOutline(true); setSiOutline(null); setSiSubtopics({});
+      setSiFreeTopic(full.outline_title || '');
+      setSiFreeText(''); setSiFreeSubtopics([]);
+      setSiFreeMode('subtopic');
+      setSiFreeType(full.speech_type || '생활과 봉사');
+      setSiSpeaker(full.speaker || '');
+      setSiDate(full.date || _siDateDefault);
+      setSiSttOriginalText(content); setSiOriginType(content ? 'quick' : '');
+      setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+      setSiSourceSttJobId('');
       setAddTab('structure'); setInputMode('speech_input');
       return;
     }
@@ -1755,6 +1784,65 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const tagLabel = { speech_points: '연설 요점', speech_expressions: '표현/예시', publications: '출판물' };
   const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
 
+  // Phase 5-2 후속: 원본 텍스트 블록 (STT/빠른 입력 공통 — 4 inputMode에서 재사용)
+  const renderOriginalBlock = () => {
+    if (!siSttOriginalText) return null;
+    const isQuick = siOriginType === 'quick';
+    const c = isQuick ? '#D85A30' : '#378ADD';
+    const cAlpha05 = isQuick ? 'rgba(216,90,48,0.05)' : 'rgba(55,138,221,0.05)';
+    const cAlpha10 = isQuick ? 'rgba(216,90,48,0.1)' : 'rgba(55,138,221,0.1)';
+    const cAlpha20 = isQuick ? 'rgba(216,90,48,0.2)' : 'rgba(55,138,221,0.2)';
+    const label = isQuick ? '빠른 입력 원본' : 'STT 원본';
+    return (
+      <div style={{ marginBottom: 12, border: `1px solid ${c}`, borderRadius: 8, background: cAlpha05, overflow: 'hidden' }}>
+        <div onClick={() => setSiSttOriginalCollapsed(v => !v)}
+          style={{ padding: '8px 10px', background: cAlpha10, borderBottom: siSttOriginalCollapsed ? 'none' : `1px solid ${cAlpha20}`, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+          <span style={{ fontSize: '0.714rem', fontWeight: 700, color: c }}>{label}</span>
+          <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flex: 1 }}>
+            {siSttOriginalCollapsed ? '클릭하여 펼치기' : '클릭하여 접기'}
+          </span>
+          {!siSttOriginalCollapsed && (
+            <button onClick={(e) => { e.stopPropagation(); setSiSttOriginalEditing(v => !v); }}
+              style={{
+                padding: '2px 8px', border: `1px solid ${c}`,
+                background: siSttOriginalEditing ? c : 'transparent',
+                color: siSttOriginalEditing ? '#fff' : c,
+                borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
+              }}>
+              {siSttOriginalEditing ? '편집 종료' : '편집'}
+            </button>
+          )}
+          <span style={{ fontSize: '0.786rem', color: c }}>{siSttOriginalCollapsed ? '▼' : '▲'}</span>
+        </div>
+        {!siSttOriginalCollapsed && (
+          <div style={{ padding: 10 }}>
+            {siSttOriginalEditing ? (
+              <textarea value={siSttOriginalText} onChange={e => setSiSttOriginalText(e.target.value)}
+                style={{
+                  width: '100%', minHeight: 150, maxHeight: 400, padding: 8,
+                  border: '1px solid var(--bd)', borderRadius: 6,
+                  fontSize: '0.857rem', lineHeight: 1.6, fontFamily: 'inherit',
+                  background: 'var(--bg-card)', color: 'var(--c-text-dark)',
+                  outline: 'none', resize: 'vertical', boxSizing: 'border-box',
+                }} />
+            ) : (
+              <div style={{
+                padding: 8, background: 'var(--bg-card)', borderRadius: 6,
+                maxHeight: 250, overflowY: 'auto',
+                fontSize: '0.857rem', lineHeight: 1.6,
+                color: 'var(--c-text-dark)', whiteSpace: 'pre-wrap', userSelect: 'text',
+              }}>{siSttOriginalText}</div>
+            )}
+            <div style={{ marginTop: 6, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
+              원본을 참고하여 아래 구조화 영역에 분류해 사용하세요.
+              {siSttOriginalEditing && ' (편집 중)'}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       {!_isAddPage && (
@@ -2026,6 +2114,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
           {/* 토의 입력 */}
           {inputMode === 'discussion' && (<>
+              {renderOriginalBlock()}
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>토의 유형</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {['파수대', '성경연구', '영적보물', '기타'].map(t => (
@@ -2079,6 +2168,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
           {/* 봉사 모임 입력 */}
           {inputMode === 'service' && (<>
+              {renderOriginalBlock()}
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 유형</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.service_types || []).map(t => (
@@ -2150,6 +2240,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
           {/* 방문 입력 */}
           {inputMode === 'visit_input' && (<>
+              {renderOriginalBlock()}
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>대상</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.visit_targets || []).map(t => (
@@ -4043,76 +4134,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           )}
 
           {/* Build-5D-2 (hotfix1): STT 원본 텍스트 상단 고정 — 원본 존재만으로 표시 (링크 독립) */}
-          {siSttOriginalText && (
-            <div style={{
-              marginBottom: 12,
-              border: '1px solid #378ADD',
-              borderRadius: 8,
-              background: 'rgba(55,138,221,0.05)',
-              overflow: 'hidden',
-            }}>
-              <div
-                onClick={() => setSiSttOriginalCollapsed(c => !c)}
-                style={{
-                  padding: '8px 10px',
-                  background: 'rgba(55,138,221,0.1)',
-                  borderBottom: siSttOriginalCollapsed ? 'none' : '1px solid rgba(55,138,221,0.2)',
-                  display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
-                }}>
-                <span style={{ fontSize: '0.714rem', fontWeight: 700, color: '#378ADD' }}>
-                  STT 원본
-                </span>
-                <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flex: 1 }}>
-                  {siSttOriginalCollapsed ? '클릭하여 펼치기' : '클릭하여 접기'}
-                </span>
-                {!siSttOriginalCollapsed && (
-                  <button onClick={(e) => { e.stopPropagation(); setSiSttOriginalEditing(v => !v); }}
-                    style={{
-                      padding: '2px 8px',
-                      border: '1px solid #378ADD',
-                      background: siSttOriginalEditing ? '#378ADD' : 'transparent',
-                      color: siSttOriginalEditing ? '#fff' : '#378ADD',
-                      borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
-                    }}>
-                    {siSttOriginalEditing ? '편집 종료' : '편집'}
-                  </button>
-                )}
-                <span style={{ fontSize: '0.786rem', color: '#378ADD' }}>
-                  {siSttOriginalCollapsed ? '▼' : '▲'}
-                </span>
-              </div>
-              {!siSttOriginalCollapsed && (
-                <div style={{ padding: 10 }}>
-                  {siSttOriginalEditing ? (
-                    <textarea
-                      value={siSttOriginalText}
-                      onChange={e => setSiSttOriginalText(e.target.value)}
-                      style={{
-                        width: '100%', minHeight: 150, maxHeight: 400, padding: 8,
-                        border: '1px solid var(--bd)', borderRadius: 6,
-                        fontSize: '0.857rem', lineHeight: 1.6, fontFamily: 'inherit',
-                        background: 'var(--bg-card)', color: 'var(--c-text-dark)',
-                        outline: 'none', resize: 'vertical', boxSizing: 'border-box',
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      padding: 8, background: 'var(--bg-card)', borderRadius: 6,
-                      maxHeight: 250, overflowY: 'auto',
-                      fontSize: '0.857rem', lineHeight: 1.6,
-                      color: 'var(--c-text-dark)', whiteSpace: 'pre-wrap', userSelect: 'text',
-                    }}>
-                      {siSttOriginalText}
-                    </div>
-                  )}
-                  <div style={{ marginTop: 6, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
-                    원본을 참고하여 아래 골자 구조나 자유 입력에 분류해 사용하세요.
-                    {siSttOriginalEditing && ' (편집 중)'}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {renderOriginalBlock()}
 
           {/* 1. 골자 선택 / 자유 입력 */}
           <div style={{ marginBottom: 10 }}>
@@ -4297,26 +4319,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           {/* 6. 골자 없는 연설 — 자유 입력 */}
           {siNoOutline && (
             <div style={{ marginBottom: 10 }}>
-              {/* 소주제별 / 한번에 세그먼트 */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 10, background: 'var(--bg-subtle)', borderRadius: 10, padding: 2 }}>
-                {[['subtopic', '소주제별 입력'], ['bulk', '한번에 입력']].map(([k, l]) => (
-                  <button key={k} onClick={() => {
-                    if (k === 'bulk' && siFreeMode === 'subtopic' && siFreeSubtopics.length > 0 && !siFreeText.trim()) {
-                      setSiFreeText(siFreeSubtopics.map((st, i) => `[${i + 1}] ${st.title}\n${st.memo}`).join('\n\n'));
-                    }
-                    setSiFreeMode(k);
-                  }} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: siFreeMode === k ? 700 : 500,
-                    border: 'none', background: siFreeMode === k ? 'var(--bg-card, #fff)' : 'transparent',
-                    color: siFreeMode === k ? '#1D9E75' : 'var(--c-muted)',
-                    cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                    boxShadow: siFreeMode === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  }}>{l}</button>
-                ))}
-              </div>
-
-              {/* 소주제별 입력 (Build-7 Hotfix 4: title/content 분리, 성구/출판물 접기, _mode 플래그) */}
-              {siFreeMode === 'subtopic' && (<>
+              {/* Phase 5-2 후속: bulk 모드 제거 — subtopic 단일 */}
+              {(<>
                 {siFreeSubtopics.map((st, si) => {
                   const isStandaloneTopLevel = st._mode === 'top';
                   return (
@@ -4458,17 +4462,6 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     </div>
                   );
                 })()}
-              </>)}
-
-              {/* 한번에 입력 */}
-              {siFreeMode === 'bulk' && (<>
-                <KoreanTextarea value={siFreeText} onChange={setSiFreeText} rows={10} placeholder="연설 내용 전체를 붙여넣으세요..."
-                  style={{ display: 'block', width: '100%', padding: '8px 12px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 6 }} />
-                <button onClick={() => { setSiAiToast('준비 중입니다'); setTimeout(() => setSiAiToast(''), 2000); }} style={{
-                  padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)',
-                  background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                }}>AI 구조화</button>
-                {siAiToast && <span style={{ marginLeft: 8, fontSize: '0.786rem', color: 'var(--c-dim)' }}>{siAiToast}</span>}
               </>)}
             </div>
           )}
@@ -5017,7 +5010,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     setMovingMemo({ id: m.id, collection: m.collection });
                     if (k === 'speech_input') {
                       setSiNoOutline(true); setSiOutline(null); setSiSubtopics({});
-                      setSiFreeTopic(m.topic); setSiFreeText(m.body);
+                      setSiFreeTopic(m.topic); setSiFreeText('');
+                      // Phase 5-2 후속: 메모 본문 → 원본 블록 (주황 "빠른 입력 원본")
+                      setSiSttOriginalText(m.body || ''); setSiOriginType(m.body ? 'quick' : '');
+                      setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
                       setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({});
                     } else if (k === 'discussion') {
                       setDiscForm(p => ({ ...p, topic: m.topic, content: m.body }));

@@ -788,6 +788,7 @@ def stt_save(job_id: str, req: dict):
         "no_outline": True,
         "source_stt_job_id": job_id,
         "source_type": source,
+        "stt_original_text": final_text,  # Phase 5-2 후속: 원본 필드 명시 저장
     }
 
     try:

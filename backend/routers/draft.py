@@ -316,6 +316,7 @@ def list_drafts():
                 "source_type": data.get("source_type", ""),
                 "free_topic": data.get("free_topic", ""),
                 "free_text": data.get("free_text", ""),  # Hotfix 9: 카드 글자수 표시용
+                "stt_original_text": data.get("stt_original_text", ""),  # Phase 5-2 후속: STT/Quick 원본
             })
         except Exception:
             continue
