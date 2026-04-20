@@ -4345,25 +4345,37 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         return;
                       }
                       const sourceKo = _siInit.sourceType || '연설';
+                      // Hotfix 2: 전역 point_num 누적 (소주제 간 doc_id 충돌 방지)
+                      //   + text = speech_text (골자 없는 자유 입력은 사용자 입력이 point_content 역할도 겸함)
+                      let _globalPtNum = 0;
                       const subList = meaningfulSubs.length > 0
                         ? meaningfulSubs.map((st, si) => {
                             const validPoints = (st.points || []).filter(pt =>
                               (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
                             );
-                            const points = validPoints.length > 0
-                              ? validPoints.map((pt, pi) => ({
-                                  num: String(pi + 1),
-                                  text: '',
+                            let points;
+                            if (validPoints.length > 0) {
+                              points = validPoints.map(pt => {
+                                _globalPtNum += 1;
+                                const body = pt.text || '';
+                                return {
+                                  num: String(_globalPtNum),
+                                  text: body,
                                   level: 'L1',
-                                  speech_text: pt.text || '',
+                                  speech_text: body,
                                   scriptures: pt.scriptures || '',
                                   scripture_usage: '',
                                   publications: pt.publications || '',
                                   keywords: pt.keywords || '',
                                   tags: pt.tags || '',
                                   usage: '사용',
-                                }))
-                              : [{ num: '1', text: '', level: 'L1', speech_text: st.memo || '', scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
+                                };
+                              });
+                            } else {
+                              _globalPtNum += 1;
+                              const memo = st.memo || '';
+                              points = [{ num: String(_globalPtNum), text: memo, level: 'L1', speech_text: memo, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
+                            }
                             return {
                               title: st.title || '',
                               num: si + 1,
@@ -4373,7 +4385,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         : [{
                             title: siFreeTopic || '',
                             num: 1,
-                            points: [{ num: '1', text: '', level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
+                            points: [{ num: '1', text: siFreeText, level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
                           }];
                       const res = await saveSpeech({
                         files: [{
