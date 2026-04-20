@@ -1055,6 +1055,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [sttUploading, setSttUploading] = useState(false);
   const [sttPollingJobs, setSttPollingJobs] = useState(new Set());
   const sttFileInputRef = useRef(null);
+  const sttPollRef = useRef(null);
+  const sttPollTimeoutRef = useRef(null);
+  const sttPollingRef = useRef(new Set());
 
   const sttLoadJobs = async () => {
     try {
@@ -1078,12 +1081,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addTab, prepMode]);
 
-  // 폴링: 진행 중 job만 2초마다 상세 조회
+  // 폴링: 진행 중 job만 2초마다 상세 조회 (ref 기반 — 인터벌 재생성 방지)
   useEffect(() => {
-    if (sttPollingJobs.size === 0) return;
+    if (sttPollingJobs.size === 0) {
+      sttPollingRef.current = new Set();
+      return;
+    }
+    sttPollingRef.current = new Set(sttPollingJobs);
     const interval = setInterval(async () => {
+      const ids = Array.from(sttPollingRef.current);
+      if (ids.length === 0) { clearInterval(interval); return; }
       try {
-        const ids = Array.from(sttPollingJobs);
         const results = await Promise.all(ids.map(id => sttJobDetail(id).catch(() => null)));
         const stillActive = new Set();
         setSttJobs(prev => {
@@ -1098,11 +1106,21 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           });
           return updated;
         });
-        setSttPollingJobs(stillActive);
+        sttPollingRef.current = stillActive;
+        if (stillActive.size === 0) clearInterval(interval);
       } catch {}
     }, 2000);
     return () => clearInterval(interval);
-  }, [sttPollingJobs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sttPollingJobs.size]);
+
+  // 언마운트 시 STT 폴링 인터벌/타임아웃 정리
+  useEffect(() => {
+    return () => {
+      if (sttPollRef.current) { clearInterval(sttPollRef.current); sttPollRef.current = null; }
+      if (sttPollTimeoutRef.current) { clearTimeout(sttPollTimeoutRef.current); sttPollTimeoutRef.current = null; }
+    };
+  }, []);
 
   const handleSttUpload = async (file) => {
     if (!file) return;
@@ -1472,8 +1490,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         return;
       }
 
-      // LLM 포함 → 폴링
-      const pollCorrection = setInterval(async () => {
+      // LLM 포함 → 폴링 (ref 기반 — 언마운트 시 정리)
+      if (sttPollRef.current) clearInterval(sttPollRef.current);
+      if (sttPollTimeoutRef.current) clearTimeout(sttPollTimeoutRef.current);
+      sttPollRef.current = setInterval(async () => {
         try {
           const fresh = await sttJobDetail(sttReviewJob.job_id);
           setSttReviewJob(fresh);
@@ -1485,16 +1505,20 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             else setSttReviewTab('parsed');
             setSttReviewStatus('✓ 교정 완료');
             setSttReviewCorrecting(false);
-            clearInterval(pollCorrection);
+            clearInterval(sttPollRef.current);
+            sttPollRef.current = null;
             setTimeout(() => setSttReviewStatus(''), 3000);
           } else if (fresh.status === 'failed') {
             setSttReviewStatus('교정 실패: ' + (fresh.error_message || ''));
             setSttReviewCorrecting(false);
-            clearInterval(pollCorrection);
+            clearInterval(sttPollRef.current);
+            sttPollRef.current = null;
           }
         } catch {}
       }, 2000);
-      setTimeout(() => clearInterval(pollCorrection), 5 * 60 * 1000);
+      sttPollTimeoutRef.current = setTimeout(() => {
+        if (sttPollRef.current) { clearInterval(sttPollRef.current); sttPollRef.current = null; }
+      }, 5 * 60 * 1000);
     } catch (e) {
       setSttReviewStatus('교정 실패: ' + e.message);
       setSttReviewCorrecting(false);

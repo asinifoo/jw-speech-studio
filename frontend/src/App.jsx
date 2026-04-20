@@ -580,7 +580,7 @@ textarea { resize: vertical; }
       </div>
       </div>
 
-      <div style={{ display: page === 'search' ? 'block' : 'none' }}>
+      {page === 'search' && (<>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 2, marginBottom: 12,
           background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
@@ -598,22 +598,12 @@ textarea { resize: vertical; }
         </div>
         {searchMode === 'chat' && <ChatSearchPage fontSize={fontSize} ai={ai} />}
         {searchMode === 'bible' && <BibleSearchPage fontSize={fontSize} />}
-        <div style={{ display: searchMode === 'original' ? 'block' : 'none' }}>
-          <TranscriptPage fontSize={fontSize} />
-        </div>
-        <div style={{ display: searchMode === 'free' ? 'block' : 'none' }}>
-          <FreeSearchPage fontSize={fontSize} />
-        </div>
-      </div>
-      <div style={{ display: page === 'input' ? 'block' : 'none' }}>
-        <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />
-      </div>
-      <div style={{ display: page === 'add' ? 'block' : 'none' }}>
-        <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />
-      </div>
-      <div style={{ display: page === 'manage' ? 'block' : 'none' }}>
-        <ManagePage pageType="manage" key={'manage-' + resetKey} fontSize={fontSize} onGoAdd={() => setPage('add')} />
-      </div>
+        {searchMode === 'original' && <TranscriptPage fontSize={fontSize} />}
+        {searchMode === 'free' && <FreeSearchPage fontSize={fontSize} />}
+      </>)}
+      {page === 'input' && <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />}
+      {page === 'add' && <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />}
+      {page === 'manage' && <ManagePage pageType="manage" key={'manage-' + resetKey} fontSize={fontSize} onGoAdd={() => setPage('add')} />}
 
       {page === 'speech' && (<>
 
@@ -634,13 +624,9 @@ textarea { resize: vertical; }
         ))}
       </div>
 
-      <div style={{ display: prepareMode === 'service' ? 'block' : 'none' }}>
-        <ServiceMeetingPage key={resetKey} fontSize={fontSize} ai={ai} />
-      </div>
+      {prepareMode === 'service' && <ServiceMeetingPage key={resetKey} fontSize={fontSize} ai={ai} />}
 
-      <div style={{ display: prepareMode === 'visit' ? 'block' : 'none' }}>
-        <VisitPage key={resetKey} fontSize={fontSize} ai={ai} />
-      </div>
+      {prepareMode === 'visit' && <VisitPage key={resetKey} fontSize={fontSize} ai={ai} />}
 
       {prepareMode === 'speech' && (<>
 
