@@ -1671,7 +1671,6 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   ['service', '봉사 모임'],
                   ['visit', '방문'],
                   ['publication', '출판물'],
-                  ['other', '기타'],
                 ].map(([k, l]) => {
                   const active = qiForm.type === k;
                   return (
@@ -1706,7 +1705,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연사</div>
-                    <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="김형제" style={{ ...iS, width: '100%' }} />
+                    <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...iS, width: '100%' }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
@@ -1740,7 +1739,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>대상</div>
-                  <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수 형제님" style={{ ...iS, width: '100%' }} />
+                  <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수" style={{ ...iS, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
@@ -1762,19 +1761,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               </div>
             )}
 
-            {qiForm.type === 'other' && (
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
-                <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605 (선택)" style={{ ...iS, width: '100%' }} />
-              </div>
-            )}
-
             {/* 주제 (공통 — service/publication 제외) */}
             {qiForm.type !== 'service' && qiForm.type !== 'publication' && (
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>
-                  주제 {qiForm.type === 'other' && <span style={{ color: 'var(--c-dim)' }}>(선택)</span>}
-                </div>
+                <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>주제</div>
                 <input value={qiForm.topic} onChange={e => setQiForm(p => ({ ...p, topic: e.target.value }))} placeholder="주제" style={{ ...iS, width: '100%' }} />
               </div>
             )}
@@ -1783,7 +1773,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             <div style={{ marginBottom: 10 }}>
               <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>내용</div>
               <textarea value={qiForm.content} onChange={e => setQiForm(p => ({ ...p, content: e.target.value }))}
-                placeholder="들은 내용을 빠르게 적어보세요..." rows={12}
+                placeholder="내용을 입력하세요..." rows={12}
                 style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.929rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
             </div>
 
@@ -4223,56 +4213,54 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         </div>
                         );
                       })}
-                      <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
-                        j === si ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
-                      ))} style={{
-                        width: '100%', padding: '5px 0', borderRadius: 6, border: '1px dashed var(--bd-light)',
-                        background: 'transparent', color: 'var(--c-muted)', fontSize: '0.714rem', cursor: 'pointer', fontFamily: 'inherit',
-                      }}>+ 요점 추가</button>
+                      {/* Hotfix 7: 최상위 모드에선 최하단 [+ 최상위 요점 추가]와 중복이므로 숨김 */}
+                      {!isStandaloneTopLevel && (
+                        <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
+                          j === si ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
+                        ))} style={{
+                          width: '100%', padding: '5px 0', borderRadius: 6, border: '1px dashed var(--bd-light)',
+                          background: 'transparent', color: 'var(--c-muted)', fontSize: '0.714rem', cursor: 'pointer', fontFamily: 'inherit',
+                        }}>+ 요점 추가</button>
+                      )}
                     </div>
                   </div>
                   );
                 })}
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button onClick={() => {
-                    // [+ 소주제 추가] — 최상위 모드에 요점 있으면 Q10 자동 편입
-                    const first = siFreeSubtopics[0];
-                    const isTopWithContent = first && first._mode === 'top' && (first.points || []).some(pt =>
-                      (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
-                    );
-                    if (isTopWithContent) {
-                      const title = prompt('기존 최상위 요점을 첫 소주제로 편입합니다.\n소주제 제목을 입력하세요:');
-                      if (!title || !title.trim()) return;
-                      setSiFreeSubtopics(p => [
-                        { ...p[0], title: title.trim(), _mode: 'subtopic' },
-                        { title: '', memo: '', _mode: 'subtopic', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] },
-                      ]);
-                    } else {
-                      setSiFreeSubtopics(p => [...p, { title: '', memo: '', _mode: 'subtopic', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
-                    }
-                  }} style={{
-                    flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #1D9E75',
-                    background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                  }}>+ 소주제 추가</button>
-                  {/* Hotfix 5: 최상위 요점 추가 버튼은 빈 상태이거나 단일 top 모드일 때만 노출 */}
-                  {(siFreeSubtopics.length === 0 || (siFreeSubtopics.length === 1 && siFreeSubtopics[0]._mode === 'top')) && (
-                    <button onClick={() => {
-                      const first = siFreeSubtopics[0];
-                      if (siFreeSubtopics.length === 0) {
-                        setSiFreeSubtopics([{ title: '', memo: '', _mode: 'top', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
-                        return;
-                      }
-                      if (siFreeSubtopics.length === 1 && first._mode === 'top') {
-                        setSiFreeSubtopics(p => p.map((x, j) =>
-                          j === 0 ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
-                        ));
-                      }
-                    }} style={{
-                      flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #378ADD',
-                      background: 'var(--bg-card)', color: '#378ADD', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                    }}>+ 최상위 요점 추가</button>
-                  )}
-                </div>
+                {/* Hotfix 6: 버튼 완전 대칭 — 각 모드에서 해당 버튼만 노출, Q10 prompt 제거 */}
+                {(() => {
+                  const isEmpty = siFreeSubtopics.length === 0;
+                  const isTopMode = siFreeSubtopics.length === 1 && siFreeSubtopics[0]._mode === 'top';
+                  const isSubtopicMode = siFreeSubtopics.some(s => s._mode === 'subtopic');
+                  const canAddSubtopic = isEmpty || isSubtopicMode;
+                  const canAddTopLevel = isEmpty || isTopMode;
+                  return (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {canAddSubtopic && (
+                        <button onClick={() => {
+                          // 단순 소주제 추가 (Q10 편입 제거)
+                          setSiFreeSubtopics(p => [...p, { title: '', memo: '', _mode: 'subtopic', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
+                        }} style={{
+                          flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #1D9E75',
+                          background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                        }}>+ 소주제 추가</button>
+                      )}
+                      {canAddTopLevel && (
+                        <button onClick={() => {
+                          if (isEmpty) {
+                            setSiFreeSubtopics([{ title: '', memo: '', _mode: 'top', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
+                          } else {
+                            setSiFreeSubtopics(p => p.map((x, j) =>
+                              j === 0 ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
+                            ));
+                          }
+                        }} style={{
+                          flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #378ADD',
+                          background: 'var(--bg-card)', color: '#378ADD', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                        }}>+ 최상위 요점 추가</button>
+                      )}
+                    </div>
+                  );
+                })()}
               </>)}
 
               {/* 한번에 입력 */}
