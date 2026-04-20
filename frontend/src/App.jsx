@@ -555,16 +555,28 @@ textarea { resize: vertical; }
         display: 'flex', alignItems: 'center', gap: 2,
         background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
       }}>
-        {[['speech', '준비'], ['search', '검색'], ['add', '추가'], ['manage', '관리']].map(([key, label]) => (
-          <button key={key} onClick={() => setPage(key)} style={{
-            flex: 1, padding: '8px 0', border: 'none', fontSize: '0.929rem', fontWeight: page === key ? 700 : 500, cursor: 'pointer',
-            background: page === key ? 'var(--bg-card, #fff)' : 'transparent',
-            color: page === key ? 'var(--c-text-dark)' : 'var(--c-muted)',
-            borderRadius: 8, fontFamily: 'inherit',
-            transition: 'all 0.2s ease',
-            boxShadow: page === key ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-          }}>{label}</button>
-        ))}
+        {[['input', '입력'], null, ['speech', '준비'], ['search', '검색'], ['add', '전처리'], ['manage', '관리']].map((item, idx) => {
+          if (item === null) {
+            return <div key={`sep-${idx}`} style={{ width: 1, height: 22, background: 'var(--bd-medium)', margin: '0 10px', alignSelf: 'center', flexShrink: 0 }} />;
+          }
+          const [key, label] = item;
+          const isInput = key === 'input';
+          const active = page === key;
+          return (
+            <button key={key} onClick={() => {
+              setPage(key);
+              // Phase 5-3A: [전처리] 진입 시 addTab='preprocess' 로 리셋
+              if (key === 'add') { try { window.dispatchEvent(new Event('enter-preprocess-tab')); } catch {} }
+            }} style={{
+              flex: 1, padding: '8px 0', border: 'none', fontSize: '0.929rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
+              background: active ? 'var(--bg-card, #fff)' : 'transparent',
+              color: active ? (isInput ? '#D85A30' : 'var(--c-text-dark)') : 'var(--c-muted)',
+              borderRadius: 8, fontFamily: 'inherit',
+              transition: 'all 0.2s ease',
+              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+            }}>{label}</button>
+          );
+        })}
       </div>
       </div>
 
@@ -592,6 +604,9 @@ textarea { resize: vertical; }
         <div style={{ display: searchMode === 'free' ? 'block' : 'none' }}>
           <FreeSearchPage fontSize={fontSize} />
         </div>
+      </div>
+      <div style={{ display: page === 'input' ? 'block' : 'none' }}>
+        <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />
       </div>
       <div style={{ display: page === 'add' ? 'block' : 'none' }}>
         <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />

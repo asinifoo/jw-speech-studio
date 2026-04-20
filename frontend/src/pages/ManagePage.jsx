@@ -70,9 +70,11 @@ function formatSbMmw(num) {
 }
 
 export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSaveReturn, pageType, onGoAdd }) {
-  const defaultMode = pageType === 'add' ? 'add' : 'mydb';
+  // Phase 5-3A: pageType='input' 도 'add' 모드로 분기 (ManagePage 내부는 addTab 렌더 경로 재사용)
+  const _isAddPage = pageType === 'add' || pageType === 'input';
+  const defaultMode = _isAddPage ? 'add' : 'mydb';
   const [mode, setMode] = useState(() => {
-    if (pageType === 'add') return 'add';
+    if (_isAddPage) return 'add';
     try { const saved = localStorage.getItem('jw-manage-mode'); return (saved && saved !== 'add' && saved !== 'memo') ? saved : 'mydb'; } catch(e) { return 'mydb'; }
   });
   const [aiOpenSections, setAiOpenSections] = useState({ model: true });
@@ -136,7 +138,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [catEditing, setCatEditing] = useState(null); // 'service_types' | 'visit_targets' | 'visit_situations'
   const [catNewVal, setCatNewVal] = useState('');
   useEffect(() => { getCategories().then(r => setCats(r)).catch(() => {}); }, []);
-  useEffect(() => { if (pageType !== 'add') { try { localStorage.setItem('jw-manage-mode', mode); } catch(e) {} } }, [mode, pageType]);
+  useEffect(() => { if (!_isAddPage) { try { localStorage.setItem('jw-manage-mode', mode); } catch(e) {} } }, [mode, pageType]);
   useEffect(() => { try { localStorage.setItem('jw-addform', JSON.stringify(addForm)); } catch(e) {} }, [addForm]);
   const [outlines, setOutlines] = useState([]);
   const [subtopics, setSubtopics] = useState({});
@@ -196,10 +198,29 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [editingMTypes, setEditingMTypes] = useState(false);
   const defaultMTypes = ['일반', '재방문', '기념식', '지역대회', '특별활동'];
   // ── 연설 입력 state ──
-  const [addTab, setAddTab] = useState(() => { try { const s = localStorage.getItem('jw-add-tab'); return ['input', 'preprocess', 'drafts'].includes(s) ? s : 'input'; } catch { return 'input'; } });
-  const [inputMode, setInputMode] = useState(() => { try { return localStorage.getItem('jw-input-mode') || 'quick_input'; } catch { return 'quick_input'; } });
-  useEffect(() => { try { localStorage.setItem('jw-add-tab', addTab); } catch {} }, [addTab]);
-  useEffect(() => { try { localStorage.setItem('jw-input-mode', inputMode); } catch {} }, [inputMode]);
+  // Phase 5-3A: pageType 별 초기값
+  //  - 'input'  → 빠른 입력 고정 (addTab='input', inputMode='quick_input')
+  //  - 'add'    → [전처리] 진입 기본은 'preprocess' (localStorage 무시)
+  //  - 'manage' → 이 컴포넌트는 mydb/ai 렌더라 addTab state 사용 안 함
+  const [addTab, setAddTab] = useState(() => {
+    if (pageType === 'input') return 'input';
+    if (pageType === 'add') return 'preprocess';
+    try { const s = localStorage.getItem('jw-add-tab'); return ['input', 'preprocess', 'drafts'].includes(s) ? s : 'input'; } catch { return 'input'; }
+  });
+  const [inputMode, setInputMode] = useState(() => {
+    if (pageType === 'input') return 'quick_input';
+    try { return localStorage.getItem('jw-input-mode') || 'quick_input'; } catch { return 'quick_input'; }
+  });
+  // Phase 5-3A: [입력] 탑레벨 ManagePage 인스턴스는 고정값이므로 localStorage 오염 방지
+  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-add-tab', addTab); } catch {} }, [addTab, pageType]);
+  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-input-mode', inputMode); } catch {} }, [inputMode, pageType]);
+  // Phase 5-3A: [전처리] 탑레벨 탭 클릭 시 addTab='preprocess' 로 리셋
+  useEffect(() => {
+    if (pageType !== 'add') return;
+    const h = () => setAddTab('preprocess');
+    window.addEventListener('enter-preprocess-tab', h);
+    return () => window.removeEventListener('enter-preprocess-tab', h);
+  }, [pageType]);
   // Phase 5-1: 빠른 입력 state
   const _qiDefault = { type: 'speech', speech_type: '생활과 봉사', speaker: '', date: '', topic: '', target: '', pub_code: '', pub_title: '', content: '' };
   const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-qi-form')) || _qiDefault; } catch { return _qiDefault; } });
@@ -1410,7 +1431,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
   // mode='mydb' 복원 시 자동 로드 (F5 새로고침 대응)
   useEffect(() => {
-    if (pageType !== 'add' && mode === 'mydb' && myEntries.length === 0 && !myLoading) {
+    if (!_isAddPage && mode === 'mydb' && myEntries.length === 0 && !myLoading) {
       setMyLoading(true);
       listManualEntries()
         .then(r => setMyEntries((r.entries || []).filter(e => !['메모', 'memo'].includes(e.metadata?.source || ''))))
@@ -1589,7 +1610,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
   return (
     <div>
-      {pageType !== 'add' && (
+      {!_isAddPage && (
       <div style={{
         display: 'flex', alignItems: 'center', gap: 2, marginBottom: 16,
         background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
@@ -1622,7 +1643,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
 
       {mode === 'add' && (<>
-        {/* 추가 탭 상단 세그먼트 */}
+        {/* 추가 탭 상단 세그먼트 — Phase 5-3A: [입력] 탑레벨에선 숨김 (빠른 입력 고정) */}
+        {pageType !== 'input' && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 2, marginBottom: 16,
           background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
@@ -1637,11 +1659,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             }}>{l}</button>
           ))}
         </div>
+        )}
 
         {/* ═══ 입력 탭 ═══ */}
         {addTab === 'input' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
-          {/* 입력 하위 — 카드 헤더 언더라인 */}
+          {/* 입력 하위 — 카드 헤더 언더라인 (Phase 5-3A: [입력] 탑레벨에선 숨김) */}
+          {pageType !== 'input' && (
           <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
             {[['quick_input', '빠른 입력', '#D85A30'], ['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => {
               const active = inputMode === k;
@@ -1657,6 +1681,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               );
             })}
           </div>
+          )}
           <div style={{ padding: 14 }}>
 
           {/* ─── 빠른 입력 (Phase 5-1) ─── */}
@@ -1804,9 +1829,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     notes: {}, details: {}, free_subtopics: [],
                   });
                   const savedId = (resp && resp.draft_id) || '';
-                  setQiSaveMsg(`✓ 저장됨 (${savedId})`);
+                  setQiSaveMsg(`✓ 저장됨 — [전처리] > [임시저장]에서 확인 가능 (${savedId})`);
                   setQiForm(_qiDefault);
-                  setTimeout(() => setQiSaveMsg(''), 3000);
+                  setTimeout(() => setQiSaveMsg(''), 4000);
                 } catch (e) {
                   setQiSaveMsg('오류: ' + e.message);
                 } finally {
@@ -1817,7 +1842,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 background: qiSaving || !qiForm.content.trim() ? 'var(--bd-medium)' : '#D85A30', color: '#fff',
                 fontSize: '0.929rem', fontWeight: 700, cursor: qiSaving || !qiForm.content.trim() ? 'default' : 'pointer',
               }}>
-                {qiSaving ? '저장 중...' : '빠른 저장'}
+                {qiSaving ? '저장 중...' : '저장'}
               </button>
             </div>
 
@@ -4714,6 +4739,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             {dbDrafts.length === 0 && <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>임시저장된 데이터가 없습니다.</div>}
             {dbDrafts.map((dr, di) => {
               const isStt = !!dr.source_stt_job_id;
+              // Hotfix 8: 빠른 입력 draft 감지 (outline_type='QUICK' 또는 outline_num prefix)
+              const isQuickInput = (dr.outline_type === 'QUICK') || /^(SP|DC|SV|VS|PB|ET)_/.test(dr.outline_num || '');
+              const quickTypeLabels = { speech: '연설', discussion: '토의', service: '봉사 모임', visit: '방문', publication: '출판물', other: '기타' };
+              const quickTypeFromPrefix = (() => {
+                const m = (dr.outline_num || '').match(/^([A-Z]{2})_/);
+                const mp = { SP: 'speech', DC: 'discussion', SV: 'service', VS: 'visit', PB: 'publication', ET: 'other' };
+                return m ? (mp[m[1]] || 'speech') : 'speech';
+              })();
               return (
               <div key={dr.draft_id} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 6 }}>
                 <div style={{ padding: '8px 10px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
@@ -4724,16 +4757,46 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   {dr.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{dr.speaker}</span>}
                   {dr.date && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{dr.date}</span>}
                   <div style={{ flex: 1 }} />
-                  {!isStt && <span style={{ fontSize: '0.643rem', color: '#378ADD', fontWeight: 600 }}>{dr.filled}/{dr.total} {(dr.no_outline || dr.mode !== 'quick') ? '요점' : '소주제'}</span>}
+                  {!isStt && (isQuickInput
+                    ? <span style={{ fontSize: '0.643rem', color: '#D85A30', fontWeight: 600 }}>{(dr.free_text || '').length}자</span>
+                    : <span style={{ fontSize: '0.643rem', color: '#378ADD', fontWeight: 600 }}>{dr.filled}/{dr.total} {(dr.no_outline || dr.mode !== 'quick') ? '요점' : '소주제'}</span>
+                  )}
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{isStt ? 'STT 자유 입력' : (dr.no_outline ? '자유 입력' : (dr.mode === 'quick' ? '간단 입력' : '상세 입력'))}</span>
+                  <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{
+                    isStt ? 'STT 자유 입력'
+                      : isQuickInput ? `빠른 입력 · ${quickTypeLabels[quickTypeFromPrefix] || '연설'}`
+                      : dr.no_outline ? '자유 입력'
+                      : dr.mode === 'quick' ? '간단 입력'
+                      : '상세 입력'
+                  }</span>
                   {dr.saved_at && <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)' }}>{dr.saved_at.split('T')[0]}</span>}
                   <div style={{ flex: 1 }} />
-                  {(isStt || dr.no_outline) ? (
+                  {(isStt || dr.no_outline || isQuickInput) ? (
                     <button onClick={async () => {
                       if (isStt) {
                         handleStartSttDraftEdit(dr.draft_id, dr.speaker, dr.date, dr.source_stt_job_id);
+                        return;
+                      }
+                      // Hotfix 8: 빠른 입력 draft 이어서 편집 — 같은 인스턴스 내 [입력]>[빠른 입력] 으로 이동 + qiForm 복원
+                      if (isQuickInput) {
+                        let full = dr;
+                        try {
+                          const r = await draftLoad({ outline_num: dr.outline_num || '', speaker: dr.speaker || '', date: dr.date || '', outline_type: 'QUICK' });
+                          if (r && r.exists) full = r;
+                        } catch {}
+                        setQiForm({
+                          type: full.quick_type || quickTypeFromPrefix,
+                          speech_type: full.speech_type || '생활과 봉사',
+                          speaker: full.speaker || '',
+                          date: full.date || '',
+                          topic: full.outline_title || '',
+                          target: full.target || '',
+                          pub_code: full.pub_code || '',
+                          pub_title: full.pub_title || '',
+                          content: full.free_text || '',
+                        });
+                        setAddTab('input'); setInputMode('quick_input');
                         return;
                       }
                       // Build-7 hotfix 1: 자유 입력 draft 이어서 편집
