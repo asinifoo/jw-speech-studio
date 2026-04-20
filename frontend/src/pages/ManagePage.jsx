@@ -203,13 +203,25 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   //  - 'add'    → [전처리] 진입 기본은 'preprocess' (localStorage 무시)
   //  - 'manage' → 이 컴포넌트는 mydb/ai 렌더라 addTab state 사용 안 함
   const [addTab, setAddTab] = useState(() => {
-    if (pageType === 'input') return 'input';
-    if (pageType === 'add') return 'preprocess';
-    try { const s = localStorage.getItem('jw-add-tab'); return ['input', 'preprocess', 'drafts'].includes(s) ? s : 'input'; } catch { return 'input'; }
+    // Phase 5-3B-1: addTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
+    if (pageType === 'input') return 'structure';
+    if (pageType === 'add') return 'gather';
+    try {
+      const s = localStorage.getItem('jw-add-tab');
+      // 기존 값 마이그레이션
+      if (s === 'input') return 'structure';
+      if (s === 'preprocess') return 'gather';
+      return ['gather', 'structure', 'drafts'].includes(s) ? s : 'gather';
+    } catch { return 'gather'; }
   });
   const [inputMode, setInputMode] = useState(() => {
     if (pageType === 'input') return 'quick_input';
-    try { return localStorage.getItem('jw-input-mode') || 'quick_input'; } catch { return 'quick_input'; }
+    try {
+      const s = localStorage.getItem('jw-input-mode');
+      // Phase 5-3B-1: [구조화] 바에서 quick_input 제거 → pageType='add'는 speech_input 기본
+      if (!s || s === 'quick_input') return 'speech_input';
+      return s;
+    } catch { return 'speech_input'; }
   });
   // Phase 5-3A: [입력] 탑레벨 ManagePage 인스턴스는 고정값이므로 localStorage 오염 방지
   useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-add-tab', addTab); } catch {} }, [addTab, pageType]);
@@ -217,7 +229,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   // Phase 5-3A: [전처리] 탑레벨 탭 클릭 시 addTab='preprocess' 로 리셋
   useEffect(() => {
     if (pageType !== 'add') return;
-    const h = () => setAddTab('preprocess');
+    const h = () => setAddTab('gather');
     window.addEventListener('enter-preprocess-tab', h);
     return () => window.removeEventListener('enter-preprocess-tab', h);
   }, [pageType]);
@@ -278,12 +290,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   // transfer 데이터 처리 — addTab 변경 시 + 외부 트리거(si-transfer 이벤트) 시
   const [siTransferTick, setSiTransferTick] = useState(0);
   useEffect(() => {
-    const handler = () => { setAddTab('input'); setInputMode('speech_input'); setSiTransferTick(t => t + 1); };
+    const handler = () => { setAddTab('structure'); setInputMode('speech_input'); setSiTransferTick(t => t + 1); };
     window.addEventListener('si-transfer', handler);
     return () => window.removeEventListener('si-transfer', handler);
   }, []);
   useEffect(() => {
-    if (!(addTab === 'input' && inputMode === 'speech_input')) return;
+    if (!(addTab === 'structure' && inputMode === 'speech_input')) return;
     let raw; try { raw = localStorage.getItem('jw-si-transfer'); } catch { return; }
     if (!raw) return;
     try { localStorage.removeItem('jw-si-transfer'); } catch {}
@@ -1041,7 +1053,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
   // STT 탭 활성화 시 목록 로드 (새로고침/탭 전환 양쪽 대응)
   useEffect(() => {
-    if (addTab === 'preprocess' && prepMode === 'stt' && sttJobs.length === 0) {
+    if (addTab === 'gather' && prepMode === 'stt' && sttJobs.length === 0) {
       sttLoadJobs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1199,9 +1211,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         source_stt_job_id: dr.source_stt_job_id || jobId || '',
         stt_original_text: dr.stt_original_text || dr.free_text || '',
       }));
-      localStorage.setItem('jw-add-tab', 'input');
+      localStorage.setItem('jw-add-tab', 'structure');
       localStorage.setItem('jw-input-mode', 'speech_input');
-      setAddTab('input');
+      setAddTab('structure');
       setInputMode('speech_input');
       window.dispatchEvent(new Event('si-transfer'));
     } catch (e) {
@@ -1522,7 +1534,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   useEffect(() => {
     if (!pendingPub) return;
     setMode('add');
-    setAddTab('input');
+    setAddTab('structure');
     setInputMode('pub_input');
     setFromPub(true);
     // pub_code 전체를 그대로 전달 (면/항 분리는 백엔드 lookup이 처리)
@@ -1651,8 +1663,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           display: 'flex', alignItems: 'center', gap: 2, marginBottom: 16,
           background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
         }}>
-          {[['input', '입력'], ['preprocess', '전처리'], ['drafts', '임시저장']].map(([k, l]) => (
-            <button key={k} onClick={() => { setAddTab(k); if (k === 'preprocess') setAddForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={{
+          {[['gather', '가져오기'], ['structure', '구조화'], ['drafts', '임시저장']].map(([k, l]) => (
+            <button key={k} onClick={() => { setAddTab(k); if (k === 'gather') setAddForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={{
               flex: 1, padding: '7px 0', border: 'none', fontSize: '0.857rem', fontWeight: addTab === k ? 700 : 500, cursor: 'pointer',
               background: addTab === k ? 'var(--bg-card, #fff)' : 'transparent',
               color: addTab === k ? '#1D9E75' : 'var(--c-muted)',
@@ -1663,13 +1675,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         </div>
         )}
 
-        {/* ═══ 입력 탭 ═══ */}
-        {addTab === 'input' && (
+        {/* ═══ 구조화 탭 ═══ */}
+        {addTab === 'structure' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
           {/* 입력 하위 — 카드 헤더 언더라인 (Phase 5-3A: [입력] 탑레벨에선 숨김) */}
           {pageType !== 'input' && (
           <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
-            {[['quick_input', '빠른 입력', '#D85A30'], ['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => {
+            {/* Phase 5-3B-1: quick_input 버튼 제거 (최상단 [입력] 탭 전용) */}
+            {(pageType === 'input'
+              ? [['quick_input', '빠른 입력', '#D85A30']]
+              : [['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']]
+            ).map(([k, l, c]) => {
               const active = inputMode === k;
               return (
                 <button key={k} onClick={() => { setInputMode(k); setSaveMsg(''); setQiSaveMsg(''); }} style={{
@@ -2221,8 +2237,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         </div>
         )}
 
-        {/* ═══ 전처리 탭 ═══ */}
-        {addTab === 'preprocess' && (
+        {/* ═══ 가져오기 탭 ═══ */}
+        {addTab === 'gather' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden' }}>
           {/* 전처리 상위 탭 — 카드 헤더 언더라인 */}
             <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
@@ -2262,7 +2278,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           <div style={{ height: 1, background: 'var(--bd-medium)', margin: '10px 0' }} />
           </>)}
 
-          {addTab === 'preprocess' && (
+          {addTab === 'gather' && (
             <div style={{ marginBottom: 8 }}>
 
               {/* ═══ 1. 파일 업로드 모드 ═══ */}
@@ -3880,7 +3896,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       )}
 
       {/* ═══ 연설 입력 ═══ */}
-      {addTab === 'input' && inputMode === 'speech_input' && (
+      {addTab === 'structure' && inputMode === 'speech_input' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, overflow: 'hidden' }}>
 
           {siTransferMemo && (
@@ -4819,7 +4835,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           content: full.free_text || '',
                         });
                         setQiEditingOutlineNum(dr.outline_num || '');
-                        setAddTab('input'); setInputMode('quick_input');
+                        setAddTab('structure'); setInputMode('quick_input');
                         return;
                       }
                       // Build-7 hotfix 1: 자유 입력 draft 이어서 편집
@@ -4841,11 +4857,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           stt_original_text: full.stt_original_text || '',
                           source_stt_job_id: full.source_stt_job_id || '',
                         }));
-                        localStorage.setItem('jw-add-tab', 'input');
+                        localStorage.setItem('jw-add-tab', 'structure');
                         localStorage.setItem('jw-input-mode', 'speech_input');
                         window.dispatchEvent(new Event('si-transfer'));
                       } catch {}
-                      setAddTab('input'); setInputMode('speech_input');
+                      setAddTab('structure'); setInputMode('speech_input');
                     }}
                       style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
                       이어서 편집
@@ -4857,8 +4873,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           speaker: dr.speaker, date: dr.date,
                           outline_num: dr.outline_num, outline_title: dr.outline_title,
                           outline_type: dr.outline_type, content: '', isDraft: true, forceMode: m,
-                        })); localStorage.setItem('jw-add-tab', 'input'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
-                        setAddTab('input'); setInputMode('speech_input');
+                        })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
+                        setAddTab('structure'); setInputMode('speech_input');
                       }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #378ADD', background: 'var(--bg-card)', color: '#378ADD', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>{m === 'quick' ? '간단' : '상세'}</button>
                     ))
                   )}
@@ -4941,7 +4957,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     } else if (k === 'pub_input') {
                       setPubForm(p => ({ ...p, content: m.body, point_summary: m.topic }));
                     }
-                    setAddTab('input');
+                    setAddTab('structure');
                     setInputMode(k);
                     setMemoMoveModal(null);
                   }} style={{
@@ -5380,8 +5396,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           outline_num: meta.outline_num || '', outline_title: meta.outline_title || meta.topic || '',
                           outline_type: meta.outline_type || '', content: body,
                           memoId: r.id, memoCol: r.collection,
-                        })); localStorage.setItem('jw-add-tab', 'input'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
-                        if (onGoAdd) onGoAdd(); else { setAddTab('input'); setInputMode('speech_input'); setMode('add'); }
+                        })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
+                        if (onGoAdd) onGoAdd(); else { setAddTab('structure'); setInputMode('speech_input'); setMode('add'); }
                       }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>→상세</button>
                     )}
                     <button onClick={async () => {
@@ -5793,9 +5809,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         outline_num: meta.outline_num || '', outline_title: meta.outline_title || meta.topic || '',
                         outline_type: meta.outline_type || '', content: body,
                         memoId: r.id, memoCol: col,
-                      })); localStorage.setItem('jw-add-tab', 'input'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
+                      })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
                       if (onGoAdd) onGoAdd();
-                      else { setAddTab('input'); setInputMode('speech_input'); setMode('add'); }
+                      else { setAddTab('structure'); setInputMode('speech_input'); setMode('add'); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>이동</button>
                     <button onClick={() => { setMemoEditIdx(i); setMemoEditVal(r.text || ''); setMemoStat(''); }} style={{
                       padding: '2px 6px', borderRadius: 4, border: '1px solid var(--tint-red-bd)',
