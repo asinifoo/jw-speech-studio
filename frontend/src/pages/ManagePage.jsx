@@ -286,6 +286,20 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       siDraftLoadedRef.current = true;
       return;
     }
+    // Build-7 hotfix 1: 자유 입력 draft 이관 (STT 없는 no_outline)
+    if (t.isFreeDraft) {
+      setSiNoOutline(true);
+      setSiFreeMode(t.free_mode || 'subtopic');
+      setSiFreeText(t.free_text || '');
+      setSiFreeTopic(t.free_topic || '');
+      setSiFreeSubtopics(t.free_subtopics || []);
+      setSiSourceSttJobId(t.source_stt_job_id || '');
+      setSiSttOriginalText(t.stt_original_text || '');
+      setSiSttOriginalEditing(false);
+      setSiSttOriginalCollapsed(false);
+      siDraftLoadedRef.current = true;
+      return;
+    }
     if (t.outline_num) {
       // 골자 번호 + 유형 조합으로 매칭 (중복 outline_num 대비)
       const matched = outlines.find(g =>
@@ -4481,8 +4495,36 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{isStt ? 'STT 자유 입력' : (dr.no_outline ? '자유 입력' : (dr.mode === 'quick' ? '간단 입력' : '상세 입력'))}</span>
                   {dr.saved_at && <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)' }}>{dr.saved_at.split('T')[0]}</span>}
                   <div style={{ flex: 1 }} />
-                  {isStt ? (
-                    <button onClick={() => handleStartSttDraftEdit(dr.draft_id, dr.speaker, dr.date, dr.source_stt_job_id)}
+                  {(isStt || dr.no_outline) ? (
+                    <button onClick={async () => {
+                      if (isStt) {
+                        handleStartSttDraftEdit(dr.draft_id, dr.speaker, dr.date, dr.source_stt_job_id);
+                        return;
+                      }
+                      // Build-7 hotfix 1: 자유 입력 draft 이어서 편집
+                      let full = dr;
+                      try {
+                        const r = await draftLoad({ outline_num: '', speaker: dr.speaker, date: dr.date, outline_type: dr.outline_type || 'ETC', source_stt_job_id: dr.source_stt_job_id || '' });
+                        if (r.exists) full = r;
+                      } catch {}
+                      try {
+                        localStorage.setItem('jw-si-transfer', JSON.stringify({
+                          speaker: dr.speaker, date: dr.date,
+                          outline_num: '', outline_title: '', outline_type: 'ETC',
+                          isFreeDraft: true, no_outline: true,
+                          free_topic: full.free_topic || '',
+                          free_text: full.free_text || '',
+                          free_subtopics: full.free_subtopics || [],
+                          free_mode: full.free_mode || 'subtopic',
+                          stt_original_text: full.stt_original_text || '',
+                          source_stt_job_id: full.source_stt_job_id || '',
+                        }));
+                        localStorage.setItem('jw-add-tab', 'input');
+                        localStorage.setItem('jw-input-mode', 'speech_input');
+                        window.dispatchEvent(new Event('si-transfer'));
+                      } catch {}
+                      setAddTab('input'); setInputMode('speech_input');
+                    }}
                       style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
                       이어서 편집
                     </button>
