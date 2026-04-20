@@ -3724,7 +3724,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   } else {
                     const hasFreeData = (siFreeText || '').trim() || (siFreeTopic || '').trim() || (siFreeSubtopics || []).some(s =>
                       (s.title || '').trim() || (s.memo || '').trim() ||
-                      (s.points || []).some(pt => (pt.text || pt.scriptures || pt.keywords || '').trim())
+                      (s.points || []).some(pt => (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim())
                     );
                     if (hasFreeData) {
                       const msg = hasStt
@@ -3895,27 +3895,36 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 ))}
               </div>
 
-              {/* 소주제별 입력 */}
+              {/* 소주제별 입력 (Build-7: 최상위 요점 모드 + publications/tags 지원) */}
               {siFreeMode === 'subtopic' && (<>
-                {siFreeSubtopics.map((st, si) => (
+                {siFreeSubtopics.map((st, si) => {
+                  const isStandaloneTopLevel = siFreeSubtopics.length === 1 && si === 0 && !(st.title || '').trim();
+                  return (
                   <div key={si} style={{ marginBottom: 8, borderRadius: 8, border: '1px solid var(--bd-light)', overflow: 'hidden' }}>
-                    <div style={{ padding: '6px 10px', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', gap: 6, borderBottom: '1px solid var(--bd-light)' }}>
-                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#1D9E75', color: '#fff', fontSize: '0.714rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{si + 1}</span>
-                      <input value={st.title} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, title: e.target.value } : x))} placeholder="소주제 제목" style={{ flex: 1, padding: '4px 8px', border: 'none', borderRadius: 6, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'transparent', boxSizing: 'border-box' }} />
-                      <button onClick={() => setSiFreeSubtopics(p => p.filter((_, j) => j !== si))} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                    </div>
-                    <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--bd-light)' }}>
-                      <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 3 }}>전체 메모 (선택)</div>
-                      <textarea value={st.memo || ''} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, memo: e.target.value } : x))} placeholder="소주제 전체 요약..." rows={2}
-                        style={{ display: 'block', width: '100%', padding: '6px 8px', boxSizing: 'border-box', border: 'none', borderRadius: 6, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
-                    </div>
-                    {/* Build-5D-3: 요점 배열 */}
+                    {!isStandaloneTopLevel && (
+                      <div style={{ padding: '6px 10px', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', gap: 6, borderBottom: '1px solid var(--bd-light)' }}>
+                        <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#1D9E75', color: '#fff', fontSize: '0.714rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{si + 1}</span>
+                        <input value={st.title} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, title: e.target.value } : x))} placeholder="소주제 제목" style={{ flex: 1, padding: '4px 8px', border: 'none', borderRadius: 6, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'transparent', boxSizing: 'border-box' }} />
+                        <button onClick={() => setSiFreeSubtopics(p => p.filter((_, j) => j !== si))} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                      </div>
+                    )}
+                    {!isStandaloneTopLevel && (
+                      <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--bd-light)' }}>
+                        <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 3 }}>전체 메모 (선택)</div>
+                        <textarea value={st.memo || ''} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, memo: e.target.value } : x))} placeholder="소주제 전체 요약..." rows={2}
+                          style={{ display: 'block', width: '100%', padding: '6px 8px', boxSizing: 'border-box', border: 'none', borderRadius: 6, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
+                      </div>
+                    )}
+                    {/* 요점 배열 */}
                     <div style={{ padding: '6px 10px' }}>
                       <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 6 }}>요점</div>
-                      {(st.points || []).map((pt, pi) => (
+                      {(st.points || []).map((pt, pi) => {
+                        const curTags = (pt.tags || '').split(',').map(s => s.trim()).filter(Boolean);
+                        const ptLabel = isStandaloneTopLevel ? `요점 ${pi + 1}` : `${si + 1}.${pi + 1}`;
+                        return (
                         <div key={pi} style={{ marginBottom: 6, padding: 8, borderRadius: 6, background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                            <span style={{ fontSize: '0.714rem', fontWeight: 600, color: '#378ADD', flexShrink: 0 }}>요점 {pi + 1}</span>
+                            <span style={{ fontSize: '0.714rem', fontWeight: 600, color: '#378ADD', flexShrink: 0 }}>{ptLabel}</span>
                             <div style={{ flex: 1 }} />
                             <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
                               j === si ? { ...x, points: (x.points || []).filter((_, pj) => pj !== pi) } : x
@@ -3927,35 +3936,94 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             ))}
                             placeholder="요점 본문..." rows={2}
                             style={{ display: 'block', width: '100%', padding: '5px 7px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.786rem', lineHeight: 1.6, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 4 }} />
-                          <div style={{ display: 'flex', gap: 4 }}>
-                            <input value={pt.scriptures || ''}
-                              onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
-                                j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, scriptures: e.target.value } : pp) } : x
-                              ))}
-                              placeholder="성구 (예: 엡 5:28)"
-                              style={{ flex: 1, padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
-                            <input value={pt.keywords || ''}
-                              onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
-                                j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, keywords: e.target.value } : pp) } : x
-                              ))}
-                              placeholder="키워드 (쉼표 구분)"
-                              style={{ flex: 1, padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+                          <input value={pt.scriptures || ''}
+                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
+                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, scriptures: e.target.value } : pp) } : x
+                            ))}
+                            placeholder="성구 (여러 개는 ; 로 구분, 예: 엡 5:28; 시편 119:105)"
+                            style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
+                          <input value={pt.publications || ''}
+                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
+                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, publications: e.target.value } : pp) } : x
+                            ))}
+                            placeholder="출판물 (여러 개는 ; 로 구분, 예: 파21 8월호 p.15 §3)"
+                            style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
+                          <input value={pt.keywords || ''}
+                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
+                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, keywords: e.target.value } : pp) } : x
+                            ))}
+                            placeholder="키워드 (쉼표 구분)"
+                            style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
+                          <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                            {['표현', '예시·실화', '예시·비유', '예시·성경'].map(tag => {
+                              const active = curTags.includes(tag);
+                              return (
+                                <button key={tag} onClick={() => {
+                                  const next = active ? curTags.filter(t => t !== tag) : [...curTags, tag];
+                                  setSiFreeSubtopics(p => p.map((x, j) =>
+                                    j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, tags: next.join(',') } : pp) } : x
+                                  ));
+                                }} style={{
+                                  padding: '3px 8px', borderRadius: 6, fontSize: '0.714rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
+                                  border: 'none',
+                                  background: active ? (tag === '표현' ? '#D85A3018' : tag === '예시·성경' ? '#2D8FC718' : '#C7842D18') : 'var(--bg-card)',
+                                  color: active ? (tag === '표현' ? '#D85A30' : tag === '예시·성경' ? '#2D8FC7' : '#C7842D') : 'var(--c-muted)',
+                                  transition: 'all 0.15s',
+                                }}>{tag}</button>
+                              );
+                            })}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
-                        j === si ? { ...x, points: [...(x.points || []), { text: '', scriptures: '', keywords: '' }] } : x
+                        j === si ? { ...x, points: [...(x.points || []), { text: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
                       ))} style={{
                         width: '100%', padding: '5px 0', borderRadius: 6, border: '1px dashed var(--bd-light)',
                         background: 'transparent', color: 'var(--c-muted)', fontSize: '0.714rem', cursor: 'pointer', fontFamily: 'inherit',
                       }}>+ 요점 추가</button>
                     </div>
                   </div>
-                ))}
-                <button onClick={() => setSiFreeSubtopics(p => [...p, { title: '', memo: '', points: [{ text: '', scriptures: '', keywords: '' }] }])} style={{
-                  width: '100%', padding: '8px 0', borderRadius: 8, border: '1px dashed var(--bd)',
-                  background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                }}>+ 소주제 추가</button>
+                  );
+                })}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => {
+                    // + 소주제 추가 — 최상위 요점 모드에서 기존 요점 자동 편입
+                    const first = siFreeSubtopics[0];
+                    const isStandalone = siFreeSubtopics.length === 1 && first && !(first.title || '').trim();
+                    const hasContent = isStandalone && (first.points || []).some(pt =>
+                      (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
+                    );
+                    if (hasContent) {
+                      const title = prompt('소주제 제목을 입력하세요 (기존 요점이 여기로 편입됩니다):');
+                      if (!title || !title.trim()) return;
+                      setSiFreeSubtopics(p => [
+                        { ...p[0], title: title.trim() },
+                        { title: '', memo: '', points: [{ text: '', scriptures: '', publications: '', keywords: '', tags: '' }] },
+                      ]);
+                    } else {
+                      setSiFreeSubtopics(p => [...p, { title: '', memo: '', points: [{ text: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
+                    }
+                  }} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 8, border: '1px dashed var(--bd)',
+                    background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
+                  }}>+ 소주제 추가</button>
+                  <button onClick={() => {
+                    // + 요점 추가 — 첫 소주제에 추가 (없으면 최상위 요점 모드 생성)
+                    if (siFreeSubtopics.length === 0) {
+                      setSiFreeSubtopics([{ title: '', memo: '', points: [{ text: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
+                    } else {
+                      setSiFreeSubtopics(p => p.map((x, j) =>
+                        j === 0
+                          ? { ...x, points: [...(x.points || []), { text: '', scriptures: '', publications: '', keywords: '', tags: '' }] }
+                          : x
+                      ));
+                    }
+                  }} style={{
+                    flex: 1, padding: '8px 0', borderRadius: 8, border: '1px dashed var(--bd)',
+                    background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
+                  }}>+ 요점 추가</button>
+                </div>
               </>)}
 
               {/* 한번에 입력 */}
@@ -4253,7 +4321,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       const meaningfulSubs = (siFreeSubtopics || []).filter(s => {
                         const hasTitleOrMemo = (s.title || '').trim() || (s.memo || '').trim();
                         const hasPoints = (s.points || []).some(pt =>
-                          (pt.text || '').trim() || (pt.scriptures || '').trim() || (pt.keywords || '').trim()
+                          (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
                         );
                         return hasTitleOrMemo || hasPoints;
                       });
@@ -4266,7 +4334,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       const subList = meaningfulSubs.length > 0
                         ? meaningfulSubs.map((st, si) => {
                             const validPoints = (st.points || []).filter(pt =>
-                              (pt.text || '').trim() || (pt.scriptures || '').trim() || (pt.keywords || '').trim()
+                              (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
                             );
                             const points = validPoints.length > 0
                               ? validPoints.map((pt, pi) => ({
@@ -4276,14 +4344,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                   speech_text: pt.text || '',
                                   scriptures: pt.scriptures || '',
                                   scripture_usage: '',
-                                  publications: '',
+                                  publications: pt.publications || '',
                                   keywords: pt.keywords || '',
-                                  tags: '',
+                                  tags: pt.tags || '',
                                   usage: '사용',
                                 }))
                               : [{ num: '1', text: '', level: 'L1', speech_text: st.memo || '', scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
                             return {
-                              title: st.title || `소주제 ${si + 1}`,
+                              title: st.title || '',
                               num: si + 1,
                               points,
                             };
@@ -4407,10 +4475,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   {dr.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{dr.speaker}</span>}
                   {dr.date && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{dr.date}</span>}
                   <div style={{ flex: 1 }} />
-                  {!isStt && <span style={{ fontSize: '0.643rem', color: '#378ADD', fontWeight: 600 }}>{dr.filled}/{dr.total} {dr.mode === 'quick' ? '소주제' : '요점'}</span>}
+                  {!isStt && <span style={{ fontSize: '0.643rem', color: '#378ADD', fontWeight: 600 }}>{dr.filled}/{dr.total} {(dr.no_outline || dr.mode !== 'quick') ? '요점' : '소주제'}</span>}
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{isStt ? 'STT 자유 입력' : (dr.mode === 'quick' ? '간단 입력' : '상세 입력')}</span>
+                  <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{isStt ? 'STT 자유 입력' : (dr.no_outline ? '자유 입력' : (dr.mode === 'quick' ? '간단 입력' : '상세 입력'))}</span>
                   {dr.saved_at && <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)' }}>{dr.saved_at.split('T')[0]}</span>}
                   <div style={{ flex: 1 }} />
                   {isStt ? (

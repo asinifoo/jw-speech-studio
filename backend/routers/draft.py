@@ -14,7 +14,19 @@ os.makedirs(_DRAFTS_DIR, exist_ok=True)
 
 
 def _count_draft(data):
-    """모드별 filled/total 계산. quick=소주제 기준, detail=요점 기준"""
+    """모드별 filled/total 계산. 자유 입력=요점 기준, quick=소주제 기준, detail=요점 기준"""
+    # 자유 입력 (Build-7): free_subtopics points 기준
+    if data.get("no_outline"):
+        free_subs = data.get("free_subtopics") or []
+        total = 0
+        filled = 0
+        for st in free_subs:
+            pts = (st or {}).get("points") or []
+            total += len(pts)
+            for pt in pts:
+                if any((pt.get(k) or "").strip() for k in ("text", "scriptures", "publications", "keywords", "tags")):
+                    filled += 1
+        return filled, total
     mode = data.get("mode", "quick")
     subtopics = data.get("subtopics") or {}
     if mode == "quick":
