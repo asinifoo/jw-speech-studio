@@ -591,15 +591,8 @@ textarea { resize: vertical; }
         {searchMode === 'original' && <TranscriptPage fontSize={fontSize} />}
         {searchMode === 'free' && <FreeSearchPage fontSize={fontSize} />}
       </>)}
-      {page === 'input' && <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => {
-        setPage('speech');
-        if (input.trim() && phase >= 3) setTimeout(() => run(), 300);
-      }} />}
-      {page === 'add' && <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => {
-        setPage('speech');
-        // 출판물 저장 후 복귀 시 검색 재실행 (새 출판물 포함)
-        if (input.trim() && phase >= 3) setTimeout(() => run(), 300);
-      }} />}
+      {page === 'input' && <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />}
+      {page === 'add' && <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={() => setPage('speech')} />}
       {page === 'manage' && <ManagePage pageType="manage" key={'manage-' + resetKey} fontSize={fontSize} onGoAdd={() => setPage('add')} />}
 
       {page === 'speech' && (<>
