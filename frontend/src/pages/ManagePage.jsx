@@ -1221,6 +1221,138 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     }
   };
 
+  // Phase 5-2: 통합 [이동] 버튼 핸들러 — draft 타입별 목적지 라우팅
+  const handleDraftMove = async (dr) => {
+    const isStt = !!dr.source_stt_job_id;
+    const isQuickInput = (dr.outline_type === 'QUICK') || /^(SP|DC|SV|VS|PB|ET)_/.test(dr.outline_num || '');
+
+    // 1) STT → 기존 핸들러 그대로
+    if (isStt) {
+      handleStartSttDraftEdit(dr.draft_id, dr.speaker, dr.date, dr.source_stt_job_id);
+      return;
+    }
+
+    // 2) QUICK → 타입별 분기
+    if (isQuickInput) {
+      let full = dr;
+      try {
+        const r = await draftLoad({ outline_num: dr.outline_num || '', speaker: dr.speaker || '', date: dr.date || '', outline_type: 'QUICK' });
+        if (r && r.exists) full = r;
+      } catch {}
+      const codeMap = { SP: 'speech', DC: 'discussion', SV: 'service', VS: 'visit', PB: 'publication', ET: 'other' };
+      const m = (dr.outline_num || '').match(/^([A-Z]{2})_/);
+      const qtype = full.quick_type || (m ? (codeMap[m[1]] || 'speech') : 'speech');
+
+      if (qtype === 'discussion') {
+        setDiscForm(p => ({
+          ...p,
+          topic: full.outline_title || '',
+          content: full.free_text || '',
+          pub_code: full.pub_code || '',
+          date: full.date || '',
+        }));
+        setAddTab('structure'); setInputMode('discussion');
+        return;
+      }
+      if (qtype === 'service') {
+        setSvcForm(p => ({
+          ...p,
+          content: full.free_text || '',
+          date: full.date || '',
+        }));
+        setAddTab('structure'); setInputMode('service');
+        return;
+      }
+      if (qtype === 'visit') {
+        setVisitForm(p => ({
+          ...p,
+          content: full.free_text || '',
+          visit_target: full.target || '',
+          date: full.date || '',
+          keywords: full.outline_title || '',
+        }));
+        setAddTab('structure'); setInputMode('visit_input');
+        return;
+      }
+      if (qtype === 'publication') {
+        setPubForm(p => ({
+          ...p,
+          content: full.free_text || '',
+          pub_code: full.pub_code || '',
+          pub_title: full.pub_title || '',
+          outline_title: full.outline_title || '',
+        }));
+        setAddTab('gather'); setPrepMode('pub_input');
+        return;
+      }
+      // 'speech' 또는 'other' → [구조화]>[연설] 자유 입력 모드
+      try {
+        localStorage.setItem('jw-si-transfer', JSON.stringify({
+          speaker: full.speaker || '',
+          date: full.date || '',
+          outline_num: '',
+          outline_title: full.outline_title || '',
+          outline_type: 'ETC',
+          isFreeDraft: true,
+          no_outline: true,
+          free_topic: full.outline_title || '',
+          free_text: full.free_text || '',
+          free_subtopics: [],
+          free_mode: 'bulk',
+          free_type: full.speech_type || '생활과 봉사',
+          stt_original_text: '',
+          source_stt_job_id: '',
+        }));
+        localStorage.setItem('jw-add-tab', 'structure');
+        localStorage.setItem('jw-input-mode', 'speech_input');
+        window.dispatchEvent(new Event('si-transfer'));
+      } catch {}
+      setAddTab('structure'); setInputMode('speech_input');
+      return;
+    }
+
+    // 3) 자유 입력 draft → 기존 isFreeDraft transfer
+    if (dr.no_outline) {
+      let full = dr;
+      try {
+        const r = await draftLoad({ outline_num: '', speaker: dr.speaker, date: dr.date, outline_type: dr.outline_type || 'ETC', source_stt_job_id: dr.source_stt_job_id || '' });
+        if (r.exists) full = r;
+      } catch {}
+      try {
+        localStorage.setItem('jw-si-transfer', JSON.stringify({
+          speaker: dr.speaker, date: dr.date,
+          outline_num: '', outline_title: '', outline_type: 'ETC',
+          isFreeDraft: true, no_outline: true,
+          free_topic: full.free_topic || '',
+          free_text: full.free_text || '',
+          free_subtopics: full.free_subtopics || [],
+          free_mode: full.free_mode || 'subtopic',
+          free_type: full.free_type || '생활과 봉사',
+          stt_original_text: full.stt_original_text || '',
+          source_stt_job_id: full.source_stt_job_id || '',
+        }));
+        localStorage.setItem('jw-add-tab', 'structure');
+        localStorage.setItem('jw-input-mode', 'speech_input');
+        window.dispatchEvent(new Event('si-transfer'));
+      } catch {}
+      setAddTab('structure'); setInputMode('speech_input');
+      return;
+    }
+
+    // 4) 골자 draft → [구조화]>[연설] 상세 모드 기본
+    try {
+      localStorage.setItem('jw-si-transfer', JSON.stringify({
+        speaker: dr.speaker, date: dr.date,
+        outline_num: dr.outline_num, outline_title: dr.outline_title,
+        outline_type: dr.outline_type, content: '', isDraft: true, forceMode: 'detail',
+      }));
+      localStorage.setItem('jw-add-tab', 'structure');
+      localStorage.setItem('jw-input-mode', 'speech_input');
+      window.dispatchEvent(new Event('si-transfer'));
+    } catch {}
+    setAddTab('structure'); setInputMode('speech_input');
+  };
+
   // AI 기본 클라우드 모델 (AI 관리에서 저장된 기본 플랫폼·모델)
   const getDefaultCloudModel = () => {
     try {
@@ -4812,75 +4944,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   }</span>
                   {dr.saved_at && <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)' }}>{dr.saved_at.split('T')[0]}</span>}
                   <div style={{ flex: 1 }} />
-                  {(isStt || dr.no_outline || isQuickInput) ? (
-                    <button onClick={async () => {
-                      if (isStt) {
-                        handleStartSttDraftEdit(dr.draft_id, dr.speaker, dr.date, dr.source_stt_job_id);
-                        return;
-                      }
-                      // Hotfix 8: 빠른 입력 draft 이어서 편집 — 같은 인스턴스 내 [입력]>[빠른 입력] 으로 이동 + qiForm 복원
-                      // Hotfix 9: 편집 상태 추적 → 저장 시 같은 draft 덮어쓰기
-                      if (isQuickInput) {
-                        let full = dr;
-                        try {
-                          const r = await draftLoad({ outline_num: dr.outline_num || '', speaker: dr.speaker || '', date: dr.date || '', outline_type: 'QUICK' });
-                          if (r && r.exists) full = r;
-                        } catch {}
-                        setQiForm({
-                          type: full.quick_type || quickTypeFromPrefix,
-                          speech_type: full.speech_type || '생활과 봉사',
-                          speaker: full.speaker || '',
-                          date: full.date || '',
-                          topic: full.outline_title || '',
-                          target: full.target || '',
-                          pub_code: full.pub_code || '',
-                          pub_title: full.pub_title || '',
-                          content: full.free_text || '',
-                        });
-                        setQiEditingOutlineNum(dr.outline_num || '');
-                        setAddTab('structure'); setInputMode('quick_input');
-                        return;
-                      }
-                      // Build-7 hotfix 1: 자유 입력 draft 이어서 편집
-                      let full = dr;
-                      try {
-                        const r = await draftLoad({ outline_num: '', speaker: dr.speaker, date: dr.date, outline_type: dr.outline_type || 'ETC', source_stt_job_id: dr.source_stt_job_id || '' });
-                        if (r.exists) full = r;
-                      } catch {}
-                      try {
-                        localStorage.setItem('jw-si-transfer', JSON.stringify({
-                          speaker: dr.speaker, date: dr.date,
-                          outline_num: '', outline_title: '', outline_type: 'ETC',
-                          isFreeDraft: true, no_outline: true,
-                          free_topic: full.free_topic || '',
-                          free_text: full.free_text || '',
-                          free_subtopics: full.free_subtopics || [],
-                          free_mode: full.free_mode || 'subtopic',
-                          free_type: full.free_type || '생활과 봉사',
-                          stt_original_text: full.stt_original_text || '',
-                          source_stt_job_id: full.source_stt_job_id || '',
-                        }));
-                        localStorage.setItem('jw-add-tab', 'structure');
-                        localStorage.setItem('jw-input-mode', 'speech_input');
-                        window.dispatchEvent(new Event('si-transfer'));
-                      } catch {}
-                      setAddTab('structure'); setInputMode('speech_input');
-                    }}
-                      style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
-                      이어서 편집
-                    </button>
-                  ) : (
-                    ['quick', 'detail'].map(m => (
-                      <button key={m} onClick={() => {
-                        try { localStorage.setItem('jw-si-transfer', JSON.stringify({
-                          speaker: dr.speaker, date: dr.date,
-                          outline_num: dr.outline_num, outline_title: dr.outline_title,
-                          outline_type: dr.outline_type, content: '', isDraft: true, forceMode: m,
-                        })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
-                        setAddTab('structure'); setInputMode('speech_input');
-                      }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #378ADD', background: 'var(--bg-card)', color: '#378ADD', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>{m === 'quick' ? '간단' : '상세'}</button>
-                    ))
-                  )}
+                  {/* Phase 5-2: 통합 [이동] 버튼 — draft 타입별 라우팅은 handleDraftMove 내부 */}
+                  <button onClick={() => handleDraftMove(dr)}
+                    style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
+                    이동
+                  </button>
                   <button onClick={async () => {
                     if (!confirm('이 임시저장을 삭제하시겠습니까?')) return;
                     await draftDelete(dr.draft_id);
