@@ -293,8 +293,24 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       setSiFreeMode(t.free_mode || 'subtopic');
       setSiFreeText(t.free_text || '');
       setSiFreeTopic(t.free_topic || '');
-      setSiFreeSubtopics(t.free_subtopics || []);
       setSiFreeType(t.free_type || '생활과 봉사');  // Hotfix 3: 연설 유형 복원
+      // Hotfix 4: 구 draft 구조 마이그레이션 (pt.text → pt.title, _mode 추론)
+      const rawSubs = t.free_subtopics || [];
+      const migrated = rawSubs.map((st, si) => ({
+        ...st,
+        _mode: st._mode || (
+          rawSubs.length === 1 && si === 0 && !((st.title || '').trim()) ? 'top' : 'subtopic'
+        ),
+        points: (st.points || []).map(pt => ({
+          title: pt.title || pt.text || '',
+          content: pt.content || '',
+          scriptures: pt.scriptures || '',
+          publications: pt.publications || '',
+          keywords: pt.keywords || '',
+          tags: pt.tags || '',
+        })),
+      }));
+      setSiFreeSubtopics(migrated);
       setSiSourceSttJobId(t.source_stt_job_id || '');
       setSiSttOriginalText(t.stt_original_text || '');
       setSiSttOriginalEditing(false);
@@ -3740,7 +3756,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   } else {
                     const hasFreeData = (siFreeText || '').trim() || (siFreeTopic || '').trim() || (siFreeSubtopics || []).some(s =>
                       (s.title || '').trim() || (s.memo || '').trim() ||
-                      (s.points || []).some(pt => (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim())
+                      (s.points || []).some(pt => (pt.title || pt.content || pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim())
                     );
                     if (hasFreeData) {
                       const msg = hasStt
@@ -3926,10 +3942,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 ))}
               </div>
 
-              {/* 소주제별 입력 (Build-7: 최상위 요점 모드 + publications/tags 지원) */}
+              {/* 소주제별 입력 (Build-7 Hotfix 4: title/content 분리, 성구/출판물 접기, _mode 플래그) */}
               {siFreeMode === 'subtopic' && (<>
                 {siFreeSubtopics.map((st, si) => {
-                  const isStandaloneTopLevel = siFreeSubtopics.length === 1 && si === 0 && !(st.title || '').trim();
+                  const isStandaloneTopLevel = st._mode === 'top';
                   return (
                   <div key={si} style={{ marginBottom: 8, borderRadius: 8, border: '1px solid var(--bd-light)', overflow: 'hidden' }}>
                     {!isStandaloneTopLevel && (
@@ -3945,8 +3961,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       {(st.points || []).map((pt, pi) => {
                         const curTags = (pt.tags || '').split(',').map(s => s.trim()).filter(Boolean);
                         const ptLabel = isStandaloneTopLevel ? `요점 ${pi + 1}` : `${si + 1}.${pi + 1}`;
+                        const showScrInput = pt._scripturesOpen || (pt.scriptures || '').trim();
+                        const showPubInput = pt._publicationsOpen || (pt.publications || '').trim();
+                        const updPoint = (field, val) => setSiFreeSubtopics(p => p.map((x, j) =>
+                          j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, [field]: val } : pp) } : x
+                        ));
                         return (
                         <div key={pi} style={{ marginBottom: 6, padding: 8, borderRadius: 6, background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)' }}>
+                          {/* 헤더 */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                             <span style={{ fontSize: '0.714rem', fontWeight: 600, color: '#378ADD', flexShrink: 0 }}>{ptLabel}</span>
                             <div style={{ flex: 1 }} />
@@ -3954,39 +3976,48 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                               j === si ? { ...x, points: (x.points || []).filter((_, pj) => pj !== pi) } : x
                             ))} style={{ width: 20, height: 20, borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>✕</button>
                           </div>
-                          <textarea value={pt.text || ''}
-                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
-                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, text: e.target.value } : pp) } : x
-                            ))}
-                            placeholder="요점 본문..." rows={2}
-                            style={{ display: 'block', width: '100%', padding: '5px 7px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.786rem', lineHeight: 1.6, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 4 }} />
-                          <input value={pt.scriptures || ''}
-                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
-                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, scriptures: e.target.value } : pp) } : x
-                            ))}
-                            placeholder="성구 (여러 개는 ; 로 구분, 예: 엡 5:28; 시편 119:105)"
-                            style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
-                          <input value={pt.publications || ''}
-                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
-                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, publications: e.target.value } : pp) } : x
-                            ))}
-                            placeholder="출판물 (여러 개는 ; 로 구분, 예: 파21 8월호 p.15 §3)"
-                            style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
+                          {/* 1. 요점 제목 */}
+                          <input value={pt.title || ''}
+                            onChange={e => updPoint('title', e.target.value)}
+                            placeholder="요점 제목 (예: 남편은 아내를 사랑해야)"
+                            style={{ display: 'block', width: '100%', padding: '5px 7px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.786rem', fontWeight: 600, fontFamily: 'inherit', outline: 'none', marginBottom: 6 }} />
+                          {/* 2. 성구 (접기/펼치기) */}
+                          {showScrInput ? (
+                            <input value={pt.scriptures || ''}
+                              onChange={e => updPoint('scriptures', e.target.value)}
+                              placeholder="성구 (여러 개는 ; 로 구분, 예: 엡 5:28; 시편 119:105)"
+                              style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
+                          ) : (
+                            <button onClick={() => updPoint('_scripturesOpen', true)}
+                              style={{ width: '100%', padding: '4px 10px', borderRadius: 4, border: '1px dashed var(--bd-light)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.714rem', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 4, textAlign: 'left' }}>
+                              + 성구 추가
+                            </button>
+                          )}
+                          {/* 3. 출판물 (접기/펼치기) */}
+                          {showPubInput ? (
+                            <input value={pt.publications || ''}
+                              onChange={e => updPoint('publications', e.target.value)}
+                              placeholder="출판물 (여러 개는 ; 로 구분, 예: 파21 8월호 p.15 §3)"
+                              style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
+                          ) : (
+                            <button onClick={() => updPoint('_publicationsOpen', true)}
+                              style={{ width: '100%', padding: '4px 10px', borderRadius: 4, border: '1px dashed var(--bd-light)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.714rem', cursor: 'pointer', fontFamily: 'inherit', marginBottom: 4, textAlign: 'left' }}>
+                              + 출판물 추가
+                            </button>
+                          )}
+                          {/* 4. 키워드 */}
                           <input value={pt.keywords || ''}
-                            onChange={e => setSiFreeSubtopics(p => p.map((x, j) =>
-                              j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, keywords: e.target.value } : pp) } : x
-                            ))}
+                            onChange={e => updPoint('keywords', e.target.value)}
                             placeholder="키워드 (쉼표 구분)"
                             style={{ width: '100%', padding: '4px 7px', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.714rem', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginBottom: 4 }} />
-                          <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                          {/* 5. 태그 */}
+                          <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap', marginBottom: 6 }}>
                             {['표현', '예시·실화', '예시·비유', '예시·성경'].map(tag => {
                               const active = curTags.includes(tag);
                               return (
                                 <button key={tag} onClick={() => {
                                   const next = active ? curTags.filter(t => t !== tag) : [...curTags, tag];
-                                  setSiFreeSubtopics(p => p.map((x, j) =>
-                                    j === si ? { ...x, points: (x.points || []).map((pp, pj) => pj === pi ? { ...pp, tags: next.join(',') } : pp) } : x
-                                  ));
+                                  updPoint('tags', next.join(','));
                                 }} style={{
                                   padding: '3px 8px', borderRadius: 6, fontSize: '0.714rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
                                   border: 'none',
@@ -3997,11 +4028,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                               );
                             })}
                           </div>
+                          {/* 6. 연설 내용 */}
+                          <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 3 }}>연설 내용</div>
+                          <textarea value={pt.content || ''}
+                            onChange={e => updPoint('content', e.target.value)}
+                            placeholder="실제 연설 내용을 입력하세요..." rows={3}
+                            style={{ display: 'block', width: '100%', padding: '5px 7px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 4, background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.786rem', lineHeight: 1.6, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                         </div>
                         );
                       })}
                       <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
-                        j === si ? { ...x, points: [...(x.points || []), { text: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
+                        j === si ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
                       ))} style={{
                         width: '100%', padding: '5px 0', borderRadius: 6, border: '1px dashed var(--bd-light)',
                         background: 'transparent', color: 'var(--c-muted)', fontSize: '0.714rem', cursor: 'pointer', fontFamily: 'inherit',
@@ -4012,41 +4049,43 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 })}
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button onClick={() => {
-                    // + 소주제 추가 — 최상위 요점 모드에서 기존 요점 자동 편입
+                    // [+ 소주제 추가] — 최상위 모드에 요점 있으면 Q10 자동 편입
                     const first = siFreeSubtopics[0];
-                    const isStandalone = siFreeSubtopics.length === 1 && first && !(first.title || '').trim();
-                    const hasContent = isStandalone && (first.points || []).some(pt =>
-                      (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
+                    const isTopWithContent = first && first._mode === 'top' && (first.points || []).some(pt =>
+                      (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
                     );
-                    if (hasContent) {
-                      const title = prompt('소주제 제목을 입력하세요 (기존 요점이 여기로 편입됩니다):');
+                    if (isTopWithContent) {
+                      const title = prompt('기존 최상위 요점을 첫 소주제로 편입합니다.\n소주제 제목을 입력하세요:');
                       if (!title || !title.trim()) return;
                       setSiFreeSubtopics(p => [
-                        { ...p[0], title: title.trim() },
-                        { title: '', memo: '', points: [{ text: '', scriptures: '', publications: '', keywords: '', tags: '' }] },
+                        { ...p[0], title: title.trim(), _mode: 'subtopic' },
+                        { title: '', memo: '', _mode: 'subtopic', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] },
                       ]);
                     } else {
-                      setSiFreeSubtopics(p => [...p, { title: '', memo: '', points: [{ text: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
+                      setSiFreeSubtopics(p => [...p, { title: '', memo: '', _mode: 'subtopic', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
                     }
                   }} style={{
-                    flex: 1, padding: '8px 0', borderRadius: 8, border: '1px dashed var(--bd)',
-                    background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
+                    flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #1D9E75',
+                    background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                   }}>+ 소주제 추가</button>
-                  <button onClick={() => {
-                    // + 요점 추가 — 첫 소주제에 추가 (없으면 최상위 요점 모드 생성)
-                    if (siFreeSubtopics.length === 0) {
-                      setSiFreeSubtopics([{ title: '', memo: '', points: [{ text: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
-                    } else {
-                      setSiFreeSubtopics(p => p.map((x, j) =>
-                        j === 0
-                          ? { ...x, points: [...(x.points || []), { text: '', scriptures: '', publications: '', keywords: '', tags: '' }] }
-                          : x
-                      ));
-                    }
-                  }} style={{
-                    flex: 1, padding: '8px 0', borderRadius: 8, border: '1px dashed var(--bd)',
-                    background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                  }}>+ 요점 추가</button>
+                  {/* Hotfix 5: 최상위 요점 추가 버튼은 빈 상태이거나 단일 top 모드일 때만 노출 */}
+                  {(siFreeSubtopics.length === 0 || (siFreeSubtopics.length === 1 && siFreeSubtopics[0]._mode === 'top')) && (
+                    <button onClick={() => {
+                      const first = siFreeSubtopics[0];
+                      if (siFreeSubtopics.length === 0) {
+                        setSiFreeSubtopics([{ title: '', memo: '', _mode: 'top', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
+                        return;
+                      }
+                      if (siFreeSubtopics.length === 1 && first._mode === 'top') {
+                        setSiFreeSubtopics(p => p.map((x, j) =>
+                          j === 0 ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
+                        ));
+                      }
+                    }} style={{
+                      flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #378ADD',
+                      background: 'var(--bg-card)', color: '#378ADD', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    }}>+ 최상위 요점 추가</button>
+                  )}
                 </div>
               </>)}
 
@@ -4346,7 +4385,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       const meaningfulSubs = (siFreeSubtopics || []).filter(s => {
                         const hasTitleOrMemo = (s.title || '').trim() || (s.memo || '').trim();
                         const hasPoints = (s.points || []).some(pt =>
-                          (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
+                          (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
                         );
                         return hasTitleOrMemo || hasPoints;
                       });
@@ -4356,24 +4395,22 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         return;
                       }
                       const sourceKo = _siInit.sourceType || '연설';
-                      // Hotfix 2: 전역 point_num 누적 (소주제 간 doc_id 충돌 방지)
-                      //   + text = speech_text (골자 없는 자유 입력은 사용자 입력이 point_content 역할도 겸함)
+                      // Hotfix 4: text = pt.title (point_content), speech_text = pt.content (document 본문)
                       let _globalPtNum = 0;
                       const subList = meaningfulSubs.length > 0
                         ? meaningfulSubs.map((st, si) => {
                             const validPoints = (st.points || []).filter(pt =>
-                              (pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
+                              (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
                             );
                             let points;
                             if (validPoints.length > 0) {
                               points = validPoints.map(pt => {
                                 _globalPtNum += 1;
-                                const body = pt.text || '';
                                 return {
                                   num: String(_globalPtNum),
-                                  text: body,
+                                  text: pt.title || '',
                                   level: 'L1',
-                                  speech_text: body,
+                                  speech_text: pt.content || '',
                                   scriptures: pt.scriptures || '',
                                   scripture_usage: '',
                                   publications: pt.publications || '',
