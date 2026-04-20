@@ -66,7 +66,9 @@ def _resolve_pub_code(raw: str):
         if inner in cat:
             val = cat[inner]
             title = val["short"] if isinstance(val, dict) else val
-            return title, cat_type, ref, pub_code_clean
+            # after가 있으면 reference에 포함 (예: 「통」 "지구, 땅" 22항 → ref = '"지구, 땅" 22항')
+            full_ref = (after + " " + ref).strip() if after else ref
+            return title, cat_type, full_ref, pub_code_clean
 
     # 4. 「」뒤 -N 합쳐서 매칭: 「통」-1 → "통-1"
     if after and re.match(r"^-\d", after):

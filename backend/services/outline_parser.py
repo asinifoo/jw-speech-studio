@@ -5,6 +5,29 @@ import re
 from config import _OUTLINES_DIR
 from services.bible_utils import extract_scriptures_from_text
 
+
+def _split_comma_refs(text):
+    """쉼표로 참조 분리하되, 따옴표("" 또는 "") 안의 쉼표는 무시."""
+    parts = []
+    buf = []
+    in_q = False
+    for i, ch in enumerate(text):
+        if ch in ('"', '\u201c'):
+            in_q = True
+        elif ch in ('"', '\u201d'):
+            in_q = False
+        elif ch == ',' and not in_q:
+            rest = text[i + 1:].lstrip()
+            if rest and ('\uac00' <= rest[0] <= '\ud7a3' or rest[0] == '\u300c'):
+                parts.append(''.join(buf).strip())
+                buf = []
+                continue
+        buf.append(ch)
+    tail = ''.join(buf).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
 _TYPE_NAMES = {
     "S-34": "공개강연", "S-31": "기념식", "S-123": "특별강연", "S-211": "RP모임",
     "SB": "생활과봉사", "CO": "대회", "CO_순회": "대회(순회)", "CO_지역": "대회(지역)",
@@ -153,8 +176,7 @@ def parse_outline_text(text: str, has_separate_title: bool = False) -> dict:
             parts = re.split(r";\s*", refs_str)
             expanded_parts = []
             for part in parts:
-                sub = re.split(r",\s*(?=[가-힣])", part)
-                expanded_parts.extend(sub)
+                expanded_parts.extend(_split_comma_refs(part))
             for part in expanded_parts:
                 part = part.strip()
                 if part.startswith("\u300c") or part.startswith("'"):
