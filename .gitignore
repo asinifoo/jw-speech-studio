@@ -38,3 +38,4 @@ chromadb_data/
 models/
 *.safetensors
 *.bin
+.claude/settings.local.json

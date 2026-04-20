@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { parseOutline, searchPoints, filterResults, generateSpeechStream, healthCheck, abortGeneration, getMyStyles, saveMyStyles, searchSpeakerMemo, getPrompts, dbAdd } from './api';
+import { S } from './styles';
 import PresetPills from './components/PresetPills';
 import KoreanTextarea from './components/KoreanTextarea';
 import EditableBlock from './components/EditableBlock';
@@ -386,15 +387,19 @@ export default function App() {
   --tint-red-soft: #fff8f8;
   --tint-red-bd: #fcc;
 
+  --accent: #1D9E75;
+  --accent-purple: #7F77DD;
+  --accent-orange: #D85A30;
+  --accent-blue: #378ADD;
+  --accent-gold: #F5A623;
+  --accent-brown: #C7842D;
+  --c-danger: #cc4444;
+
   --opt-bg: #fefcf9;
   --opt-bd: #e8e0d0;
 
-  --card-shadow: 0 1px 2px rgba(0,0,0,0.04);
-
   --tab-active-bg: #333;
   --tab-active-c: #fff;
-  --tab-bg: #EFEFF4;
-  --tab-c: #AEAEB2;
 }
 
 .dk {
@@ -447,15 +452,19 @@ export default function App() {
   --tint-red-soft: #2e1a1a;
   --tint-red-bd: #5a2a2a;
 
+  --accent: #22B888;
+  --accent-purple: #9B94E8;
+  --accent-orange: #E87A55;
+  --accent-blue: #5AA0E8;
+  --accent-gold: #F5B84A;
+  --accent-brown: #D8A050;
+  --c-danger: #E06060;
+
   --opt-bg: #2a2520;
   --opt-bd: #444;
 
-  --card-shadow: none;
-
   --tab-active-bg: #e0e0e0;
   --tab-active-c: #111;
-  --tab-bg: #2a2a2a;
-  --tab-c: #999;
 }
 
 body, html { margin: 0; padding: 0; background: var(--bg); color: var(--c-text); -webkit-text-size-adjust: 100%; -moz-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -504,7 +513,7 @@ textarea { resize: vertical; }
           <div style={{ fontSize: '1.286rem', fontWeight: 800 }}>JW Speech Studio</div>
           <div style={{
             width: 8, height: 8, borderRadius: '50%',
-            background: serverOk === true ? '#1D9E75' : serverOk === false ? '#c44' : 'var(--bd-medium)',
+            background: serverOk === true ? 'var(--accent)' : serverOk === false ? 'var(--c-danger)' : 'var(--bd-medium)',
             boxShadow: serverOk === true ? '0 0 6px #1D9E7560' : serverOk === false ? '0 0 6px #c4460' : 'none',
           }} />
           <button onClick={() => {
@@ -532,7 +541,7 @@ textarea { resize: vertical; }
             <button onClick={() => setShowFontSlider(p => !p)} style={{
               width: 30, height: 30, borderRadius: 8, border: 'none',
               background: showFontSlider ? 'var(--bg-card, #fff)' : 'transparent',
-              color: showFontSlider ? '#1D9E75' : 'var(--c-muted)',
+              color: showFontSlider ? 'var(--accent)' : 'var(--c-muted)',
               fontSize: '0.857rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 700, transition: 'all 0.15s',
               boxShadow: showFontSlider ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
@@ -541,7 +550,7 @@ textarea { resize: vertical; }
               <div style={{ position: 'absolute', top: 36, right: 0, background: 'var(--bg-card)', border: '1px solid var(--bd)', borderRadius: 10, padding: '10px 14px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 20, display: 'flex', alignItems: 'center', gap: 8, minWidth: 180 }}>
                 <span onClick={() => setFontSize(f => Math.max(12, f - 1))} style={{ fontSize: '0.786rem', color: 'var(--c-muted)', cursor: 'pointer', userSelect: 'none' }}>A</span>
                 <input type="range" min={12} max={20} step={1} value={fontSize} onChange={e => setFontSize(Number(e.target.value))}
-                  style={{ flex: 1, accentColor: '#1D9E75' }} />
+                  style={{ flex: 1, accentColor: 'var(--accent)' }} />
                 <span onClick={() => setFontSize(f => Math.min(20, f + 1))} style={{ fontSize: '1.071rem', color: 'var(--c-muted)', fontWeight: 700, cursor: 'pointer', userSelect: 'none' }}>A</span>
                 <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', minWidth: 18, textAlign: 'center' }}>{fontSize}</span>
               </div>
@@ -551,10 +560,7 @@ textarea { resize: vertical; }
       </div>
 
       <div style={{ borderRadius: 10, border: '1px solid var(--bd-soft)', background: 'var(--bg-subtle)', padding: '10px 12px', marginBottom: 16 }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2,
-        background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
-      }}>
+      <div style={S.pillContainer}>
         {[['input', '입력'], null, ['speech', '준비'], ['search', '검색'], ['add', '전처리'], ['manage', '관리']].map((item, idx) => {
           if (item === null) {
             return <div key={`sep-${idx}`} style={{ width: 1, height: 22, background: 'var(--bd-medium)', margin: '0 10px', alignSelf: 'center', flexShrink: 0 }} />;
@@ -565,16 +571,8 @@ textarea { resize: vertical; }
           return (
             <button key={key} onClick={() => {
               setPage(key);
-              // Phase 5-3A: [전처리] 진입 시 addTab='preprocess' 로 리셋
               if (key === 'add') { try { window.dispatchEvent(new Event('enter-preprocess-tab')); } catch {} }
-            }} style={{
-              flex: 1, padding: '8px 0', border: 'none', fontSize: '0.929rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
-              background: active ? 'var(--bg-card, #fff)' : 'transparent',
-              color: active ? (isInput ? '#D85A30' : 'var(--c-text-dark)') : 'var(--c-muted)',
-              borderRadius: 8, fontFamily: 'inherit',
-              transition: 'all 0.2s ease',
-              boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}>{label}</button>
+            }} style={S.pillL1(active, isInput ? 'var(--accent-orange)' : 'var(--c-text-dark)')}>{label}</button>
           );
         })}
       </div>
@@ -583,19 +581,9 @@ textarea { resize: vertical; }
       <Suspense fallback={<div style={{ padding: 40, textAlign: 'center', color: 'var(--c-muted)', fontSize: '0.857rem' }}>로딩 중...</div>}>
 
       {page === 'search' && (<>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 2, marginBottom: 12,
-          background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
-        }}>
+        <div style={{ ...S.pillContainer, marginBottom: 12 }}>
           {[['chat', 'AI 대화'], ['free', 'DB 검색'], ['bible', '성구'], ['original', '원문']].map(([k, l]) => (
-            <button key={k} onClick={() => setSearchMode(k)} style={{
-              flex: 1, padding: '7px 0', border: 'none', fontSize: '0.857rem', fontWeight: searchMode === k ? 700 : 500, cursor: 'pointer',
-              background: searchMode === k ? 'var(--bg-card, #fff)' : 'transparent',
-              color: searchMode === k ? '#1D9E75' : 'var(--c-muted)',
-              borderRadius: 8, fontFamily: 'inherit',
-              transition: 'all 0.2s ease',
-              boxShadow: searchMode === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}>{l}</button>
+            <button key={k} onClick={() => setSearchMode(k)} style={S.pillL2(searchMode === k)}>{l}</button>
           ))}
         </div>
         {searchMode === 'chat' && <ChatSearchPage fontSize={fontSize} ai={ai} />}
@@ -610,19 +598,9 @@ textarea { resize: vertical; }
       {page === 'speech' && (<>
 
       {/* Prepare sub-tabs */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2, marginBottom: 16,
-        background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
-      }}>
+      <div style={{ ...S.pillContainer, marginBottom: 16 }}>
         {[['speech', '연설'], ['service', '봉사 모임'], ['visit', '방문']].map(([k, l]) => (
-          <button key={k} onClick={() => { setPrepareMode(k); setError(''); }} style={{
-            flex: 1, padding: '7px 0', border: 'none', fontSize: '0.857rem', fontWeight: prepareMode === k ? 700 : 500, cursor: 'pointer',
-            background: prepareMode === k ? 'var(--bg-card, #fff)' : 'transparent',
-            color: prepareMode === k ? '#1D9E75' : 'var(--c-muted)',
-            borderRadius: 8, fontFamily: 'inherit',
-            transition: 'all 0.2s ease',
-            boxShadow: prepareMode === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-          }}>{l}</button>
+          <button key={k} onClick={() => { setPrepareMode(k); setError(''); }} style={S.pillL2(prepareMode === k)}>{l}</button>
         ))}
       </div>
 
@@ -654,18 +632,18 @@ textarea { resize: vertical; }
           <button onClick={() => { const next = !useLLMFilter; setUseLLMFilter(next); if (!next) setShowPrepareFilters(false); }} style={{
             padding: '4px 10px', borderRadius: 8, border: 'none',
             background: useLLMFilter ? '#7F77DD15' : 'var(--bg-subtle, #EFEFF4)',
-            color: useLLMFilter ? '#7F77DD' : 'var(--c-muted)',
+            color: useLLMFilter ? 'var(--accent-purple)' : 'var(--c-muted)',
             fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, transition: 'all 0.15s',
             display: 'flex', alignItems: 'center', gap: 3,
           }}>
             {useLLMFilter ? '✓' : '○'} LLM 필터
             {useLLMFilter && <span onClick={e => { e.stopPropagation(); setShowPrepareFilters(p => !p); }}
-              style={{ color: showPrepareFilters ? '#C7842D' : '#7F77DD80', fontSize: '1.286rem', lineHeight: 0 }}>▾</span>}
+              style={{ color: showPrepareFilters ? 'var(--accent-brown)' : '#7F77DD80', fontSize: '1.286rem', lineHeight: 0 }}>▾</span>}
           </button>
           <button onClick={() => setSearchTitle(p => !p)} style={{
             padding: '4px 10px', borderRadius: 8, border: 'none',
             background: searchTitle ? '#D85A3015' : 'var(--bg-subtle, #EFEFF4)',
-            color: searchTitle ? '#D85A30' : 'var(--c-muted)',
+            color: searchTitle ? 'var(--accent-orange)' : 'var(--c-muted)',
             fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, transition: 'all 0.15s',
           }}>{searchTitle ? '✓' : '○'} 제목 검색</button>
           <div style={{ flex: 1 }} />
@@ -681,7 +659,7 @@ textarea { resize: vertical; }
           <button onClick={run} disabled={!input.trim() || !!status}
             style={{
               width: 80, padding: '5px 0', borderRadius: 8, border: 'none', textAlign: 'center',
-              fontSize: '0.786rem', fontWeight: 700, background: input.trim() && !status ? '#1D9E75' : 'var(--bd-medium)', color: '#fff',
+              fontSize: '0.786rem', fontWeight: 700, background: input.trim() && !status ? 'var(--accent)' : 'var(--bd-medium)', color: '#fff',
               cursor: input.trim() && !status ? 'pointer' : 'default', transition: 'background 0.15s',
               position: 'relative', overflow: 'hidden',
             }}>
@@ -692,7 +670,7 @@ textarea { resize: vertical; }
         {showPrepareFilters && <div style={{ padding: '4px 14px 8px' }}><WolFiltersPanel compact={false} /></div>}
         {useLLMFilter && ai.llmSettings && (
           <div style={{ padding: '2px 14px 6px', fontSize: '0.786rem', color: 'var(--c-muted)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <span>필터: <b style={{ color: '#7F77DD' }}>{Object.values(ai.aiModels).flat().find(m => m.value === ai.llmSettings.filter_model)?.label || ai.llmSettings.filter_model}</b></span>
+            <span>필터: <b style={{ color: 'var(--accent-purple)' }}>{Object.values(ai.aiModels).flat().find(m => m.value === ai.llmSettings.filter_model)?.label || ai.llmSettings.filter_model}</b></span>
             <span>·</span>
             <span>CTX: <b>{(ai.llmSettings.filter_ctx / 1024).toFixed(0)}K</b></span>
             <span>·</span>
@@ -719,8 +697,8 @@ textarea { resize: vertical; }
           <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', fontWeight: 600 }}>필터</span>
           <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.786rem', color: 'var(--c-sub)', userSelect: 'none' }}>
             <span style={{ color: 'var(--c-muted)' }}>최소 점수</span>
-            <input type="range" min={0} max={100} value={minScore} onChange={e => setMinScore(Number(e.target.value))} style={{ width: 80, cursor: 'pointer', accentColor: '#1D9E75' }} />
-            <span style={{ minWidth: 28, fontWeight: 700, color: '#1D9E75', fontSize: '0.857rem' }}>{minScore}%</span>
+            <input type="range" min={0} max={100} value={minScore} onChange={e => setMinScore(Number(e.target.value))} style={{ width: 80, cursor: 'pointer', accentColor: 'var(--accent)' }} />
+            <span style={{ minWidth: 28, fontWeight: 700, color: 'var(--accent)', fontSize: '0.857rem' }}>{minScore}%</span>
           </label>
           <div style={{ flex: 1 }} />
           <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', background: 'var(--bg-subtle)', padding: '2px 8px', borderRadius: 10 }}>
@@ -733,18 +711,18 @@ textarea { resize: vertical; }
       {points.map((pt, pi) => (
         <div key={pi} style={{ borderRadius: 10, border: '1px solid var(--bd)', background: 'var(--bg-card)', marginBottom: 12, overflow: 'hidden' }}>
           <div style={{ padding: '10px 14px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--bd)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: pt._isTitlePoint ? '#D85A30' : 'var(--tab-active-bg)', color: 'var(--tab-active-c)', fontSize: '0.857rem', fontWeight: 800 }}>{pt._isTitlePoint ? 'T' : pi + 1 - (points[0]?._isTitlePoint ? 1 : 0)}</span>
+            <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: pt._isTitlePoint ? 'var(--accent-orange)' : 'var(--tab-active-bg)', color: 'var(--tab-active-c)', fontSize: '0.857rem', fontWeight: 800 }}>{pt._isTitlePoint ? 'T' : pi + 1 - (points[0]?._isTitlePoint ? 1 : 0)}</span>
             <span style={{ fontSize: '0.929rem', fontWeight: 700 }}>{pt.title}</span>
-            {pt._isTitlePoint && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 4, background: 'var(--tint-orange)', color: '#D85A30', fontWeight: 600 }}>제목 검색</span>}
+            {pt._isTitlePoint && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 4, background: 'var(--tint-orange)', color: 'var(--accent-orange)', fontWeight: 600 }}>제목 검색</span>}
           </div>
           <div style={{ padding: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
 
             {(pt.auto_scriptures || []).map((a, i) => (
               <div key={'as' + i} style={{ padding: '8px 10px', borderRadius: 7, background: 'var(--tint-blue)', border: '1px solid var(--tint-blue-bd)' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                  <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: '#D85A30' }}>B</span>
+                  <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: 'var(--accent-orange)' }}>B</span>
                   <span style={{ fontSize: '0.857rem', fontWeight: 700, color: '#2a7ab5' }}>{a.original || a.ref}</span>
-                  <span style={{ fontSize: '0.643rem', padding: '1px 4px', borderRadius: 4, background: 'var(--tint-green)', color: '#1D9E75', fontWeight: 600 }}>Bible DB</span>
+                  <span style={{ fontSize: '0.643rem', padding: '1px 4px', borderRadius: 4, background: 'var(--tint-green)', color: 'var(--accent)', fontWeight: 600 }}>Bible DB</span>
                 </div>
                 <div style={{ paddingLeft: 28 }}>
                   {a.verses ? a.verses.map((v, vi) => (
@@ -768,19 +746,19 @@ textarea { resize: vertical; }
               return (
                 <div key={'ap' + api} style={{ padding: '8px 10px', borderRadius: 7, background: 'var(--tint-purple)', border: '1px solid var(--tint-purple-bd)' }}>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                    <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: '#7F77DD' }}>P</span>
+                    <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: 'var(--accent-purple)' }}>P</span>
                     <span style={{ fontSize: '0.857rem', fontWeight: 700, color: '#6b5fbd' }}>{ap.pub_code}</span>
                     <span style={{ fontSize: '0.643rem', padding: '1px 4px', borderRadius: 4, background: 'var(--tint-purple-badge)', color: '#6b5fbd', fontWeight: 600 }}>출판물 DB</span>
                     <div style={{ flex: 1 }} />
                     {!isEditing && (
                       <button onClick={() => setAutoPubEdits(prev => ({ ...prev, [apKey]: { text: currentText, editing: true } }))} style={{
-                        padding: '2px 6px', borderRadius: 4, border: '1px solid var(--tint-purple-input)', background: 'var(--bg-card)', color: '#7F77DD', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
+                        padding: '2px 6px', borderRadius: 4, border: '1px solid var(--tint-purple-input)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
                       }}>수정</button>
                     )}
                     {isEditing && (
                       <>
                         <button onClick={() => setAutoPubEdits(prev => ({ ...prev, [apKey]: { text: prev[apKey]?.text || bodyText, editing: false } }))} style={{
-                          padding: '2px 6px', borderRadius: 4, border: '1px solid #1D9E75', background: 'var(--tint-green)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
+                          padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
                         }}>확인</button>
                         <button onClick={() => setAutoPubEdits(prev => { const n = { ...prev }; delete n[apKey]; return n; })} style={{
                           padding: '2px 6px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer',
@@ -809,7 +787,7 @@ textarea { resize: vertical; }
 
             {(pt.sub_points || []).map((sub, si) => {
               const lvl = sub.level || 2;
-              const levelColors = { 2: '#D85A30', 3: '#BA7517', 4: '#1D9E75', 5: '#378ADD' };
+              const levelColors = { 2: 'var(--accent-orange)', 3: '#BA7517', 4: 'var(--accent)', 5: 'var(--accent-blue)' };
               const levelLabels = { 2: 'L2', 3: 'L3', 4: 'L4', 5: 'L5' };
               const levelBg = { 2: 'var(--tint-orange-light)', 3: 'var(--tint-orange-soft)', 4: 'var(--tint-green-bg)', 5: 'var(--tint-blue-light)' };
               const levelBorder = { 2: 'var(--tint-orange-bd)', 3: 'var(--opt-bd)', 4: 'var(--tint-green-bd)', 5: 'var(--tint-blue-bd)' };
@@ -830,7 +808,7 @@ textarea { resize: vertical; }
                   {(sub.auto_scriptures || []).map((a, ai2) => (
                     <div key={'sub-as' + ai2} style={{ padding: '6px 8px', borderRadius: 8, background: 'var(--tint-blue)', border: '1px solid var(--tint-blue-bd)', marginTop: 4 }}>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
-                        <span style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.571rem', fontWeight: 800, color: '#fff', background: '#D85A30' }}>B</span>
+                        <span style={{ width: 16, height: 16, borderRadius: 3, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.571rem', fontWeight: 800, color: '#fff', background: 'var(--accent-orange)' }}>B</span>
                         <span style={{ fontSize: '0.786rem', fontWeight: 700, color: '#2a7ab5' }}>{a.original}</span>
                       </div>
                       <div style={{ paddingLeft: 22 }}>
@@ -866,7 +844,7 @@ textarea { resize: vertical; }
             <EditableBlock
               value={pointExtras[pi] || ''}
               onChange={(val) => setPointExtra(pi, val)}
-              label="추가 자료" icon="+" color="#1D9E75" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
+              label="추가 자료" icon="+" color="var(--accent)" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
               placeholder={"이 요점에 참고할 추가 자료를 붙여넣으세요"} buttonLabel="+ 추가 자료"
             />
 
@@ -888,7 +866,7 @@ textarea { resize: vertical; }
                       <button key={f} onClick={() => setResultFilter(f)} style={{
                         padding: '2px 8px', borderRadius: 6, border: 'none', fontSize: '0.643rem', fontWeight: resultFilter === f ? 700 : 500,
                         background: resultFilter === f ? '#1D9E7515' : 'transparent',
-                        color: resultFilter === f ? '#1D9E75' : 'var(--c-dim)', cursor: 'pointer',
+                        color: resultFilter === f ? 'var(--accent)' : 'var(--c-dim)', cursor: 'pointer',
                       }}>{f} {cnt > 0 ? cnt : ''}</button>
                     );
                   })}
@@ -934,7 +912,7 @@ textarea { resize: vertical; }
         <div style={{ borderRadius: 10, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, marginBottom: 14 }}>
 
           <div style={{ marginBottom: 12 }}>
-            <EditableBlock value={extraMat} onChange={setExtraMat} label="추가 자료 (전체)" icon="+" color="#1D9E75" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
+            <EditableBlock value={extraMat} onChange={setExtraMat} label="추가 자료 (전체)" icon="+" color="var(--accent)" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
               placeholder={"요점에 해당하지 않는 일반 추가 자료\n\n예: 배경 정보, 참고 기사 등"} buttonLabel="+ 추가 자료 (전체)" />
           </div>
 
@@ -943,8 +921,8 @@ textarea { resize: vertical; }
             <div onClick={() => { setStyleOpen(!styleOpen); if (!styleOpen) { getMyStyles().then(r => setMyStyles(r.styles || [])).catch(() => {}); getPrompts().then(r => { const p = r.prompts || {}; setStylePrompts({ both: p.style_both || '', mine: p.style_mine || '', others: p.style_others || '' }); }).catch(() => {}); } }}
               style={{ padding: '10px 12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-subtle)' }}>
               <span style={{ fontSize: '0.857rem' }}>📝</span>
-              <span style={{ fontSize: '0.786rem', fontWeight: 600, color: '#7F77DD' }}>연사 스타일 참고</span>
-              {(() => { const cnt = myStyles.filter(s => s.selected).length + Object.values(selStyles).filter(Boolean).length; return cnt > 0 ? <span style={{ fontSize: '0.643rem', padding: '1px 6px', borderRadius: 3, background: '#7F77DD', color: '#fff', fontWeight: 700 }}>{cnt}건</span> : null; })()}
+              <span style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--accent-purple)' }}>연사 스타일 참고</span>
+              {(() => { const cnt = myStyles.filter(s => s.selected).length + Object.values(selStyles).filter(Boolean).length; return cnt > 0 ? <span style={{ fontSize: '0.643rem', padding: '1px 6px', borderRadius: 3, background: 'var(--accent-purple)', color: '#fff', fontWeight: 700 }}>{cnt}건</span> : null; })()}
               <div style={{ flex: 1 }} />
               <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)' }}>{styleOpen ? '▲' : '▼'}</span>
             </div>
@@ -955,7 +933,7 @@ textarea { resize: vertical; }
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
                     <span style={{ fontSize: '0.786rem', fontWeight: 600 }}>⭐ 내 스타일</span>
                     <div style={{ flex: 1 }} />
-                    <button onClick={() => { setAddingStyle(true); setNewStyleName(''); setNewStyleContent(''); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #7F77DD', background: 'transparent', color: '#7F77DD', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>+ 추가</button>
+                    <button onClick={() => { setAddingStyle(true); setNewStyleName(''); setNewStyleContent(''); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent-purple)', background: 'transparent', color: 'var(--accent-purple)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>+ 추가</button>
                   </div>
                   {myStyles.map((st, si) => (
                     <div key={si} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--bd-soft)', marginBottom: 4, background: st.selected ? '#7F77DD08' : 'var(--bg-subtle)', fontSize: '0.786rem' }}>
@@ -965,30 +943,30 @@ textarea { resize: vertical; }
                           <textarea value={st.content} onChange={e => { const n = [...myStyles]; n[si] = { ...n[si], content: e.target.value }; setMyStyles(n); }} rows={3} placeholder="스타일 내용"
                             style={{ width: '100%', padding: 6, borderRadius: 8, border: 'none', fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)' }} />
                           <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                            <button onClick={() => { saveMyStyles({ styles: myStyles }); setEditingStyleIdx(-1); }} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: '#7F77DD', color: '#fff', fontSize: '0.643rem', fontWeight: 600, cursor: 'pointer' }}>저장</button>
+                            <button onClick={() => { saveMyStyles({ styles: myStyles }); setEditingStyleIdx(-1); }} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.643rem', fontWeight: 600, cursor: 'pointer' }}>저장</button>
                             <button onClick={() => setEditingStyleIdx(-1)} style={{ padding: '3px 10px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
                           </div>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                          <input type="checkbox" checked={!!st.selected} onChange={e => { const n = [...myStyles]; n[si] = { ...n[si], selected: e.target.checked }; setMyStyles(n); saveMyStyles({ styles: n }); }} style={{ accentColor: '#7F77DD', marginTop: 2, flexShrink: 0 }} />
+                          <input type="checkbox" checked={!!st.selected} onChange={e => { const n = [...myStyles]; n[si] = { ...n[si], selected: e.target.checked }; setMyStyles(n); saveMyStyles({ styles: n }); }} style={{ accentColor: 'var(--accent-purple)', marginTop: 2, flexShrink: 0 }} />
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600, color: 'var(--c-text)', marginBottom: 2 }}>{st.name || '(이름 없음)'}</div>
                             <div style={{ color: 'var(--c-sub)', lineHeight: 1.5 }}>{st.content.length > 80 ? st.content.slice(0, 80) + '...' : st.content}</div>
                           </div>
                           <button onClick={() => setEditingStyleIdx(si)} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.571rem', cursor: 'pointer', flexShrink: 0 }}>편집</button>
-                          <button onClick={() => { if (!confirm(`"${st.name}" 삭제?`)) return; const n = myStyles.filter((_, i) => i !== si); setMyStyles(n); saveMyStyles({ styles: n }); }} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid #c44', background: 'transparent', color: '#c44', fontSize: '0.571rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
+                          <button onClick={() => { if (!confirm(`"${st.name}" 삭제?`)) return; const n = myStyles.filter((_, i) => i !== si); setMyStyles(n); saveMyStyles({ styles: n }); }} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid var(--c-danger)', background: 'transparent', color: 'var(--c-danger)', fontSize: '0.571rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
                         </div>
                       )}
                     </div>
                   ))}
                   {addingStyle && (
-                    <div style={{ padding: '6px 8px', borderRadius: 6, border: '1px dashed #7F77DD', marginBottom: 4, background: 'var(--bg-subtle)' }}>
+                    <div style={{ padding: '6px 8px', borderRadius: 6, border: '1px dashed var(--accent-purple)', marginBottom: 4, background: 'var(--bg-subtle)' }}>
                       <input value={newStyleName} onChange={e => setNewStyleName(e.target.value)} placeholder="스타일 이름 (예: 도입, 마무리, 예시...)" style={{ width: '100%', padding: '3px 6px', borderRadius: 4, border: '1px solid var(--bd)', fontSize: '0.857rem', outline: 'none', marginBottom: 4, boxSizing: 'border-box' }} />
                       <textarea value={newStyleContent} onChange={e => setNewStyleContent(e.target.value)} rows={3} placeholder="스타일 내용 (예: 비유를 사용해줘, 감동적으로...)"
                         style={{ width: '100%', padding: 6, borderRadius: 8, border: 'none', fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', resize: 'vertical', boxSizing: 'border-box', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)' }} />
                       <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                        <button onClick={() => { if (!newStyleName.trim() || !newStyleContent.trim()) return; const n = [...myStyles, { name: newStyleName, content: newStyleContent, selected: true }]; setMyStyles(n); saveMyStyles({ styles: n }); setAddingStyle(false); }} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: '#7F77DD', color: '#fff', fontSize: '0.643rem', fontWeight: 600, cursor: 'pointer' }}>추가</button>
+                        <button onClick={() => { if (!newStyleName.trim() || !newStyleContent.trim()) return; const n = [...myStyles, { name: newStyleName, content: newStyleContent, selected: true }]; setMyStyles(n); saveMyStyles({ styles: n }); setAddingStyle(false); }} style={{ padding: '3px 10px', borderRadius: 4, border: 'none', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.643rem', fontWeight: 600, cursor: 'pointer' }}>추가</button>
                         <button onClick={() => setAddingStyle(false)} style={{ padding: '3px 10px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
                       </div>
                     </div>
@@ -1014,7 +992,7 @@ textarea { resize: vertical; }
                         padding: '4px 10px', borderRadius: 6, fontSize: '0.786rem', fontWeight: styleQuery === (cat === '전체' ? '' : cat) ? 700 : 500,
                         border: 'none', whiteSpace: 'nowrap', flexShrink: 0,
                         background: styleQuery === (cat === '전체' ? '' : cat) ? 'var(--bg-card)' : 'transparent',
-                        color: styleQuery === (cat === '전체' ? '' : cat) ? '#7F77DD' : 'var(--c-muted)',
+                        color: styleQuery === (cat === '전체' ? '' : cat) ? 'var(--accent-purple)' : 'var(--c-muted)',
                         cursor: 'pointer', fontFamily: 'inherit',
                         boxShadow: styleQuery === (cat === '전체' ? '' : cat) ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                       }}>{cat}</button>
@@ -1025,7 +1003,7 @@ textarea { resize: vertical; }
                       onKeyDown={e => { if (e.key === 'Enter' && styleQuery.trim()) { setStyleLoading(true); searchSpeakerMemo({ query: styleQuery, top_k: 20 }).then(r => setStyleResults(r.results || [])).catch(() => {}).finally(() => setStyleLoading(false)); } }}
                       style={{ flex: 1, padding: '5px 10px', borderRadius: 6, border: 'none', fontSize: '0.786rem', background: 'var(--bg-subtle)', outline: 'none', fontFamily: 'inherit', color: 'var(--c-text-dark)' }} />
                     <button onClick={() => { if (!styleQuery.trim()) return; setStyleLoading(true); searchSpeakerMemo({ query: styleQuery, top_k: 20 }).then(r => setStyleResults(r.results || [])).catch(() => {}).finally(() => setStyleLoading(false)); }}
-                      disabled={styleLoading} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: styleLoading ? 'var(--bd-medium)' : '#7F77DD', color: '#fff', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>{styleLoading ? '...' : '🔍'}</button>
+                      disabled={styleLoading} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: styleLoading ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>{styleLoading ? '...' : '🔍'}</button>
                   </div>
                 </div>
                 {styleResults.length > 0 && (
@@ -1037,16 +1015,16 @@ textarea { resize: vertical; }
                       return (
                         <div key={i} style={{ padding: '6px 8px', borderRadius: 6, border: '1px solid var(--bd-soft)', marginBottom: 4, background: 'var(--bg-card)', fontSize: '0.786rem' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                            {rating > 0 && <span style={{ fontSize: '0.643rem', color: '#C7842D', fontWeight: 700 }}>⭐{rating}</span>}
+                            {rating > 0 && <span style={{ fontSize: '0.643rem', color: 'var(--accent-brown)', fontWeight: 700 }}>⭐{rating}</span>}
                             <span style={{ fontWeight: 600 }}>{m.speaker || '미상'}</span>
                             {m.outline_num && <span style={{ color: 'var(--c-dim)' }}>· {m.outline_num}{/^\d+$/.test(m.outline_num) ? '번' : ''}</span>}
-                            {m.memo_category && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#7F77DD', color: '#fff' }}>{m.memo_category}</span>}
+                            {m.memo_category && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: 'var(--accent-purple)', color: '#fff' }}>{m.memo_category}</span>}
                             <div style={{ flex: 1 }} />
                             <button onClick={() => {
                               const name = (m.memo_category || '참고') + ' (' + (m.speaker || '미상') + ')';
                               const n = [...myStyles, { name, content: body, type: 'reference', source_id: r.id, selected: true }];
                               setMyStyles(n); saveMyStyles({ styles: n });
-                            }} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid #7F77DD', background: 'transparent', color: '#7F77DD', fontSize: '0.571rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>+ 추가</button>
+                            }} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid var(--accent-purple)', background: 'transparent', color: 'var(--accent-purple)', fontSize: '0.571rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>+ 추가</button>
                           </div>
                           <div style={{ color: 'var(--c-sub)', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{selStyles[`exp_${i}`] ? body : body.length > 120 ? body.slice(0, 120) + '...' : body}</div>
                           {body.length > 120 && (
@@ -1065,7 +1043,7 @@ textarea { resize: vertical; }
           </div>
 
           <div style={{ borderRadius: 8, border: '1px solid var(--opt-bd)', background: 'var(--opt-bg)', padding: 12, marginBottom: 12 }}>
-            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: '#D85A30', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--accent-orange)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: '0.857rem' }}>⚙</span> AI 생성 옵션
             </div>
             <div style={{ marginBottom: 10 }}>
@@ -1074,27 +1052,27 @@ textarea { resize: vertical; }
             <div style={{ marginBottom: 8 }}>
               <PresetPills storageKey="jw-speech-preset" label="AI 프리셋" onChange={setSpeechPreset} />
             </div>
-            <EditableBlock value={instructions} onChange={setInstructions} label="AI 지시사항" icon="!" color="#D85A30" borderColor="var(--tint-orange-bd)" bgColor="var(--tint-orange-light)" headerBg="var(--tint-orange-header)"
+            <EditableBlock value={instructions} onChange={setInstructions} label="AI 지시사항" icon="!" color="var(--accent-orange)" borderColor="var(--tint-orange-bd)" bgColor="var(--tint-orange-light)" headerBg="var(--tint-orange-header)"
               placeholder={"연설문 생성 시 AI에게 전달할 지시사항\n\n예:\n- 청중에게 질문을 많이 사용해 주세요\n- 도입부에 경험담을 넣어 주세요"} buttonLabel="+ AI 지시사항" />
           </div>
 
           {error && (
-            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--tint-red)', border: '1px solid var(--tint-red-bd)', color: '#c44', fontSize: '0.857rem', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--tint-red)', border: '1px solid var(--tint-red-bd)', color: 'var(--c-danger)', fontSize: '0.857rem', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{error}</span>
-              <button onClick={() => setError('')} style={{ border: 'none', background: 'none', color: '#c44', fontSize: '1.143rem', cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}>×</button>
+              <button onClick={() => setError('')} style={{ border: 'none', background: 'none', color: 'var(--c-danger)', fontSize: '1.143rem', cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}>×</button>
             </div>
           )}
 
           <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-subtle)', marginBottom: 12, fontSize: '0.857rem', color: 'var(--c-sub)', lineHeight: 1.8 }}>
             <div>제목: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{speechTitle.trim() || parsedTitle || '(없음)'}</span></div>
             {finalDurationDisplay && <div>시간: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{finalDurationDisplay}</span></div>}
-            <div>검색 자료: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{selCount}건 선택</span>{(() => { const sc = myStyles.filter(s => s.selected).length + Object.values(selStyles).filter(Boolean).length; return sc > 0 ? <span style={{ color: '#7F77DD', fontWeight: 600 }}> + 스타일 {sc}건</span> : null; })()}</div>
-            {priorityCount > 0 && <div>우선 자료: <span style={{ color: '#7F77DD', fontWeight: 600 }}>{priorityCount}건</span></div>}
-            {totalPubCount > 0 && <div>출판물 사용: <span style={{ color: '#7F77DD', fontWeight: 600 }}>{totalPubCount}건</span></div>}
-            {pointExtraCount > 0 && <div>요점별 추가: <span style={{ color: '#1D9E75', fontWeight: 600 }}>{pointExtraCount}건</span></div>}
-            {extraMat && <div>추가 자료: <span style={{ color: '#1D9E75', fontWeight: 600 }}>있음</span></div>}
-            {instructions && <div>AI 지시: <span style={{ color: '#D85A30', fontWeight: 600 }}>있음</span></div>}
-            {ai.aiModel && <div>모델: <span style={{ color: '#D85A30', fontWeight: 600 }}>{ai.aiPlatform} / {
+            <div>검색 자료: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{selCount}건 선택</span>{(() => { const sc = myStyles.filter(s => s.selected).length + Object.values(selStyles).filter(Boolean).length; return sc > 0 ? <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}> + 스타일 {sc}건</span> : null; })()}</div>
+            {priorityCount > 0 && <div>우선 자료: <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>{priorityCount}건</span></div>}
+            {totalPubCount > 0 && <div>출판물 사용: <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>{totalPubCount}건</span></div>}
+            {pointExtraCount > 0 && <div>요점별 추가: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>{pointExtraCount}건</span></div>}
+            {extraMat && <div>추가 자료: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>있음</span></div>}
+            {instructions && <div>AI 지시: <span style={{ color: 'var(--accent-orange)', fontWeight: 600 }}>있음</span></div>}
+            {ai.aiModel && <div>모델: <span style={{ color: 'var(--accent-orange)', fontWeight: 600 }}>{ai.aiPlatform} / {
               (ai.aiModels[ai.aiPlatform] || []).find(m => m.value === ai.aiModel)?.label || ai.aiModel
             }{ai.isDefaultModel ? ' ★' : ''}</span></div>}
           </div>
@@ -1103,7 +1081,7 @@ textarea { resize: vertical; }
             display: 'flex', alignItems: 'center', gap: 0, marginBottom: 10,
             borderRadius: 10, background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)', overflow: 'hidden',
           }}>
-            <span style={{ padding: '0 10px', fontSize: '1.0rem', color: password ? '#1D9E75' : 'var(--c-dim)', flexShrink: 0 }}>🔒</span>
+            <span style={{ padding: '0 10px', fontSize: '1.0rem', color: password ? 'var(--accent)' : 'var(--c-dim)', flexShrink: 0 }}>🔒</span>
             <input type={showPw ? 'text' : 'password'} placeholder="비밀번호" autoComplete="off" value={password} onChange={e => setPassword(e.target.value)}
               style={{ flex: 1, padding: '9px 0', border: 'none', fontSize: '0.929rem', outline: 'none', fontFamily: 'inherit', background: 'transparent', color: 'var(--c-text-dark)', minWidth: 0 }} />
             {password && (
@@ -1151,7 +1129,7 @@ textarea { resize: vertical; }
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 50 }}>
         <button onClick={() => setMemoOpen(true)} style={{
           width: 48, height: 48, borderRadius: 24, border: 'none',
-          background: '#D85A30', color: '#fff', fontSize: '1.286rem',
+          background: 'var(--accent-orange)', color: '#fff', fontSize: '1.286rem',
           boxShadow: '0 4px 12px rgba(216,90,48,0.35)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           cursor: 'pointer', transition: 'transform 0.15s',
@@ -1172,11 +1150,11 @@ textarea { resize: vertical; }
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button onClick={saveMemo} disabled={memoSaving || !memoContent.trim()} style={{
                 flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                background: memoSaving ? 'var(--bd-medium)' : '#D85A30', color: '#fff',
+                background: memoSaving ? 'var(--bd-medium)' : 'var(--accent-orange)', color: '#fff',
                 fontSize: '0.929rem', fontWeight: 700, cursor: memoSaving ? 'default' : 'pointer',
               }}>{memoSaving ? '저장 중...' : '저장'}</button>
             </div>
-            {memoMsg && <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center', color: memoMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{memoMsg}</div>}
+            {memoMsg && <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center', color: memoMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{memoMsg}</div>}
           </div>
         </div>
       )}

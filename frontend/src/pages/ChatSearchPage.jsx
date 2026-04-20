@@ -242,7 +242,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
   };
 
   const needsPassword = ai?.chatModel && (ai.chatModel.startsWith('gemini-') || ai.chatModel.startsWith('claude-') || ai.chatModel.startsWith('gpt-'));
-  const tagColor = { speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD', wol: '#C7842D' };
+  const tagColor = { speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)', wol: 'var(--accent-brown)' };
   const colLabel = { speech_points: '골자', speech_expressions: '연설', publications: '출판물', wol: 'WOL' };
   const chatModelLabel = (ai.aiModels[ai.chatPlatform] || []).find(m => m.value === ai.chatModel)?.label || ai.chatModel;
 
@@ -258,14 +258,14 @@ export default function ChatSearchPage({ fontSize, ai }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div onClick={() => setShowModelSelector(p => !p)}
             style={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-            <span style={{ fontSize: '0.857rem', fontWeight: 700, color: '#7F77DD', flexShrink: 0 }}>{ai.chatPlatform}</span>
+            <span style={{ fontSize: '0.857rem', fontWeight: 700, color: 'var(--accent-purple)', flexShrink: 0 }}>{ai.chatPlatform}</span>
             <span style={{ fontSize: '0.857rem', color: 'var(--c-text-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chatModelLabel}</span>
-            {ai.isChatDefaultModel && <span style={{ fontSize: '0.643rem', color: '#7F77DD', flexShrink: 0 }}>★</span>}
+            {ai.isChatDefaultModel && <span style={{ fontSize: '0.643rem', color: 'var(--accent-purple)', flexShrink: 0 }}>★</span>}
             <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)', flexShrink: 0 }}>{showModelSelector ? '▲' : '▼'}</span>
           </div>
           <button onClick={() => setShowSessionList(p => !p)} style={{
-            padding: '3px 8px', borderRadius: 8, border: '1px solid ' + (showSessionList ? '#7F77DD' : 'var(--bd)'),
-            background: showSessionList ? '#7F77DD18' : 'transparent', color: showSessionList ? '#7F77DD' : 'var(--c-muted)',
+            padding: '3px 8px', borderRadius: 8, border: '1px solid ' + (showSessionList ? 'var(--accent-purple)' : 'var(--bd)'),
+            background: showSessionList ? '#7F77DD18' : 'transparent', color: showSessionList ? 'var(--accent-purple)' : 'var(--c-muted)',
             fontSize: '0.643rem', cursor: 'pointer', fontWeight: showSessionList ? 600 : 400, flexShrink: 0,
           }}>목록{sessions.length > 0 ? ` ${sessions.length}` : ''}</button>
           <button onClick={newChat} style={{
@@ -280,7 +280,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
               CTX {((ai.llmSettings.chat_ctx || 16384) / 1024).toFixed(0)}K
             </span>
             <span style={{ padding: '1px 5px', borderRadius: 4, background: ai.llmSettings.chat_no_think === false ? '#7F77DD18' : 'var(--bg-card)',
-              color: ai.llmSettings.chat_no_think === false ? '#7F77DD' : 'var(--c-dim)', border: '1px solid ' + (ai.llmSettings.chat_no_think === false ? '#7F77DD44' : 'var(--bd)') }}>
+              color: ai.llmSettings.chat_no_think === false ? 'var(--accent-purple)' : 'var(--c-dim)', border: '1px solid ' + (ai.llmSettings.chat_no_think === false ? '#7F77DD44' : 'var(--bd)') }}>
               🧠 {ai.llmSettings.chat_no_think === false ? 'ON' : 'OFF'}
             </span>
             {ai.llmSettings.chat_max_turns && (
@@ -314,9 +314,9 @@ export default function ChatSearchPage({ fontSize, ai }) {
             <button onClick={ai.isChatDefaultModel ? ai.clearChatDefault : ai.saveChatDefault}
               style={{
                 flex: '0 0 auto', padding: '5px 9px', borderRadius: 7, fontSize: '0.786rem', fontWeight: 600,
-                border: `1.5px solid ${ai.isChatDefaultModel ? '#7F77DD' : 'var(--bd)'}`,
+                border: `1.5px solid ${ai.isChatDefaultModel ? 'var(--accent-purple)' : 'var(--bd)'}`,
                 background: ai.isChatDefaultModel ? '#7F77DD18' : 'transparent',
-                color: ai.isChatDefaultModel ? '#7F77DD' : 'var(--c-sub)',
+                color: ai.isChatDefaultModel ? 'var(--accent-purple)' : 'var(--c-sub)',
                 cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
               }}>
               {ai.isChatDefaultModel ? '★ 기본' : '☆ 기본'}
@@ -350,7 +350,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
               background: currentId === s.id ? '#7F77DD10' : 'transparent',
             }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: '0.857rem', fontWeight: currentId === s.id ? 700 : 400, color: currentId === s.id ? '#7F77DD' : 'var(--c-text-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '0.857rem', fontWeight: currentId === s.id ? 700 : 400, color: currentId === s.id ? 'var(--accent-purple)' : 'var(--c-text-dark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {s.title || '새 대화'}
                 </div>
                 <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>
@@ -392,7 +392,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <div style={{
                   maxWidth: '85%', padding: '10px 14px', borderRadius: '16px 16px 4px 16px',
-                  background: '#1D9E75', color: '#fff', fontSize: '0.929rem', lineHeight: 1.7,
+                  background: 'var(--accent)', color: '#fff', fontSize: '0.929rem', lineHeight: 1.7,
                   wordBreak: 'keep-all', whiteSpace: 'pre-wrap',
                 }}>{m.content}</div>
               </div>
@@ -401,7 +401,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                 <div style={{
                   width: 24, height: 24, borderRadius: '50%', flexShrink: 0, marginTop: 2,
-                  background: 'linear-gradient(135deg, #7F77DD, #5B4FC4)',
+                  background: 'linear-gradient(135deg, var(--accent-purple), #5B4FC4)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '0.786rem', color: '#fff', fontWeight: 700,
                 }}>AI</div>
@@ -416,20 +416,20 @@ export default function ChatSearchPage({ fontSize, ai }) {
                     <div style={{
                       padding: '10px 14px', borderRadius: '4px 16px 16px 16px',
                       background: 'var(--bg-card)', border: '1px solid var(--bd)',
-                      fontSize: '0.929rem', lineHeight: 1.7, color: m.error ? '#c44' : 'var(--c-text)',
+                      fontSize: '0.929rem', lineHeight: 1.7, color: m.error ? 'var(--c-danger)' : 'var(--c-text)',
                       wordBreak: 'break-word', overflowWrap: 'anywhere', whiteSpace: 'pre-wrap',
                     }}>
                       {m.content}
                       {streaming && mi === messages.length - 1 && (
-                        <span style={{ display: 'inline-block', width: 6, height: 14, background: '#7F77DD', marginLeft: 2, animation: 'blink 1s step-end infinite', verticalAlign: 'text-bottom' }} />
+                        <span style={{ display: 'inline-block', width: 6, height: 14, background: 'var(--accent-purple)', marginLeft: 2, animation: 'blink 1s step-end infinite', verticalAlign: 'text-bottom' }} />
                       )}
                     </div>
                   )}
                   {m.content && !m.loading && (
                     <div style={{ marginTop: 4, display: 'flex', gap: 4 }}>
                       <button onClick={() => doCopy('msg-' + mi, m.content)} style={{
-                        padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['msg-' + mi] ? '#1D9E75' : 'var(--bd)'),
-                        background: copied['msg-' + mi] ? 'var(--tint-green)' : 'transparent', color: copied['msg-' + mi] ? '#1D9E75' : 'var(--c-dim)',
+                        padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['msg-' + mi] ? 'var(--accent)' : 'var(--bd)'),
+                        background: copied['msg-' + mi] ? 'var(--tint-green)' : 'transparent', color: copied['msg-' + mi] ? 'var(--accent)' : 'var(--c-dim)',
                         fontSize: '0.643rem', cursor: 'pointer',
                       }}>{copied['msg-' + mi] ? '✓ 복사됨' : '복사'}</button>
                     </div>
@@ -448,7 +448,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
           {allResults.map((rs, rsi) => {
             const isOpen = expandedResultIdx === rsi;
             const queryShort = rs.query.length > 25 ? rs.query.slice(0, 25) + '...' : rs.query;
-            const modeColor = rs.mode === 'wol' ? '#C7842D' : rs.mode === 'db_wol' ? '#2D8FC7' : '#1D9E75';
+            const modeColor = rs.mode === 'wol' ? 'var(--accent-brown)' : rs.mode === 'db_wol' ? '#2D8FC7' : 'var(--accent)';
             return (
               <div key={rsi} style={{ marginBottom: 6 }}>
                 <button onClick={() => setExpandedResultIdx(isOpen ? -1 : rsi)} style={{
@@ -488,7 +488,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
                       const subTopic = parsed?.subtopic || meta.sub_topic || meta.subtopic || '';
                       const scripture = cleanMd(parsed?.scripture || meta.scriptures || '');
                       const metaRows = [
-                        isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+                        isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
                         isPub && meta.pub_title && { label: '출판물명', value: meta.pub_title },
                         !isPub && title && { label: '주제', value: (prefix ? prefix + ' ' : '') + title },
                         subTopic && { label: '소주제', value: subTopic },
@@ -507,15 +507,15 @@ export default function ChatSearchPage({ fontSize, ai }) {
                               <div style={{ flex: 1 }} />
                               <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <span style={{ width: 44, height: 4, borderRadius: 2, background: 'var(--bg-dim)', overflow: 'hidden' }}>
-                                  <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? '#1D9E75' : score > 50 ? '#BA7517' : '#c44' }} />
+                                  <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? 'var(--accent)' : score > 50 ? '#BA7517' : 'var(--c-danger)' }} />
                                 </span>
                                 <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', minWidth: 26 }}>{Math.min(score, 100)}%</span>
                               </span>
                             </div>
                             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 4 }}>
                               <div style={{ flex: 1 }} />
-                              {meta.wol_url && <a href={meta.wol_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600, background: '#C7842D', color: '#fff', textDecoration: 'none' }}>WOL ↗</a>}
-                              <button onClick={e => { e.stopPropagation(); doCopy('card-' + cardKey, body); }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid ' + (copied['card-' + cardKey] ? '#1D9E75' : 'var(--bd)'), background: copied['card-' + cardKey] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['card-' + cardKey] ? '#1D9E75' : 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>{copied['card-' + cardKey] ? '✓ 복사됨' : '복사'}</button>
+                              {meta.wol_url && <a href={meta.wol_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600, background: 'var(--accent-brown)', color: '#fff', textDecoration: 'none' }}>WOL ↗</a>}
+                              <button onClick={e => { e.stopPropagation(); doCopy('card-' + cardKey, body); }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid ' + (copied['card-' + cardKey] ? 'var(--accent)' : 'var(--bd)'), background: copied['card-' + cardKey] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['card-' + cardKey] ? 'var(--accent)' : 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>{copied['card-' + cardKey] ? '✓ 복사됨' : '복사'}</button>
                             </div>
                           </div>
                           {metaRows.length > 0 && (
@@ -576,7 +576,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
           }}>
             <span style={{ fontSize: '1.071rem' }}>📄</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '0.786rem', fontWeight: 700, color: '#7F77DD', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--accent-purple)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {attachedFile.name}
               </div>
               <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginTop: 1 }}>
@@ -586,13 +586,13 @@ export default function ChatSearchPage({ fontSize, ai }) {
             </div>
             <button onClick={() => setAttachedFile(null)} style={{
               width: 20, height: 20, borderRadius: 8, border: 'none',
-              background: '#7F77DD20', color: '#7F77DD', fontSize: '0.786rem',
+              background: '#7F77DD20', color: 'var(--accent-purple)', fontSize: '0.786rem',
               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>✕</button>
           </div>
         )}
         {fileUploading && (
-          <div style={{ margin: '8px 12px 0', fontSize: '0.786rem', color: '#7F77DD' }}>
+          <div style={{ margin: '8px 12px 0', fontSize: '0.786rem', color: 'var(--accent-purple)' }}>
             파일 읽는 중...
           </div>
         )}
@@ -638,7 +638,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
               { key: 'chat', label: '대화', icon: '💬' },
             ].map(m => {
               const active = searchMode === m.key;
-              const mColor = { db: '#1D9E75', wol: '#C7842D', db_wol: '#2D8FC7', chat: '#7F77DD' }[m.key] || '#1D9E75';
+              const mColor = { db: 'var(--accent)', wol: 'var(--accent-brown)', db_wol: '#2D8FC7', chat: 'var(--accent-purple)' }[m.key] || 'var(--accent)';
               return (
                 <button key={m.key} onClick={() => !m.disabled && setSearchMode(m.key)}
                   disabled={m.disabled}
@@ -666,7 +666,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
             fontSize: '0.786rem', overflow: 'hidden',
             textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0,
           }}>
-            <span style={{ fontWeight: 700, color: '#7F77DD' }}>{ai.chatPlatform}</span>
+            <span style={{ fontWeight: 700, color: 'var(--accent-purple)' }}>{ai.chatPlatform}</span>
             {' '}
             <span style={{ color: 'var(--c-muted)' }}>{chatModelLabel}</span>
           </span>
@@ -674,7 +674,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
             <button onClick={() => setShowWolFilters(p => !p)} style={{
               padding: '2px 5px', borderRadius: 8, border: 'none',
               background: showWolFilters ? '#C7842D20' : 'transparent',
-              color: showWolFilters ? '#C7842D' : 'var(--c-dim)',
+              color: showWolFilters ? 'var(--accent-brown)' : 'var(--c-dim)',
               fontSize: '1.286rem', cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0,
             }}>▾</button>
           )}
@@ -686,7 +686,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
             style={{
               padding: '8px 10px', borderRadius: 8, border: 'none',
               background: attachedFile ? '#7F77DD20' : 'transparent',
-              color: attachedFile ? '#7F77DD' : 'var(--c-dim)',
+              color: attachedFile ? 'var(--accent-purple)' : 'var(--c-dim)',
               fontSize: '1.286rem', fontWeight: 300, cursor: 'pointer', flexShrink: 0,
               opacity: fileUploading ? 0.5 : 1, transition: 'all 0.15s',
             }}>+</button>
@@ -699,7 +699,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
           ) : (
             <button onClick={send} disabled={!input.trim() || (needsPassword && !password)} style={{
               width: 80, padding: '5px 0', borderRadius: 8, border: 'none',
-              background: input.trim() && (!needsPassword || password) ? '#7F77DD' : 'var(--bd-medium)',
+              background: input.trim() && (!needsPassword || password) ? 'var(--accent-purple)' : 'var(--bd-medium)',
               color: '#fff', fontSize: '0.786rem', fontWeight: 700, cursor: 'pointer', flexShrink: 0,
               transition: 'background 0.15s', textAlign: 'center',
             }}>전송</button>

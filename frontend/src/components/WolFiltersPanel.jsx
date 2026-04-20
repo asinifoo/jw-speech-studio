@@ -108,7 +108,7 @@ export default function WolFiltersPanel({ compact = true }) {
           </div>
           {testResult && (
             <div style={{
-              fontSize: '0.786rem', fontWeight: 700, color: '#C7842D',
+              fontSize: '0.786rem', fontWeight: 700, color: 'var(--accent-brown)',
               padding: '4px 8px', marginTop: 4, borderRadius: 8, background: '#C7842D12',
               wordBreak: 'break-word', lineHeight: 1.5,
             }}>→ {testResult}</div>
@@ -118,7 +118,7 @@ export default function WolFiltersPanel({ compact = true }) {
         {/* 접미사 / 불용어 */}
         <div style={{ display: 'flex', gap: 10 }}>
           {[
-            { label: '접미사', desc: '단어 끝에서 제거', val: suffixes, set: setSuffixes, cnt: sfxCount, clr: '#C7842D' },
+            { label: '접미사', desc: '단어 끝에서 제거', val: suffixes, set: setSuffixes, cnt: sfxCount, clr: 'var(--accent-brown)' },
             { label: '불용어', desc: '단독 출현 시 제거', val: stopwords, set: setStopwords, cnt: swCount, clr: '#2D8FC7' },
           ].map(c => (
             <div key={c.label} style={{ flex: 1 }}>
@@ -143,7 +143,7 @@ export default function WolFiltersPanel({ compact = true }) {
         <div style={{ display: 'flex', gap: 6, marginTop: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={doSave} style={{
             padding: '5px 14px', borderRadius: 8, border: 'none', fontSize: '0.786rem', fontWeight: 700,
-            background: '#C7842D', color: '#fff', cursor: 'pointer',
+            background: 'var(--accent-brown)', color: '#fff', cursor: 'pointer',
           }}>저장</button>
           <button onClick={doSaveDefault} style={{
             padding: '5px 14px', borderRadius: 8, border: '1px solid #2D8FC7', fontSize: '0.786rem', fontWeight: 600,
@@ -156,7 +156,7 @@ export default function WolFiltersPanel({ compact = true }) {
           {msg && (
             <span style={{
               fontSize: '0.786rem', fontWeight: 600, marginLeft: 4,
-              color: msgType === 'err' ? '#c44' : '#1D9E75',
+              color: msgType === 'err' ? 'var(--c-danger)' : 'var(--accent)',
             }}>{msg}</span>
           )}
         </div>

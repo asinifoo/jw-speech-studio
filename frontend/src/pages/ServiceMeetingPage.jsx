@@ -3,6 +3,7 @@ import KoreanTextarea from '../components/KoreanTextarea';
 import PresetPills from '../components/PresetPills';
 import EditableBlock from '../components/EditableBlock';
 import AiModelSelector from '../components/AiModelSelector';
+import { S } from '../styles';
 import RefinePanel from '../components/RefinePanel';
 import GenerateButton from '../components/GenerateButton';
 import WolFiltersPanel from '../components/WolFiltersPanel';
@@ -145,21 +146,9 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
         <div style={{ padding: '12px 14px 8px' }}>
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 종류</div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 2,
-              background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
-              overflowX: 'auto', WebkitOverflowScrolling: 'touch',
-            }} className="chat-input">
+            <div style={{ ...S.pillContainer, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="chat-input">
               {serviceTypes.map(t => (
-                <button key={t} onClick={() => toggleType(t)} style={{
-                  padding: '5px 12px', borderRadius: 8, fontSize: '0.821rem', fontWeight: selTypes.has(t) ? 700 : 500,
-                  border: 'none',
-                  background: selTypes.has(t) ? 'var(--bg-card, #fff)' : 'transparent',
-                  color: selTypes.has(t) ? '#1D9E75' : 'var(--c-muted)',
-                  cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0,
-                  transition: 'all 0.2s ease',
-                  boxShadow: selTypes.has(t) ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                }}>{t}</button>
+                <button key={t} onClick={() => toggleType(t)} style={S.pillScroll(selTypes.has(t))}>{t}</button>
               ))}
             </div>
           </div>
@@ -180,13 +169,13 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
           <button onClick={() => { const next = !useLLMFilter; setUseLLMFilter(next); if (!next) setShowFilters(false); }} style={{
             padding: '4px 10px', borderRadius: 8, border: 'none',
             background: useLLMFilter ? '#7F77DD15' : 'var(--bg-subtle, #EFEFF4)',
-            color: useLLMFilter ? '#7F77DD' : 'var(--c-muted)',
+            color: useLLMFilter ? 'var(--accent-purple)' : 'var(--c-muted)',
             fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, transition: 'all 0.15s',
             display: 'flex', alignItems: 'center', gap: 3,
           }}>
             {useLLMFilter ? '✓' : '○'} LLM 필터
             {useLLMFilter && <span onClick={e => { e.stopPropagation(); setShowFilters(p => !p); }}
-              style={{ color: showFilters ? '#C7842D' : '#7F77DD80', fontSize: '1.286rem', lineHeight: 0 }}>▾</span>}
+              style={{ color: showFilters ? 'var(--accent-brown)' : '#7F77DD80', fontSize: '1.286rem', lineHeight: 0 }}>▾</span>}
           </button>
           <div style={{ flex: 1 }} />
           {(selTypes.size > 0 || scriptures.trim() || searchQuery.trim() || searchResults.length > 0) && (
@@ -200,7 +189,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
           )}
           <button onClick={doSearch} disabled={searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())} style={{
             width: 80, padding: '5px 0', borderRadius: 8, border: 'none', textAlign: 'center',
-            background: (searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())) ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+            background: (searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())) ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
             fontSize: '0.786rem', fontWeight: 700, cursor: (searchLoading || (!selTypes.size && !scriptures.trim() && !searchQuery.trim())) ? 'default' : 'pointer',
             transition: 'background 0.15s', position: 'relative', overflow: 'hidden',
           }}>
@@ -211,7 +200,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
         {showFilters && <div style={{ padding: '4px 14px 8px' }}><WolFiltersPanel compact={false} /></div>}
         {useLLMFilter && ai.llmSettings && (
           <div style={{ padding: '2px 14px 6px', fontSize: '0.786rem', color: 'var(--c-muted)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            <span>필터: <b style={{ color: '#7F77DD' }}>{Object.values(ai.aiModels).flat().find(m => m.value === ai.llmSettings.filter_model)?.label || ai.llmSettings.filter_model}</b></span>
+            <span>필터: <b style={{ color: 'var(--accent-purple)' }}>{Object.values(ai.aiModels).flat().find(m => m.value === ai.llmSettings.filter_model)?.label || ai.llmSettings.filter_model}</b></span>
             <span>·</span>
             <span>CTX: <b>{(ai.llmSettings.filter_ctx / 1024).toFixed(0)}K</b></span>
             <span>·</span>
@@ -227,7 +216,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
           {autoScriptures.map((a, i) => (
             <div key={i} style={{ padding: '8px 10px', borderRadius: 7, background: 'var(--tint-blue)', border: '1px solid var(--tint-blue-bd)', marginBottom: 6 }}>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 3 }}>
-                <span style={{ width: 16, height: 16, borderRadius: 3, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.571rem', fontWeight: 800, color: '#fff', background: '#D85A30' }}>B</span>
+                <span style={{ width: 16, height: 16, borderRadius: 3, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.571rem', fontWeight: 800, color: '#fff', background: 'var(--accent-orange)' }}>B</span>
                 <span style={{ fontSize: '0.857rem', fontWeight: 700, color: '#2a7ab5' }}>{a.original || a.book}</span>
               </div>
               <div style={{ paddingLeft: 22, fontSize: '0.929rem', lineHeight: 1.7 }}>
@@ -265,27 +254,27 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
             const sel = !!selectedPast[i];
             const rt = parseInt(meta.rating || '0');
             return (
-              <div key={i} style={{ borderRadius: 8, border: '1px solid ' + (sel ? '#1D9E75' : 'var(--bd-soft)'), background: sel ? 'var(--tint-green-bg)' : 'var(--bg-card)', marginBottom: 6, overflow: 'hidden' }}>
+              <div key={i} style={{ borderRadius: 8, border: '1px solid ' + (sel ? 'var(--accent)' : 'var(--bd-soft)'), background: sel ? 'var(--tint-green-bg)' : 'var(--bg-card)', marginBottom: 6, overflow: 'hidden' }}>
                 <div onClick={() => setSelectedPast(p => ({ ...p, [i]: !p[i] }))} style={{ padding: '6px 10px', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', background: sel ? 'var(--tint-green)' : 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)', cursor: 'pointer' }}>
-                  <input type="checkbox" checked={sel} readOnly style={{ accentColor: '#1D9E75' }} />
+                  <input type="checkbox" checked={sel} readOnly style={{ accentColor: 'var(--accent)' }} />
                   <span style={{ fontSize: '0.786rem', color: 'var(--c-hint)', fontWeight: 600 }}>{meta.date || '?'}</span>
                   {meta.service_type && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: 'var(--tint-green-soft)', color: '#2e7d32', fontWeight: 600 }}>{meta.service_type}</span>}
-                  {meta.favorite === 'true' && <span style={{ fontSize: '0.714rem', color: '#F5A623' }}>★</span>}
-                  {rt > 0 && <span style={{ fontSize: '0.571rem', color: '#F5A623', letterSpacing: -1 }}>{'★'.repeat(rt)}{'☆'.repeat(5 - rt)}</span>}
-                  {isEdited && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: 'var(--tint-blue)', color: '#378ADD', fontWeight: 600 }}>편집됨</span>}
+                  {meta.favorite === 'true' && <span style={{ fontSize: '0.714rem', color: 'var(--accent-gold)' }}>★</span>}
+                  {rt > 0 && <span style={{ fontSize: '0.571rem', color: 'var(--accent-gold)', letterSpacing: -1 }}>{'★'.repeat(rt)}{'☆'.repeat(5 - rt)}</span>}
+                  {isEdited && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: 'var(--tint-blue)', color: 'var(--accent-blue)', fontWeight: 600 }}>편집됨</span>}
                   <div style={{ flex: 1 }} />
                   <div style={{ display: 'flex', gap: 4 }} onClick={e => e.stopPropagation()}>
                     <button onClick={() => { if (pastEditIdx === i) { setPastEditIdx(null); } else { setPastEditIdx(i); setPastDbIdx(null); } }} style={{
-                      height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit',
+                      ...S.btnXs,
                     }}>수정</button>
                     <button onClick={() => { if (pastDbIdx === i) { setPastDbIdx(null); } else { setPastDbIdx(i); setPastEditIdx(null); setPastDbText(pm.text || ''); setPastDbMeta({ ...meta, rating: rt, favorite: meta.favorite === 'true' }); setPastDbStatus(''); } }} style={{
-                      height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--tint-red-bd)', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit',
+                      ...S.btnXsDanger,
                     }}>DB</button>
                   </div>
                 </div>
                 <div style={{ padding: '8px 10px', fontSize: '0.786rem', color: 'var(--c-faint)' }}>
                   {(parsed?.scripture || meta.scriptures) && <span style={{ marginRight: 8, color: '#2D8FC7' }}>성구: {cleanMd(parsed?.scripture || meta.scriptures || '')}</span>}
-                  {(meta.pub_code || parsed?.pubCode) && <span style={{ marginRight: 8, color: '#7F77DD' }}>{meta.pub_code || parsed?.pubCode}</span>}
+                  {(meta.pub_code || parsed?.pubCode) && <span style={{ marginRight: 8, color: 'var(--accent-purple)' }}>{meta.pub_code || parsed?.pubCode}</span>}
                   {parseKeywords(parsed?.keywords || meta.keywords).map((kw, ki) => (
                     <span key={ki} style={{ display: 'inline-block', fontSize: '0.786rem', padding: '0 5px', borderRadius: 3, background: 'var(--bg-muted)', color: '#777', marginRight: 3, marginBottom: 2 }}>{kw}</span>
                   ))}
@@ -296,30 +285,30 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
                     <textarea value={displayBody} onChange={e => setPastEditText(p => ({ ...p, [i]: e.target.value }))} rows={6}
                       style={{ display: 'block', width: '100%', padding: '8px 10px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                     <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                      {isEdited && <button onClick={() => setPastEditText(p => { const n = { ...p }; delete n[i]; return n; })} style={{ height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit' }}>원래대로</button>}
-                      <button onClick={() => setPastEditIdx(null)} style={{ height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit' }}>{isEdited ? '확인' : '취소'}</button>
+                      {isEdited && <button onClick={() => setPastEditText(p => { const n = { ...p }; delete n[i]; return n; })} style={{ ...S.btnXs }}>원래대로</button>}
+                      <button onClick={() => setPastEditIdx(null)} style={{ ...S.btnXs }}>{isEdited ? '확인' : '취소'}</button>
                     </div>
                   </div>
                 )}
                 {/* DB 편집 모드 */}
                 {pastDbIdx === i && (
                   <div style={{ padding: '8px 10px', borderTop: '1px solid var(--tint-red-bd)' }}>
-                    <div style={{ fontSize: '0.714rem', fontWeight: 600, color: '#c44', marginBottom: 6 }}>DB 직접 편집</div>
+                    <div style={{ fontSize: '0.714rem', fontWeight: 600, color: 'var(--c-danger)', marginBottom: 6 }}>DB 직접 편집</div>
                     <textarea value={pastDbText} onChange={e => setPastDbText(e.target.value)} rows={6}
                       style={{ display: 'block', width: '100%', padding: '8px 10px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 6 }} />
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
                       <div style={{ display: 'flex', gap: 2 }}>
                         {[1,2,3,4,5].map(n => (
                           <button key={n} onClick={() => setPastDbMeta(p => ({ ...p, rating: p.rating === n ? 0 : n }))} style={{
-                            width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (pastDbMeta.rating || 0) ? '#F5A623' : 'var(--bd)'),
-                            background: n <= (pastDbMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)', color: n <= (pastDbMeta.rating || 0) ? '#F5A623' : 'var(--c-dim)',
+                            width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (pastDbMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--bd)'),
+                            background: n <= (pastDbMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)', color: n <= (pastDbMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--c-dim)',
                             fontSize: '0.714rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                           }}>{n}</button>
                         ))}
                       </div>
                       <button onClick={() => setPastDbMeta(p => ({ ...p, favorite: !p.favorite }))} style={{
-                        padding: '3px 10px', borderRadius: 6, border: '1px solid ' + (pastDbMeta.favorite ? '#F5A623' : 'var(--bd)'),
-                        background: pastDbMeta.favorite ? '#F5A62318' : 'var(--bg-card)', color: pastDbMeta.favorite ? '#F5A623' : 'var(--c-dim)',
+                        padding: '3px 10px', borderRadius: 6, border: '1px solid ' + (pastDbMeta.favorite ? 'var(--accent-gold)' : 'var(--bd)'),
+                        background: pastDbMeta.favorite ? '#F5A62318' : 'var(--bg-card)', color: pastDbMeta.favorite ? 'var(--accent-gold)' : 'var(--c-dim)',
                         fontSize: '0.786rem', cursor: 'pointer', fontWeight: 700,
                       }}>{pastDbMeta.favorite ? '★' : '☆'}</button>
                     </div>
@@ -337,9 +326,9 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
                           setPastDbStatus('저장 완료');
                           setTimeout(() => { setPastDbStatus(''); setPastDbIdx(null); }, 1000);
                         } catch (e) { setPastDbStatus('오류: ' + e.message); }
-                      }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #D85A30', background: '#D85A30', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
+                      }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                       <button onClick={() => { setPastDbIdx(null); setPastDbStatus(''); }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                      {pastDbStatus && <span style={{ fontSize: '0.714rem', color: pastDbStatus.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{pastDbStatus}</span>}
+                      {pastDbStatus && <span style={{ fontSize: '0.714rem', color: pastDbStatus.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{pastDbStatus}</span>}
                     </div>
                   </div>
                 )}
@@ -377,7 +366,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
             const parsed = parseDocument(r.text || '');
             const body = getBody(r.text || '');
             const sel = selectedSearch[i] !== false;
-            const cColor = { speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD' }[col] || 'var(--c-muted)';
+            const cColor = { speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)' }[col] || 'var(--c-muted)';
             const score = Math.round((r.score || 0) / 0.035 * 100);
             const isPub = col === 'publications';
             const gt = meta.outline_type || '', gn = meta.outline_num || '';
@@ -395,39 +384,39 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
                   {!isPub && meta.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{meta.speaker}</span>}
                   {meta.date && meta.date !== '0000' && <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)' }}>{meta.date}</span>}
                   {meta.service_type && meta.service_type !== '일반' && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: 'var(--tint-green-soft)', color: '#2e7d32', fontWeight: 600 }}>{meta.service_type}</span>}
-                  {meta.visit_target && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: '#D85A30', fontWeight: 600 }}>{meta.visit_target}</span>}
-                  {meta.favorite === 'true' && <span style={{ fontSize: '0.714rem', color: '#F5A623' }}>★</span>}
-                  {parseInt(meta.rating || '0') > 0 && <span style={{ fontSize: '0.571rem', color: '#F5A623', letterSpacing: -1 }}>{'★'.repeat(parseInt(meta.rating))}{'☆'.repeat(5 - parseInt(meta.rating))}</span>}
-                  {srEditText[i] !== undefined && srEditText[i] !== getBody(r.text || '') && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: 'var(--tint-blue)', color: '#378ADD', fontWeight: 600 }}>편집됨</span>}
-                  {r.filtered && <span style={{ fontSize: '0.786rem', fontWeight: 700, color: '#c44' }}>LLM 제외</span>}
+                  {meta.visit_target && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: 'var(--accent-orange)', fontWeight: 600 }}>{meta.visit_target}</span>}
+                  {meta.favorite === 'true' && <span style={{ fontSize: '0.714rem', color: 'var(--accent-gold)' }}>★</span>}
+                  {parseInt(meta.rating || '0') > 0 && <span style={{ fontSize: '0.571rem', color: 'var(--accent-gold)', letterSpacing: -1 }}>{'★'.repeat(parseInt(meta.rating))}{'☆'.repeat(5 - parseInt(meta.rating))}</span>}
+                  {srEditText[i] !== undefined && srEditText[i] !== getBody(r.text || '') && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: 'var(--tint-blue)', color: 'var(--accent-blue)', fontWeight: 600 }}>편집됨</span>}
+                  {r.filtered && <span style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--c-danger)' }}>LLM 제외</span>}
                   {meta.tags && (() => {
                     const t = meta.tags;
                     const badges = [];
-                    if (t.includes('표현')) badges.push({ label: '표현', bg: '#D85A30' });
-                    if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: '#C7842D' });
-                    if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: '#C7842D' });
+                    if (t.includes('표현')) badges.push({ label: '표현', bg: 'var(--accent-orange)' });
+                    if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: 'var(--accent-brown)' });
+                    if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: 'var(--accent-brown)' });
                     if (t.includes('예시(성경)')) badges.push({ label: '예시·성경', bg: '#2D8FC7' });
-                    if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: '#C7842D' });
+                    if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: 'var(--accent-brown)' });
                     return badges.map((b, bi) => <span key={bi} style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: b.bg, color: '#fff', fontWeight: 700 }}>{b.label}</span>);
                   })()}
                   <div style={{ flex: 1 }} />
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }} onClick={e => e.stopPropagation()}>
-                    <button onClick={() => { if (srEditIdx === i) { setSrEditIdx(null); } else { setSrEditIdx(i); setSrDbIdx(null); } }} style={{ height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit' }}>수정</button>
-                    <button onClick={() => { if (srDbIdx === i) { setSrDbIdx(null); } else { setSrDbIdx(i); setSrEditIdx(null); setSrDbText(r.text || ''); setSrDbMeta({ ...meta, rating: parseInt(meta.rating || '0'), favorite: meta.favorite === 'true' }); setSrDbStatus(''); } }} style={{ height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--tint-red-bd)', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit' }}>DB</button>
+                    <button onClick={() => { if (srEditIdx === i) { setSrEditIdx(null); } else { setSrEditIdx(i); setSrDbIdx(null); } }} style={{ ...S.btnXs }}>수정</button>
+                    <button onClick={() => { if (srDbIdx === i) { setSrDbIdx(null); } else { setSrDbIdx(i); setSrEditIdx(null); setSrDbText(r.text || ''); setSrDbMeta({ ...meta, rating: parseInt(meta.rating || '0'), favorite: meta.favorite === 'true' }); setSrDbStatus(''); } }} style={{ ...S.btnXsDanger }}>DB</button>
                   </div>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ width: 44, height: 4, borderRadius: 2, background: 'var(--bg-dim)', overflow: 'hidden' }}>
-                      <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? '#1D9E75' : score > 50 ? '#BA7517' : '#c44' }} />
+                      <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? 'var(--accent)' : score > 50 ? '#BA7517' : 'var(--c-danger)' }} />
                     </span>
                     <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', minWidth: 26 }}>{Math.min(score, 100)}%</span>
                   </span>
                 </div>
                 {(() => {
-                  const cColor = { speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD' }[col] || 'var(--c-muted)';
+                  const cColor = { speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)' }[col] || 'var(--c-muted)';
                   const isPub = col === 'publications';
                   const title = isPub ? (meta.outline_title || '') : (meta.outline_title || '');
                   const metaRows = [
-                    isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+                    isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
                     isPub && meta.pub_title && { label: '출판물명', value: meta.pub_title },
                     !isPub && title && { label: '주제', value: (prefix ? prefix + ' ' : '') + title },
                     (parsed?.subtopic || meta.sub_topic || meta.subtopic) && { label: '소주제', value: parsed?.subtopic || meta.sub_topic || meta.subtopic },
@@ -452,30 +441,30 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
                     <textarea value={srEditText[i] !== undefined ? srEditText[i] : body} onChange={e => setSrEditText(p => ({ ...p, [i]: e.target.value }))} rows={6}
                       style={{ display: 'block', width: '100%', padding: '8px 10px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                     <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                      {srEditText[i] !== undefined && srEditText[i] !== body && <button onClick={() => setSrEditText(p => { const n = { ...p }; delete n[i]; return n; })} style={{ height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit' }}>원래대로</button>}
-                      <button onClick={() => setSrEditIdx(null)} style={{ height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 36, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit' }}>{srEditText[i] !== undefined && srEditText[i] !== body ? '확인' : '취소'}</button>
+                      {srEditText[i] !== undefined && srEditText[i] !== body && <button onClick={() => setSrEditText(p => { const n = { ...p }; delete n[i]; return n; })} style={{ ...S.btnXs }}>원래대로</button>}
+                      <button onClick={() => setSrEditIdx(null)} style={{ ...S.btnXs }}>{srEditText[i] !== undefined && srEditText[i] !== body ? '확인' : '취소'}</button>
                     </div>
                   </div>
                 )}
                 {/* DB 편집 */}
                 {srDbIdx === i && (
                   <div style={{ padding: '8px 10px', borderTop: '1px solid var(--tint-red-bd)' }}>
-                    <div style={{ fontSize: '0.714rem', fontWeight: 600, color: '#c44', marginBottom: 6 }}>DB 직접 편집</div>
+                    <div style={{ fontSize: '0.714rem', fontWeight: 600, color: 'var(--c-danger)', marginBottom: 6 }}>DB 직접 편집</div>
                     <textarea value={srDbText} onChange={e => setSrDbText(e.target.value)} rows={6}
                       style={{ display: 'block', width: '100%', padding: '8px 10px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 6 }} />
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
                       <div style={{ display: 'flex', gap: 2 }}>
                         {[1,2,3,4,5].map(n => (
                           <button key={n} onClick={(e) => { e.stopPropagation(); setSrDbMeta(p => ({ ...p, rating: p.rating === n ? 0 : n })); }} style={{
-                            width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (srDbMeta.rating || 0) ? '#F5A623' : 'var(--bd)'),
-                            background: n <= (srDbMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)', color: n <= (srDbMeta.rating || 0) ? '#F5A623' : 'var(--c-dim)',
+                            width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (srDbMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--bd)'),
+                            background: n <= (srDbMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)', color: n <= (srDbMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--c-dim)',
                             fontSize: '0.714rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                           }}>{n}</button>
                         ))}
                       </div>
                       <button onClick={(e) => { e.stopPropagation(); setSrDbMeta(p => ({ ...p, favorite: !p.favorite })); }} style={{
-                        padding: '3px 10px', borderRadius: 6, border: '1px solid ' + (srDbMeta.favorite ? '#F5A623' : 'var(--bd)'),
-                        background: srDbMeta.favorite ? '#F5A62318' : 'var(--bg-card)', color: srDbMeta.favorite ? '#F5A623' : 'var(--c-dim)',
+                        padding: '3px 10px', borderRadius: 6, border: '1px solid ' + (srDbMeta.favorite ? 'var(--accent-gold)' : 'var(--bd)'),
+                        background: srDbMeta.favorite ? '#F5A62318' : 'var(--bg-card)', color: srDbMeta.favorite ? 'var(--accent-gold)' : 'var(--c-dim)',
                         fontSize: '0.786rem', cursor: 'pointer', fontWeight: 700,
                       }}>{srDbMeta.favorite ? '★' : '☆'}</button>
                     </div>
@@ -493,9 +482,9 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
                           setSrDbStatus('저장 완료');
                           setTimeout(() => { setSrDbStatus(''); setSrDbIdx(null); }, 1000);
                         } catch (e2) { setSrDbStatus('오류: ' + e2.message); }
-                      }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #D85A30', background: '#D85A30', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
+                      }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                       <button onClick={(e) => { e.stopPropagation(); setSrDbIdx(null); setSrDbStatus(''); }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                      {srDbStatus && <span style={{ fontSize: '0.714rem', color: srDbStatus.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{srDbStatus}</span>}
+                      {srDbStatus && <span style={{ fontSize: '0.714rem', color: srDbStatus.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{srDbStatus}</span>}
                     </div>
                   </div>
                 )}
@@ -527,11 +516,11 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
       {phase >= 1 && !script && (
         <div style={{ borderRadius: 10, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, marginBottom: 14 }}>
           <div style={{ marginBottom: 12 }}>
-            <EditableBlock value={extraMat} onChange={setExtraMat} label="추가 자료" icon="+" color="#1D9E75" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
+            <EditableBlock value={extraMat} onChange={setExtraMat} label="추가 자료" icon="+" color="var(--accent)" borderColor="var(--tint-green-bd)" bgColor="var(--tint-green-bg)" headerBg="var(--tint-green-header)"
               placeholder={"일반 추가 자료\n\n예: 배경 정보, 참고 기사 등"} buttonLabel="+ 추가 자료" />
           </div>
           <div style={{ borderRadius: 8, border: '1px solid var(--opt-bd)', background: 'var(--opt-bg)', padding: 12, marginBottom: 12 }}>
-            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: '#D85A30', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--accent-orange)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: '0.857rem' }}>⚙</span> AI 생성 옵션
             </div>
             <div style={{ marginBottom: 8 }}>
@@ -540,7 +529,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
             <div style={{ marginBottom: 8 }}>
               <PresetPills storageKey="jw-svc-preset" label="AI 프리셋" onChange={setSvcPreset} />
             </div>
-            <EditableBlock value={notes} onChange={setNotes} label="AI 지시사항" icon="!" color="#D85A30" borderColor="var(--tint-orange-bd)" bgColor="var(--tint-orange-light)" headerBg="var(--tint-orange-header)"
+            <EditableBlock value={notes} onChange={setNotes} label="AI 지시사항" icon="!" color="var(--accent-orange)" borderColor="var(--tint-orange-bd)" bgColor="var(--tint-orange-light)" headerBg="var(--tint-orange-header)"
               placeholder={"AI에게 전달할 지시사항\n\n예:\n- 질문-답변 형식으로\n- 서론 예시 2개 포함"} buttonLabel="+ AI 지시사항" />
           </div>
 
@@ -548,15 +537,15 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
             <div>봉사 종류: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{[...selTypes].join(', ') || '(없음)'}</span></div>
             <div>성구: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{scriptures || '없음'}</span></div>
             <div>과거 참고: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedPast).filter(Boolean).length}건</span> | DB 자료: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedSearch).filter(Boolean).length}건</span></div>
-            {extraMat && <div>추가 자료: <span style={{ color: '#1D9E75', fontWeight: 600 }}>있음</span></div>}
-            {notes && <div>AI 지시: <span style={{ color: '#D85A30', fontWeight: 600 }}>있음</span></div>}
-            <div>모델: <span style={{ color: '#D85A30', fontWeight: 600 }}>{ai.aiPlatform} / {(ai.aiModels[ai.aiPlatform] || []).find(m => m.value === ai.aiModel)?.label || ai.aiModel}</span></div>
+            {extraMat && <div>추가 자료: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>있음</span></div>}
+            {notes && <div>AI 지시: <span style={{ color: 'var(--accent-orange)', fontWeight: 600 }}>있음</span></div>}
+            <div>모델: <span style={{ color: 'var(--accent-orange)', fontWeight: 600 }}>{ai.aiPlatform} / {(ai.aiModels[ai.aiPlatform] || []).find(m => m.value === ai.aiModel)?.label || ai.aiModel}</span></div>
           </div>
 
           {error && (
-            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--tint-red)', border: '1px solid var(--tint-red-bd)', color: '#c44', fontSize: '0.857rem', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--tint-red)', border: '1px solid var(--tint-red-bd)', color: 'var(--c-danger)', fontSize: '0.857rem', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{error}</span>
-              <button onClick={() => setError('')} style={{ border: 'none', background: 'none', color: '#c44', fontSize: '1.143rem', cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}>×</button>
+              <button onClick={() => setError('')} style={{ border: 'none', background: 'none', color: 'var(--c-danger)', fontSize: '1.143rem', cursor: 'pointer', padding: '0 4px', lineHeight: 1, flexShrink: 0 }}>×</button>
             </div>
           )}
 
@@ -564,7 +553,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
             display: 'flex', alignItems: 'center', gap: 0, marginBottom: 10,
             borderRadius: 10, background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)', overflow: 'hidden',
           }}>
-            <span style={{ padding: '0 10px', fontSize: '1.0rem', color: password ? '#1D9E75' : 'var(--c-dim)', flexShrink: 0 }}>🔒</span>
+            <span style={{ padding: '0 10px', fontSize: '1.0rem', color: password ? 'var(--accent)' : 'var(--c-dim)', flexShrink: 0 }}>🔒</span>
             <input type={showPw ? 'text' : 'password'} placeholder="비밀번호" autoComplete="off" value={password} onChange={e => setPassword(e.target.value)}
               style={{ flex: 1, padding: '9px 0', border: 'none', fontSize: '0.929rem', outline: 'none', fontFamily: 'inherit', background: 'transparent', color: 'var(--c-text-dark)', minWidth: 0 }} />
             {password && (

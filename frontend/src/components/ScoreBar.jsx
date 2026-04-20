@@ -2,7 +2,7 @@ export default function ScoreBar({ score }) {
   const isRRF = score < 0.1;
   const pct = isRRF ? Math.round(score / 0.035 * 100) : Math.round(score * 100);
   const display = Math.min(pct, 100);
-  const c = display > 80 ? '#1D9E75' : display > 50 ? '#BA7517' : '#c44';
+  const c = display > 80 ? 'var(--accent)' : display > 50 ? '#BA7517' : 'var(--c-danger)';
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <div style={{ width: 44, height: 4, borderRadius: 2, background: 'var(--bg-dim)', overflow: 'hidden' }}>

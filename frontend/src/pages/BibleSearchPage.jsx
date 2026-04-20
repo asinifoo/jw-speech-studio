@@ -72,7 +72,7 @@ export default function BibleSearchPage({ fontSize }) {
           )}
           <button onClick={search} disabled={!query.trim() || loading} style={{
             width: 80, padding: '5px 0', borderRadius: 8, border: 'none', textAlign: 'center',
-            background: query.trim() && !loading ? '#1D9E75' : 'var(--bd-medium)', color: '#fff',
+            background: query.trim() && !loading ? 'var(--accent)' : 'var(--bd-medium)', color: '#fff',
             fontSize: '0.786rem', fontWeight: 700, cursor: 'pointer', transition: 'background 0.15s',
             position: 'relative', overflow: 'hidden',
           }}>
@@ -86,7 +86,7 @@ export default function BibleSearchPage({ fontSize }) {
         <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>참조 {refCount}건</span>
           {errors.length > 0 && (
-            <span style={{ fontSize: '0.786rem', color: '#c44', fontWeight: 600 }}>오류 {errors.length}건</span>
+            <span style={{ fontSize: '0.786rem', color: 'var(--c-danger)', fontWeight: 600 }}>오류 {errors.length}건</span>
           )}
           <button onClick={() => {
             const text = results.map(r => {
@@ -97,7 +97,7 @@ export default function BibleSearchPage({ fontSize }) {
               return `[${header}]\n${body}`;
             }).join('\n\n');
             doCopy('all', text);
-          }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['all'] ? '#1D9E75' : 'var(--bd)'), background: copied['all'] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['all'] ? '#1D9E75' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copied['all'] ? 600 : 400 }}>{copied['all'] ? '복사됨' : '전체 복사'}</button>
+          }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['all'] ? 'var(--accent)' : 'var(--bd)'), background: copied['all'] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['all'] ? 'var(--accent)' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copied['all'] ? 600 : 400 }}>{copied['all'] ? '복사됨' : '전체 복사'}</button>
         </div>
       )}
 
@@ -113,7 +113,7 @@ export default function BibleSearchPage({ fontSize }) {
             <span style={{
               width: 20, height: 20, borderRadius: 4, flexShrink: 0,
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: '#D85A30',
+              fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: 'var(--accent-orange)',
             }}>B</span>
             <span style={{ fontSize: '0.929rem', fontWeight: 700, color: '#2a7ab5' }}>{r.original}</span>
             {r.book && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{r.book}</span>}
@@ -133,14 +133,14 @@ export default function BibleSearchPage({ fontSize }) {
           </div>
           <div style={{ padding: '4px 12px 8px', display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => { const body = r.verses.map(v => r.verses.length > 1 ? `${v.verse} ${v.text}` : v.text).join('\n'); doCopy('v'+i, r.original + '\n' + body); }}
-              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['v'+i] ? '#1D9E75' : 'var(--bd)'), background: copied['v'+i] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['v'+i] ? '#1D9E75' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copied['v'+i] ? 600 : 400 }}>{copied['v'+i] ? '복사됨' : '복사'}</button>
+              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['v'+i] ? 'var(--accent)' : 'var(--bd)'), background: copied['v'+i] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['v'+i] ? 'var(--accent)' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copied['v'+i] ? 600 : 400 }}>{copied['v'+i] ? '복사됨' : '복사'}</button>
             <button onClick={() => { doCopy('r'+i, r.original); }}
-              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['r'+i] ? '#1D9E75' : 'var(--bd)'), background: copied['r'+i] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['r'+i] ? '#1D9E75' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copied['r'+i] ? 600 : 400 }}>{copied['r'+i] ? '복사됨' : '성구'}</button>
+              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (copied['r'+i] ? 'var(--accent)' : 'var(--bd)'), background: copied['r'+i] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied['r'+i] ? 'var(--accent)' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copied['r'+i] ? 600 : 400 }}>{copied['r'+i] ? '복사됨' : '성구'}</button>
             {r.not_found && r.not_found.length > 0 && (
-              <span style={{ fontSize: '0.643rem', color: '#c44', marginLeft: 4 }}>⚠ 미발견: {r.not_found.join(', ')}</span>
+              <span style={{ fontSize: '0.643rem', color: 'var(--c-danger)', marginLeft: 4 }}>⚠ 미발견: {r.not_found.join(', ')}</span>
             )}
             {r.warning && (
-              <span style={{ fontSize: '0.643rem', color: '#D85A30', marginLeft: 4 }}>⚠ {r.warning}</span>
+              <span style={{ fontSize: '0.643rem', color: 'var(--accent-orange)', marginLeft: 4 }}>⚠ {r.warning}</span>
             )}
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function BibleSearchPage({ fontSize }) {
           borderRadius: 8, border: '1px solid var(--tint-red-bd)',
           background: 'var(--tint-red)', padding: 12, marginBottom: 8,
         }}>
-          <div style={{ fontSize: '0.786rem', fontWeight: 700, color: '#c44', marginBottom: 6 }}>
+          <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--c-danger)', marginBottom: 6 }}>
             ⚠ 검색 오류 {errors.length}건
           </div>
           {errors.map((err, i) => (
@@ -169,7 +169,7 @@ export default function BibleSearchPage({ fontSize }) {
               background: 'var(--tint-red-soft)', fontSize: '0.786rem', color: 'var(--c-text)',
               display: 'flex', gap: 8, alignItems: 'baseline',
             }}>
-              <span style={{ fontWeight: 600, color: '#c44', flexShrink: 0 }}>{err.original}</span>
+              <span style={{ fontWeight: 600, color: 'var(--c-danger)', flexShrink: 0 }}>{err.original}</span>
               <span style={{ color: 'var(--c-faint)', fontSize: '0.786rem' }}>
                 {err.reason}{err.refs ? ` (${err.refs.join(', ')})` : ''}
               </span>

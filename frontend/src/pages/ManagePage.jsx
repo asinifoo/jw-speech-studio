@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, Fragment } from 'react';
 import KoreanTextarea from '../components/KoreanTextarea';
 import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../components/utils';
 import { getBody } from '../utils/textHelpers';
+import { S } from '../styles';
 import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, listManualEntries, listOriginals, listSpeakerMemos, listCollection, batchAdd, batchList, batchDelete, getApiKeys, saveApiKeys, ollamaModels, ollamaPull, ollamaDelete, getPasswordStatus, changePassword, getFilterModel, setFilterModel, getOllamaCtx, setOllamaCtx, getOllamaThink, setOllamaThink, getChatTurns, setChatTurns, setChatSearchTopK, getPrompts, setPrompt, resetPrompt, savePromptDefault, getAiModels, saveAiModels as saveAiModelsAPI, getApiVersions, saveApiVersions, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, deleteOutline, getCategories, saveCategories, lookupPubTitle, sttCorrectionsGet, sttCorrectionsSave, sttCorrectionsValidate, sttCorrectionsReload, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave } from '../api';
 
 const OUTLINE_TYPES = [
@@ -489,11 +490,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [myDateFilter, setMyDateFilter] = useState('all');
   const [mySortOrder, setMySortOrder] = useState('desc');
   const _dbTabs = [
-    { key: '골자', color: '#1D9E75' },
-    { key: '연설', color: '#D85A30' },
-    { key: '출판물', color: '#7F77DD' },
+    { key: '골자', color: 'var(--accent)' },
+    { key: '연설', color: 'var(--accent-orange)' },
+    { key: '출판물', color: 'var(--accent-purple)' },
     { key: '원문', color: '#2D8FC7' },
-    { key: '연사메모', color: '#C7842D' },
+    { key: '연사메모', color: 'var(--accent-brown)' },
   ];
   const _dbTabKeys = _dbTabs.map(t => t.key);
   const _dbTabColor = Object.fromEntries(_dbTabs.map(t => [t.key, t.color]));
@@ -1194,14 +1195,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   }[status] || status);
 
   const sttStatusColor = (status) => ({
-    uploaded: '#378ADD',
-    transcribing: '#F5A623',
-    transcribed: '#1D9E75',
-    correcting: '#F5A623',
-    reviewing: '#1D9E75',
-    draft_sent: '#378ADD',
-    saved: '#1D9E75',
-    failed: '#c44',
+    uploaded: 'var(--accent-blue)',
+    transcribing: 'var(--accent-gold)',
+    transcribed: 'var(--accent)',
+    correcting: 'var(--accent-gold)',
+    reviewing: 'var(--accent)',
+    draft_sent: 'var(--accent-blue)',
+    saved: 'var(--accent)',
+    failed: 'var(--c-danger)',
   }[status] || '#888');
 
   // ── Build-5B: STT 검토 화면 state ──
@@ -1816,7 +1817,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     else if (tab === '연사메모') { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(() => {}).finally(() => { setSpMemoLoading(false); setDbLoading(false); }); }
     else setDbLoading(false);
   };
-  const tagColor = { speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD' };
+  const tagColor = { speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)' };
   const tagLabel = { speech_points: '연설 요점', speech_expressions: '표현/예시', publications: '출판물' };
   const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
 
@@ -1824,7 +1825,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const renderOriginalBlock = () => {
     if (!siSttOriginalText) return null;
     const isQuick = siOriginType === 'quick';
-    const c = isQuick ? '#D85A30' : '#378ADD';
+    const c = isQuick ? 'var(--accent-orange)' : 'var(--accent-blue)';
     const cAlpha05 = isQuick ? 'rgba(216,90,48,0.05)' : 'rgba(55,138,221,0.05)';
     const cAlpha10 = isQuick ? 'rgba(216,90,48,0.1)' : 'rgba(55,138,221,0.1)';
     const cAlpha20 = isQuick ? 'rgba(216,90,48,0.2)' : 'rgba(55,138,221,0.2)';
@@ -1882,10 +1883,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   return (
     <div>
       {!_isAddPage && (
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 2, marginBottom: 16,
-        background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
-      }}>
+      <div style={{ ...S.pillContainer, marginBottom: 16 }}>
         {[['mydb', 'DB'], ['ai', 'AI'], ['preprocess', '전처리']].map(([k, l]) => (
           <button key={k} onClick={() => {
             setMode(k);
@@ -1900,14 +1898,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             if (k === 'preprocess' && !preprocData) {
               loadPreproc();
             }
-          }} style={{
-            flex: 1, padding: '7px 0', border: 'none', fontSize: '0.857rem', fontWeight: mode === k ? 700 : 500, cursor: 'pointer',
-            background: mode === k ? 'var(--bg-card, #fff)' : 'transparent',
-            color: mode === k ? '#1D9E75' : 'var(--c-muted)',
-            borderRadius: 8, fontFamily: 'inherit',
-            transition: 'all 0.2s ease',
-            boxShadow: mode === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-          }}>{l}</button>
+          }} style={S.pillL2(mode === k)}>{l}</button>
         ))}
       </div>
       )}
@@ -1916,18 +1907,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       {mode === 'add' && (<>
         {/* 추가 탭 상단 세그먼트 — Phase 5-3A: [입력] 탑레벨에선 숨김 (빠른 입력 고정) */}
         {pageType !== 'input' && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 2, marginBottom: 16,
-          background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
-        }}>
+        <div style={{ ...S.pillContainer, marginBottom: 16 }}>
           {[['gather', '가져오기'], ['structure', '구조화'], ['drafts', '임시저장']].map(([k, l]) => (
-            <button key={k} onClick={() => { setAddTab(k); if (k === 'gather') setAddForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={{
-              flex: 1, padding: '7px 0', border: 'none', fontSize: '0.857rem', fontWeight: addTab === k ? 700 : 500, cursor: 'pointer',
-              background: addTab === k ? 'var(--bg-card, #fff)' : 'transparent',
-              color: addTab === k ? '#1D9E75' : 'var(--c-muted)',
-              borderRadius: 8, fontFamily: 'inherit', transition: 'all 0.2s ease',
-              boxShadow: addTab === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-            }}>{l}</button>
+            <button key={k} onClick={() => { setAddTab(k); if (k === 'gather') setAddForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={S.pillL2(addTab === k)}>{l}</button>
           ))}
         </div>
         )}
@@ -1937,20 +1919,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
           {/* 입력 하위 — 카드 헤더 언더라인 (Phase 5-3A: [입력] 탑레벨에선 숨김) */}
           {pageType !== 'input' && (
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
+          <div style={S.underlineContainer}>
             {/* Phase 5-3B-1: quick_input 제거. 5-3B-2: pub_input 제거 (→ [가져오기]로 이동) */}
             {(pageType === 'input'
-              ? [['quick_input', '빠른 입력', '#D85A30']]
-              : [['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30']]
+              ? [['quick_input', '빠른 입력', 'var(--accent-orange)']]
+              : [['speech_input', '연설', 'var(--accent)'], ['discussion', '토의', 'var(--accent-blue)'], ['service', '봉사 모임', 'var(--accent)'], ['visit_input', '방문', 'var(--accent-orange)']]
             ).map(([k, l, c]) => {
               const active = inputMode === k;
               return (
-                <button key={k} onClick={() => { setInputMode(k); setSaveMsg(''); setQiSaveMsg(''); }} style={{
-                  flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? `2px solid ${c}` : '2px solid transparent',
-                  background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? c : 'var(--c-muted)', lineHeight: 1.2 }}>{l}</span>
+                <button key={k} onClick={() => { setInputMode(k); setSaveMsg(''); setQiSaveMsg(''); }} style={S.underlineTab(active, c)}>
+                  <span style={S.underlineLabel(active, c)}>{l}</span>
                   <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                 </button>
               );
@@ -1977,9 +1955,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     <button key={k} onClick={() => setQiForm(p => ({ ...p, type: k }))}
                       style={{
                         flex: '1 1 30%', padding: '6px 4px', borderRadius: 6,
-                        border: '1px solid ' + (active ? '#D85A30' : 'var(--bd)'),
+                        border: '1px solid ' + (active ? 'var(--accent-orange)' : 'var(--bd)'),
                         background: active ? '#D85A3010' : 'var(--bg-card)',
-                        color: active ? '#D85A30' : 'var(--c-faint)',
+                        color: active ? 'var(--accent-orange)' : 'var(--c-faint)',
                         fontSize: '0.786rem', fontWeight: active ? 700 : 500,
                         cursor: 'pointer', fontFamily: 'inherit',
                       }}>{l}</button>
@@ -2080,11 +2058,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             {/* Hotfix 9: 편집 모드 배너 */}
             {qiEditingOutlineNum && (
               <div style={{ marginBottom: 8, padding: '8px 10px', borderRadius: 8, background: '#D85A3010', border: '1px solid #D85A3040', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.714rem', color: '#D85A30', fontWeight: 700 }}>📝 수정 중</span>
+                <span style={{ fontSize: '0.714rem', color: 'var(--accent-orange)', fontWeight: 700 }}>📝 수정 중</span>
                 <span style={{ fontSize: '0.714rem', color: 'var(--c-sub)', fontFamily: 'monospace' }}>QUICK_{qiEditingOutlineNum}</span>
                 <div style={{ flex: 1 }} />
                 <button onClick={() => { setQiEditingOutlineNum(''); setQiForm(_qiDefault); setQiSaveMsg(''); }}
-                  style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #D85A30', background: 'var(--bg-card)', color: '#D85A30', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
+                  style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
                   새로 만들기
                 </button>
                 <div style={{ flexBasis: '100%', fontSize: '0.643rem', color: 'var(--c-dim)' }}>※ 연사/날짜 변경 시 새 draft로 저장됩니다</div>
@@ -2133,7 +2111,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 }
               }} disabled={qiSaving || !qiForm.content.trim()} style={{
                 flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                background: qiSaving || !qiForm.content.trim() ? 'var(--bd-medium)' : '#D85A30', color: '#fff',
+                background: qiSaving || !qiForm.content.trim() ? 'var(--bd-medium)' : 'var(--accent-orange)', color: '#fff',
                 fontSize: '0.929rem', fontWeight: 700, cursor: qiSaving || !qiForm.content.trim() ? 'default' : 'pointer',
               }}>
                 {qiSaving ? '저장 중...' : (qiEditingOutlineNum ? '수정 저장' : '저장')}
@@ -2142,7 +2120,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
             {qiSaveMsg && (
               <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center',
-                color: qiSaveMsg.startsWith('✓') ? '#1D9E75' : '#c44', fontWeight: 600 }}>
+                color: qiSaveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>
                 {qiSaveMsg}
               </div>
             )}
@@ -2155,8 +2133,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {['파수대', '성경연구', '영적보물', '기타'].map(t => (
                   <button key={t} onClick={() => setDiscForm(p => ({ ...p, sub_source: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (discForm.sub_source === t ? '#378ADD' : 'var(--bd)'),
-                    background: discForm.sub_source === t ? '#378ADD10' : 'var(--bg-card)', color: discForm.sub_source === t ? '#378ADD' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (discForm.sub_source === t ? 'var(--accent-blue)' : 'var(--bd)'),
+                    background: discForm.sub_source === t ? '#378ADD10' : 'var(--bg-card)', color: discForm.sub_source === t ? 'var(--accent-blue)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
                   }}>{t}</button>
                 ))}
@@ -2190,16 +2168,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 </div>
               </div>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                 <KoreanTextarea value={discForm.content} onChange={v => setDiscForm(p => ({ ...p, content: v }))}
                   placeholder="내용을 입력하세요" rows={8}
                   style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
               </div>
               <button onClick={() => _saveTab(discForm, '토의', setDiscForm, _dfDisc)} disabled={saving || !discForm.content.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                 fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
               }}>{saving ? '저장 중...' : '저장'}</button>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
+              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
           {/* 봉사 모임 입력 */}
@@ -2209,10 +2187,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.service_types || []).map(t => (
                   <button key={t} onClick={() => setSvcForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (svcForm.service_type === t ? '#1D9E75' : 'var(--bd)'),
-                    background: svcForm.service_type === t ? '#1D9E7510' : 'var(--bg-card)', color: svcForm.service_type === t ? '#1D9E75' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (svcForm.service_type === t ? 'var(--accent)' : 'var(--bd)'),
+                    background: svcForm.service_type === t ? '#1D9E7510' : 'var(--bg-card)', color: svcForm.service_type === t ? 'var(--accent)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                  }}>{catEditing === 'service_types' && <span onClick={e => { e.stopPropagation(); const next = cats.service_types.filter(x => x !== t); setCats(p => ({ ...p, service_types: next })); saveCategories({ ...cats, service_types: next }); if (svcForm.service_type === t) setSvcForm(p => ({ ...p, service_type: '' })); }} style={{ color: '#c44', marginRight: 2, fontSize: '0.643rem' }}>✕</span>}{t}</button>
+                  }}>{catEditing === 'service_types' && <span onClick={e => { e.stopPropagation(); const next = cats.service_types.filter(x => x !== t); setCats(p => ({ ...p, service_types: next })); saveCategories({ ...cats, service_types: next }); if (svcForm.service_type === t) setSvcForm(p => ({ ...p, service_type: '' })); }} style={{ color: 'var(--c-danger)', marginRight: 2, fontSize: '0.643rem' }}>✕</span>}{t}</button>
                 ))}
                 {catEditing === 'service_types' ? (
                   <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
@@ -2243,7 +2221,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <input value={svcForm.keywords} onChange={e => setSvcForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
               </div>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                 <KoreanTextarea value={svcForm.content} onChange={v => setSvcForm(p => ({ ...p, content: v }))}
                   placeholder="대화 흐름을 기록하세요" rows={8}
                   style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
@@ -2253,25 +2231,25 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <div style={{ display: 'flex', gap: 3 }}>
                   {[1,2,3,4,5].map(n => (
                     <button key={n} onClick={() => setSvcForm(p => ({ ...p, rating: p.rating === n ? 0 : n }))} style={{
-                      width: 36, height: 36, borderRadius: 8, border: '1px solid ' + (n <= svcForm.rating ? '#1D9E75' : 'var(--bd)'),
-                      background: n <= svcForm.rating ? '#1D9E7518' : 'var(--bg-card)', color: n <= svcForm.rating ? '#1D9E75' : 'var(--c-dim)',
+                      width: 36, height: 36, borderRadius: 8, border: '1px solid ' + (n <= svcForm.rating ? 'var(--accent)' : 'var(--bd)'),
+                      background: n <= svcForm.rating ? '#1D9E7518' : 'var(--bg-card)', color: n <= svcForm.rating ? 'var(--accent)' : 'var(--c-dim)',
                       fontSize: '0.786rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>{n}</button>
                   ))}
                 </div>
-                {svcForm.rating > 0 && <span style={{ fontSize: '0.714rem', color: '#F5A623', letterSpacing: -1 }}>{'★'.repeat(svcForm.rating)}{'☆'.repeat(5 - svcForm.rating)}</span>}
+                {svcForm.rating > 0 && <span style={{ fontSize: '0.714rem', color: 'var(--accent-gold)', letterSpacing: -1 }}>{'★'.repeat(svcForm.rating)}{'☆'.repeat(5 - svcForm.rating)}</span>}
                 <div style={{ flex: 1 }} />
                 <button onClick={() => setSvcForm(p => ({ ...p, favorite: !p.favorite }))} style={{
-                  padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (svcForm.favorite ? '#F5A623' : 'var(--bd)'),
-                  background: svcForm.favorite ? '#F5A62318' : 'var(--bg-card)', color: svcForm.favorite ? '#F5A623' : 'var(--c-dim)',
+                  padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (svcForm.favorite ? 'var(--accent-gold)' : 'var(--bd)'),
+                  background: svcForm.favorite ? '#F5A62318' : 'var(--bg-card)', color: svcForm.favorite ? 'var(--accent-gold)' : 'var(--c-dim)',
                   fontSize: '0.857rem', cursor: 'pointer', fontWeight: 700,
                 }}>{svcForm.favorite ? '★' : '☆'}</button>
               </div>
               <button onClick={() => _saveTab(svcForm, '봉사 모임', setSvcForm, _dfSvc)} disabled={saving || !svcForm.content.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                 fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
               }}>{saving ? '저장 중...' : '저장'}</button>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
+              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
           {/* 방문 입력 */}
@@ -2281,10 +2259,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.visit_targets || []).map(t => (
                   <button key={t} onClick={() => setVisitForm(p => ({ ...p, visit_target: t, source: '방문', entry_type: 'expression' }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (visitForm.visit_target === t ? '#D85A30' : 'var(--bd)'),
-                    background: visitForm.visit_target === t ? '#D85A3010' : 'var(--bg-card)', color: visitForm.visit_target === t ? '#D85A30' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (visitForm.visit_target === t ? 'var(--accent-orange)' : 'var(--bd)'),
+                    background: visitForm.visit_target === t ? '#D85A3010' : 'var(--bg-card)', color: visitForm.visit_target === t ? 'var(--accent-orange)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                  }}>{catEditing === 'visit_targets' && <span onClick={e => { e.stopPropagation(); const next = cats.visit_targets.filter(x => x !== t); setCats(p => ({ ...p, visit_targets: next })); saveCategories({ ...cats, visit_targets: next }); if (visitForm.visit_target === t) setVisitForm(p => ({ ...p, visit_target: '' })); }} style={{ color: '#c44', marginRight: 2, fontSize: '0.643rem' }}>✕</span>}{t}</button>
+                  }}>{catEditing === 'visit_targets' && <span onClick={e => { e.stopPropagation(); const next = cats.visit_targets.filter(x => x !== t); setCats(p => ({ ...p, visit_targets: next })); saveCategories({ ...cats, visit_targets: next }); if (visitForm.visit_target === t) setVisitForm(p => ({ ...p, visit_target: '' })); }} style={{ color: 'var(--c-danger)', marginRight: 2, fontSize: '0.643rem' }}>✕</span>}{t}</button>
                 ))}
                 {catEditing === 'visit_targets' ? (
                   <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
@@ -2300,10 +2278,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.visit_situations || []).map(t => (
                   <button key={t} onClick={() => setVisitForm(p => ({ ...p, situation: p.situation === t ? '' : t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (visitForm.situation === t ? '#D85A30' : 'var(--bd)'),
-                    background: visitForm.situation === t ? '#D85A3010' : 'var(--bg-card)', color: visitForm.situation === t ? '#D85A30' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (visitForm.situation === t ? 'var(--accent-orange)' : 'var(--bd)'),
+                    background: visitForm.situation === t ? '#D85A3010' : 'var(--bg-card)', color: visitForm.situation === t ? 'var(--accent-orange)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                  }}>{catEditing === 'visit_situations' && <span onClick={e => { e.stopPropagation(); const next = cats.visit_situations.filter(x => x !== t); setCats(p => ({ ...p, visit_situations: next })); saveCategories({ ...cats, visit_situations: next }); if (visitForm.situation === t) setVisitForm(p => ({ ...p, situation: '' })); }} style={{ color: '#c44', marginRight: 2, fontSize: '0.643rem' }}>✕</span>}{t}</button>
+                  }}>{catEditing === 'visit_situations' && <span onClick={e => { e.stopPropagation(); const next = cats.visit_situations.filter(x => x !== t); setCats(p => ({ ...p, visit_situations: next })); saveCategories({ ...cats, visit_situations: next }); if (visitForm.situation === t) setVisitForm(p => ({ ...p, situation: '' })); }} style={{ color: 'var(--c-danger)', marginRight: 2, fontSize: '0.643rem' }}>✕</span>}{t}</button>
                 ))}
                 {catEditing === 'visit_situations' ? (
                   <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
@@ -2334,7 +2312,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <input value={visitForm.pub_code} onChange={e => setVisitForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파26.2」" style={{ ...iS, width: '100%' }} />
               </div>
               <div style={{ marginBottom: 8 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                 <KoreanTextarea value={visitForm.content} onChange={v => setVisitForm(p => ({ ...p, content: v }))}
                   placeholder="대화 흐름을 기록하세요" rows={8}
                   style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
@@ -2344,25 +2322,25 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <div style={{ display: 'flex', gap: 3 }}>
                   {[1,2,3,4,5].map(n => (
                     <button key={n} onClick={() => setVisitForm(p => ({ ...p, rating: p.rating === n ? 0 : n }))} style={{
-                      width: 36, height: 36, borderRadius: 8, border: '1px solid ' + (n <= visitForm.rating ? '#D85A30' : 'var(--bd)'),
-                      background: n <= visitForm.rating ? '#D85A3018' : 'var(--bg-card)', color: n <= visitForm.rating ? '#D85A30' : 'var(--c-dim)',
+                      width: 36, height: 36, borderRadius: 8, border: '1px solid ' + (n <= visitForm.rating ? 'var(--accent-orange)' : 'var(--bd)'),
+                      background: n <= visitForm.rating ? '#D85A3018' : 'var(--bg-card)', color: n <= visitForm.rating ? 'var(--accent-orange)' : 'var(--c-dim)',
                       fontSize: '0.786rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>{n}</button>
                   ))}
                 </div>
-                {visitForm.rating > 0 && <span style={{ fontSize: '0.714rem', color: '#F5A623', letterSpacing: -1 }}>{'★'.repeat(visitForm.rating)}{'☆'.repeat(5 - visitForm.rating)}</span>}
+                {visitForm.rating > 0 && <span style={{ fontSize: '0.714rem', color: 'var(--accent-gold)', letterSpacing: -1 }}>{'★'.repeat(visitForm.rating)}{'☆'.repeat(5 - visitForm.rating)}</span>}
                 <div style={{ flex: 1 }} />
                 <button onClick={() => setVisitForm(p => ({ ...p, favorite: !p.favorite }))} style={{
-                  padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (visitForm.favorite ? '#F5A623' : 'var(--bd)'),
-                  background: visitForm.favorite ? '#F5A62318' : 'var(--bg-card)', color: visitForm.favorite ? '#F5A623' : 'var(--c-dim)',
+                  padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (visitForm.favorite ? 'var(--accent-gold)' : 'var(--bd)'),
+                  background: visitForm.favorite ? '#F5A62318' : 'var(--bg-card)', color: visitForm.favorite ? 'var(--accent-gold)' : 'var(--c-dim)',
                   fontSize: '0.857rem', cursor: 'pointer', fontWeight: 700,
                 }}>{visitForm.favorite ? '★' : '☆'}</button>
               </div>
               <button onClick={() => _saveTab(visitForm, '방문', setVisitForm, _dfVisit)} disabled={saving || !visitForm.content.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#D85A30', color: '#fff',
+                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-orange)', color: '#fff',
                 fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
               }}>{saving ? '저장 중...' : '저장'}</button>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
+              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
           {/* 출판물 입력 블록은 Phase 5-3B-2에서 [가져오기] 탭으로 이동됨 */}
@@ -2374,16 +2352,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         {addTab === 'gather' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden' }}>
           {/* 전처리 상위 탭 — 카드 헤더 언더라인 */}
-            <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
-              {[['file', '파일 업로드', '#1D9E75'], ['text', '텍스트 입력', '#1D9E75'], ['stt', 'STT 업로드', '#1D9E75'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => {
+            <div style={S.underlineContainer}>
+              {[['file', '파일 업로드', 'var(--accent)'], ['text', '텍스트 입력', 'var(--accent)'], ['stt', 'STT 업로드', 'var(--accent)'], ['pub_input', '출판물', 'var(--accent-purple)']].map(([k, l, c]) => {
                 const active = prepMode === k;
                 return (
-                  <button key={k} onClick={() => setPrepMode(k)} style={{
-                    flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? `2px solid ${c}` : '2px solid transparent',
-                    background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                  }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? c : 'var(--c-muted)', lineHeight: 1.2 }}>{l}</span>
+                  <button key={k} onClick={() => setPrepMode(k)} style={S.underlineTab(active, c)}>
+                    <span style={S.underlineLabel(active, c)}>{l}</span>
                     <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                   </button>
                 );
@@ -2429,8 +2403,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     finally { setMdParsing(false); }
                   }} />
                   <button onClick={() => document.getElementById('mdUpload').click()} disabled={mdParsing} style={{
-                    width: '100%', padding: '12px 0', borderRadius: 8, border: '2px dashed #1D9E75',
-                    background: 'var(--tint-green)', color: '#1D9E75', fontSize: '0.929rem', fontWeight: 600, cursor: 'pointer',
+                    width: '100%', padding: '12px 0', borderRadius: 8, border: '2px dashed var(--accent)',
+                    background: 'var(--tint-green)', color: 'var(--accent)', fontSize: '0.929rem', fontWeight: 600, cursor: 'pointer',
                   }}>{mdParsing ? '파싱 중...' : '전처리 md 파일 선택'}</button>
 
                   {mdParsed && mdParsed.files && (() => {
@@ -2439,10 +2413,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     const pubs = mdParsed.files.filter(f => f.file_format === 'publication');
                     const originals = mdParsed.files.filter(f => f.file_format === 'original');
                     const groups = [
-                      { label: '📋 골자', items: outlines, color: '#1D9E75', saveKey: 'outline' },
-                      { label: '🎤 연설', items: speeches, color: '#D85A30', saveKey: 'speech' },
-                      { label: '📚 출판물', items: pubs, color: '#7F77DD', saveKey: 'publication' },
-                      { label: '📄 원문', items: originals, color: '#378ADD', saveKey: 'original' },
+                      { label: '📋 골자', items: outlines, color: 'var(--accent)', saveKey: 'outline' },
+                      { label: '🎤 연설', items: speeches, color: 'var(--accent-orange)', saveKey: 'speech' },
+                      { label: '📚 출판물', items: pubs, color: 'var(--accent-purple)', saveKey: 'publication' },
+                      { label: '📄 원문', items: originals, color: 'var(--accent-blue)', saveKey: 'original' },
                     ].filter(g => g.items.length > 0);
                     return <div style={{ marginTop: 8 }}>
                       <div style={{ textAlign: 'right', marginBottom: 4 }}>
@@ -2476,7 +2450,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 <button onClick={() => { dupKeys.forEach(k => setFileStatus(p => ({ ...p, [k]: 'skipped' }))); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>전체 건너뛰기</button>
                               </div>
                             )}
-                            {allDone ? <span style={{ fontSize: '0.786rem', color: '#1D9E75' }}>완료</span> : (
+                            {allDone ? <span style={{ fontSize: '0.786rem', color: 'var(--accent)' }}>완료</span> : (
                               <button onClick={async () => {
                                 setMdSaving(p => ({ ...p, [g.saveKey]: true }));
                                 setMdResult('');
@@ -2542,28 +2516,28 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             }}>
                               {fSt === 'saving' && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', background: 'linear-gradient(90deg, transparent, rgba(29,158,117,0.08), transparent)', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
                               <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap', position: 'relative' }}>
-                                <span style={{ color: fSt === 'done' ? '#1D9E75' : fSt === 'updated' ? '#C7842D' : fSt === 'error' ? '#c44' : fSt === 'skipped' ? 'var(--c-dim)' : hasWarn ? '#c44' : '#1D9E75', fontSize: '0.786rem' }}>
+                                <span style={{ color: fSt === 'done' ? 'var(--accent)' : fSt === 'updated' ? 'var(--accent-brown)' : fSt === 'error' ? 'var(--c-danger)' : fSt === 'skipped' ? 'var(--c-dim)' : hasWarn ? 'var(--c-danger)' : 'var(--accent)', fontSize: '0.786rem' }}>
                                   {fSt === 'done' ? '✅' : fSt === 'updated' ? '🔄' : fSt === 'saving' ? '⏳' : fSt === 'error' ? '❌' : fSt === 'skipped' ? '⏭️' : fSt === 'dup' ? '⚠️' : hasWarn ? '⚠️' : '📄'}
                                 </span>
                                 {isPub ? <>
-                                  {ot && <span style={{ color: '#7F77DD', fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>}
+                                  {ot && <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>}
                                   <span style={{ fontWeight: 600 }}>{m.title || '출판물'}</span>
-                                  <span style={{ color: '#7F77DD', fontSize: '0.786rem' }}>출판물</span>
+                                  <span style={{ color: 'var(--accent-purple)', fontSize: '0.786rem' }}>출판물</span>
                                 </> : isOrig ? <>
                                   <span style={{ fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>
-                                  <span style={{ color: '#378ADD', fontSize: '0.786rem' }}>원문</span>
+                                  <span style={{ color: 'var(--accent-blue)', fontSize: '0.786rem' }}>원문</span>
                                   {m.title && <span style={{ color: 'var(--c-dim)' }}>— {m.title}</span>}
-                                  {m.speaker && <span style={{ color: '#D85A30' }}>· {m.speaker}</span>}
+                                  {m.speaker && <span style={{ color: 'var(--accent-orange)' }}>· {m.speaker}</span>}
                                   {m.date && <span style={{ color: 'var(--c-dim)' }}>· {m.date}</span>}
                                 </> : <>
                                   <span style={{ fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>
                                   {m.title && <span style={{ color: 'var(--c-dim)' }}>— {m.title}</span>}
-                                  {m.speaker && <span style={{ color: '#D85A30' }}>· {m.speaker}</span>}
+                                  {m.speaker && <span style={{ color: 'var(--accent-orange)' }}>· {m.speaker}</span>}
                                   {m.date && <span style={{ color: 'var(--c-dim)' }}>· {m.date}</span>}
                                   {m.version && <span style={{ color: 'var(--c-dim)' }}>· v{m.version}</span>}
                                 </>}
-                                {fSt === 'done' && <span style={{ color: '#1D9E75', fontSize: '0.786rem', marginLeft: 'auto' }}>저장됨</span>}
-                                {fSt === 'updated' && <span style={{ color: '#C7842D', fontSize: '0.786rem', marginLeft: 'auto' }}>{fMsg || '참조 추가'}</span>}
+                                {fSt === 'done' && <span style={{ color: 'var(--accent)', fontSize: '0.786rem', marginLeft: 'auto' }}>저장됨</span>}
+                                {fSt === 'updated' && <span style={{ color: 'var(--accent-brown)', fontSize: '0.786rem', marginLeft: 'auto' }}>{fMsg || '참조 추가'}</span>}
                                 {fSt === 'skipped' && <span style={{ color: 'var(--c-dim)', fontSize: '0.786rem', marginLeft: 'auto' }}>건너뜀</span>}
                               </div>
                               <div style={{ color: 'var(--c-dim)', fontSize: '0.786rem', marginTop: 2 }}>
@@ -2575,8 +2549,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 <div style={{ marginTop: 3 }}>
                                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                                     <button onClick={() => setFileStatus(p => ({ ...p, [`${fKey}_warn`]: !p[`${fKey}_warn`] }))} style={{
-                                      padding: '1px 6px', borderRadius: 4, border: '1px solid #c44', background: 'transparent',
-                                      color: '#c44', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
+                                      padding: '1px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'transparent',
+                                      color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
                                     }}>⚠️ {f.warnings.length}건 {fileStatus[`${fKey}_warn`] ? '닫기' : '확인'}</button>
                                     <button onClick={() => {
                                       setMdParsed(prev => {
@@ -2594,16 +2568,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                     }}>제외</button>
                                   </div>
                                   {fileStatus[`${fKey}_warn`] && (
-                                    <div style={{ marginTop: 3, padding: '4px 8px', borderRadius: 6, background: '#c4410a08', fontSize: '0.786rem', color: '#c44', lineHeight: 1.6 }}>
+                                    <div style={{ marginTop: 3, padding: '4px 8px', borderRadius: 6, background: '#c4410a08', fontSize: '0.786rem', color: 'var(--c-danger)', lineHeight: 1.6 }}>
                                       {f.warnings.map((w, wi) => <div key={wi}>· {w}</div>)}
                                     </div>
                                   )}
                                 </div>
                               )}
-                              {fSt === 'error' && <div style={{ color: '#c44', fontSize: '0.786rem', marginTop: 2 }}>{fMsg}</div>}
+                              {fSt === 'error' && <div style={{ color: 'var(--c-danger)', fontSize: '0.786rem', marginTop: 2 }}>{fMsg}</div>}
                               {fSt === 'dup' && (
                                 <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                                  <span style={{ fontSize: '0.786rem', color: '#C7842D', flex: 1 }}>{fMsg}</span>
+                                  <span style={{ fontSize: '0.786rem', color: 'var(--accent-brown)', flex: 1 }}>{fMsg}</span>
                                   <button onClick={async () => {
                                     setFileStatus(p => ({ ...p, [fKey]: 'saving' }));
                                     try {
@@ -2621,7 +2595,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       );})}
                     </div>;
                   })()}
-                  {mdResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: mdResult.startsWith('✓') ? '#1D9E75' : '#c44' }}>{mdResult}</div>}
+                  {mdResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: mdResult.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{mdResult}</div>}
                 </div>
               )}
 
@@ -2662,8 +2636,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       style={{
                         padding: '8px 20px',
                         borderRadius: 8,
-                        border: '1px solid #D85A30',
-                        background: sttUploading ? 'var(--bg-subtle)' : '#D85A30',
+                        border: '1px solid var(--accent-orange)',
+                        background: sttUploading ? 'var(--bg-subtle)' : 'var(--accent-orange)',
                         color: sttUploading ? 'var(--c-dim)' : '#fff',
                         fontSize: '0.857rem',
                         fontWeight: 600,
@@ -2676,7 +2650,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       <div style={{
                         marginTop: 10,
                         fontSize: '0.786rem',
-                        color: sttUploadStatus.includes('실패') || sttUploadStatus.includes('큽') ? '#c44' : '#1D9E75',
+                        color: sttUploadStatus.includes('실패') || sttUploadStatus.includes('큽') ? 'var(--c-danger)' : 'var(--accent)',
                       }}>{sttUploadStatus}</div>
                     )}
                   </div>
@@ -2736,20 +2710,20 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 <div style={{
                                   width: `${Math.round(progress * 100)}%`,
                                   height: '100%',
-                                  background: isOverdue ? '#c44' : '#F5A623',
+                                  background: isOverdue ? 'var(--c-danger)' : 'var(--accent-gold)',
                                   transition: 'width 1s linear',
                                 }} />
                               </div>
                               <div style={{ fontSize: '0.714rem', color: 'var(--c-dim)', marginTop: 2 }}>
                                 {formatSttDuration(elapsed)} / 약 {formatSttDuration(job.estimated_transcribe_seconds)}
-                                {isOverdue && <span style={{ color: '#c44', marginLeft: 4 }}>(예상 초과)</span>}
+                                {isOverdue && <span style={{ color: 'var(--c-danger)', marginLeft: 4 }}>(예상 초과)</span>}
                               </div>
                             </div>
                           );
                         })()}
 
                         {job.status === 'failed' && job.error_message && (
-                          <div style={{ fontSize: '0.714rem', color: '#c44', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '0.714rem', color: 'var(--c-danger)', marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             ⚠️ {job.error_message.slice(0, 120)}
                           </div>
                         )}
@@ -2757,13 +2731,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         <div style={{ display: 'flex', gap: 6 }}>
                           {job.status === 'uploaded' && (
                             <button onClick={() => handleSttTranscribe(job.job_id)}
-                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #D85A30', background: '#D85A30', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                               변환 시작
                             </button>
                           )}
                           {(job.status === 'transcribed' || job.status === 'reviewing') && (
                             <button onClick={() => enterSttReview(job)}
-                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #378ADD', background: '#378ADD', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-blue)', background: 'var(--accent-blue)', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                               검토하기
                             </button>
                           )}
@@ -2774,13 +2748,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                               job.final_meta?.date || '',
                               job.job_id,
                             )}
-                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                               이어서 편집
                             </button>
                           )}
                           {job.status === 'failed' && (
                             <button onClick={() => handleSttTranscribe(job.job_id)}
-                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #F5A623', background: '#F5A623', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                              style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-gold)', background: 'var(--accent-gold)', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                               재시도
                             </button>
                           )}
@@ -2896,8 +2870,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         disabled={sttReviewCorrecting}
                         style={{
                           padding: '7px 16px',
-                          border: '1px solid #D85A30',
-                          background: sttReviewCorrecting ? 'var(--bg-subtle)' : '#D85A30',
+                          border: '1px solid var(--accent-orange)',
+                          background: sttReviewCorrecting ? 'var(--bg-subtle)' : 'var(--accent-orange)',
                           color: sttReviewCorrecting ? 'var(--c-dim)' : '#fff',
                           borderRadius: 8, fontSize: '0.786rem', fontWeight: 600,
                           cursor: sttReviewCorrecting ? 'not-allowed' : 'pointer',
@@ -2905,7 +2879,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         {sttReviewCorrecting ? '교정 중...' : (sttReviewJob.final_text ? '다시 교정' : '교정 적용')}
                       </button>
                       {sttReviewStatus && (
-                        <div style={{ fontSize: '0.714rem', color: sttReviewStatus.includes('실패') ? '#c44' : '#1D9E75' }}>
+                        <div style={{ fontSize: '0.714rem', color: sttReviewStatus.includes('실패') ? 'var(--c-danger)' : 'var(--accent)' }}>
                           {sttReviewStatus}
                         </div>
                       )}
@@ -2933,7 +2907,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           style={{
                             flex: 1, padding: '6px 10px', border: 'none',
                             background: sttReviewTab === t.key ? 'var(--bg-card)' : 'transparent',
-                            color: sttReviewTab === t.key ? '#1D9E75' : 'var(--c-muted)',
+                            color: sttReviewTab === t.key ? 'var(--accent)' : 'var(--c-muted)',
                             fontSize: '0.786rem', fontWeight: sttReviewTab === t.key ? 700 : 500,
                             cursor: 'pointer', borderRadius: 6, whiteSpace: 'nowrap',
                           }}>
@@ -3043,8 +3017,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           disabled={disabled}
                           style={{
                             padding: '8px 22px',
-                            border: '1px solid #1D9E75',
-                            background: disabled ? 'var(--bg-subtle)' : '#1D9E75',
+                            border: '1px solid var(--accent)',
+                            background: disabled ? 'var(--bg-subtle)' : 'var(--accent)',
                             color: disabled ? 'var(--c-dim)' : '#fff',
                             borderRadius: 8, fontSize: '0.857rem', fontWeight: 600,
                             cursor: disabled ? 'not-allowed' : 'pointer',
@@ -3069,7 +3043,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     background: 'var(--bg-card)', borderRadius: 12, padding: 24,
                     maxWidth: 400, width: '100%',
                   }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 700, color: '#1D9E75', marginBottom: 8 }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--accent)', marginBottom: 8 }}>
                       ✓ 임시저장 완료
                     </div>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 16 }}>
@@ -3092,7 +3066,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         setSttReviewJob(null);
                         sttLoadJobs();
                         await handleStartSttDraftEdit(draftId, speaker, date, jobId);
-                      }} style={{ padding: '7px 14px', border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', borderRadius: 6, fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
+                      }} style={{ padding: '7px 14px', border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', borderRadius: 6, fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
                         이어서 편집
                       </button>
                     </div>
@@ -3137,8 +3111,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       }
                     }} />
                     <button onClick={() => document.getElementById('docxLoad').click()} disabled={txtDocxLoading} style={{
-                      width: '100%', padding: '10px 0', borderRadius: 8, border: '2px dashed #378ADD',
-                      background: 'var(--tint-blue, #eef4fb)', color: '#378ADD',
+                      width: '100%', padding: '10px 0', borderRadius: 8, border: '2px dashed var(--accent-blue)',
+                      background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
                       fontSize: '0.857rem', fontWeight: 600,
                       cursor: txtDocxLoading ? 'wait' : 'pointer', fontFamily: 'inherit',
                     }}>{txtDocxLoading ? 'DOCX 변환 중...' : '📄 DOCX에서 불러오기'}</button>
@@ -3160,7 +3134,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             setTxtMeta(p => ({ ...p, outlineType: code, year: needYear ? p.year : '' }));
                           }} style={{
                             flex: 1, padding: '5px 0', border: 'none', borderRadius: 8, fontSize: '0.786rem', fontWeight: active ? 700 : 500,
-                            background: active ? 'var(--bg-card, #fff)' : 'transparent', color: active ? '#1D9E75' : 'var(--c-muted)',
+                            background: active ? 'var(--bg-card, #fff)' : 'transparent', color: active ? 'var(--accent)' : 'var(--c-muted)',
                             cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
                             boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.15s',
                           }}>{t.name}</button>;
@@ -3175,7 +3149,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                               setTxtMeta(p => ({ ...p, outlineType: s.code, year: needYear ? p.year : '' }));
                             }} style={{
                               flex: 1, padding: '5px 0', border: 'none', borderRadius: 8, fontSize: '0.786rem', fontWeight: active ? 700 : 500,
-                              background: active ? 'var(--bg-card, #fff)' : 'transparent', color: active ? '#D85A30' : 'var(--c-muted)',
+                              background: active ? 'var(--bg-card, #fff)' : 'transparent', color: active ? 'var(--accent-orange)' : 'var(--c-muted)',
                               cursor: 'pointer', fontFamily: 'inherit',
                               boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.15s',
                             }}>{s.name}</button>;
@@ -3330,7 +3304,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       setTxtParsed(parsed);
                     }} style={{
                       flex: 1, padding: '8px 0', borderRadius: 8, border: 'none',
-                      background: '#1D9E75', color: '#fff', fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
+                      background: 'var(--accent)', color: '#fff', fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
                     }}>파싱</button>
                     <button onClick={() => { setTxtContent(''); setTxtParsed([]); setTxtResult(''); }} style={{
                       padding: '8px 12px', borderRadius: 8, border: '1px solid var(--bd)',
@@ -3374,7 +3348,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         }}>🔢 번호 재정렬</button>
                       </div>
                       {txtParsed.map((pt, i) => {
-                        const levelColors = { ST: '#8B6914', L1: '#D85A30', L2: '#C7842D', L3: '#1D9E75', L4: '#2D8FC7', L5: '#7F77DD' };
+                        const levelColors = { ST: '#8B6914', L1: 'var(--accent-orange)', L2: 'var(--accent-brown)', L3: 'var(--accent)', L4: '#2D8FC7', L5: 'var(--accent-purple)' };
                         const lbl = pt.isSubtopic ? 'ST' : pt.level;
                         const lc = levelColors[lbl] || '#888';
                         const isEditing = expandedDbEntry['txt_' + i];
@@ -3437,7 +3411,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             <span style={{ fontWeight: 700, color: lc, fontSize: '0.857rem', flexShrink: 0 }}>{pt.num}</span>
                             <div style={{ flex: 1 }} />
                             {pt.isSubtopic && pt.time && <span style={{ fontSize: '0.714rem', padding: '2px 8px', borderRadius: 4, background: lc + '20', color: lc, fontWeight: 600, flexShrink: 0 }}>⏱ {pt.time}</span>}
-                            <button onClick={() => setExpandedDbEntry(p => ({ ...p, ['txt_' + i]: !p['txt_' + i] }))} style={{ border: 'none', background: 'transparent', color: isEditing ? '#1D9E75' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', padding: '2px 6px', flexShrink: 0, fontWeight: 600 }}>{isEditing ? '완료' : '편집'}</button>
+                            <button onClick={() => setExpandedDbEntry(p => ({ ...p, ['txt_' + i]: !p['txt_' + i] }))} style={{ border: 'none', background: 'transparent', color: isEditing ? 'var(--accent)' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', padding: '2px 6px', flexShrink: 0, fontWeight: 600 }}>{isEditing ? '완료' : '편집'}</button>
                           </div>
                           {/* 본문 2줄 */}
                           <div style={{ padding: '0 10px 6px', fontSize: '0.929rem', color: 'var(--c-text-dark)', fontWeight: pt.isSubtopic ? 600 : 400, lineHeight: 1.6, wordBreak: 'keep-all' }}>
@@ -3454,12 +3428,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                   placeholder="성구 (창 3:6; 요 17:3)" style={{ flex: 1, padding: '4px 8px', border: 'none', borderRadius: 6, fontSize: '0.857rem', outline: 'none', background: 'var(--bg-card)', color: 'var(--c-text-dark)', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ color: '#7F77DD', fontSize: '0.857rem', flexShrink: 0 }}>📚</span>
+                                <span style={{ color: 'var(--accent-purple)', fontSize: '0.857rem', flexShrink: 0 }}>📚</span>
                                 <input value={pt.publications} onChange={e => setTxtParsed(p => p.map((x, j) => j === i ? { ...x, publications: e.target.value } : x))}
                                   placeholder="출판물 (「파08」 3면)" style={{ flex: 1, padding: '4px 8px', border: 'none', borderRadius: 6, fontSize: '0.857rem', outline: 'none', background: 'var(--bg-card)', color: 'var(--c-text-dark)', boxSizing: 'border-box', fontFamily: 'inherit' }} />
                               </div>
                               <div style={{ textAlign: 'right' }}>
-                                <button onClick={() => setTxtParsed(p => p.filter((_, j) => j !== i))} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
+                                <button onClick={() => setTxtParsed(p => p.filter((_, j) => j !== i))} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
                               </div>
                             </div>
                           )}
@@ -3467,7 +3441,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           {!isEditing && (pt.scriptures || pt.publications) && (
                             <div style={{ padding: '3px 10px 6px', borderTop: '1px solid var(--bd-light)' }}>
                               {pt.scriptures && <div style={{ fontSize: '0.857rem', color: '#2D8FC7' }}>📖 {pt.scriptures}</div>}
-                              {pt.publications && <div style={{ fontSize: '0.857rem', color: '#7F77DD', marginTop: 1 }}>📚 {pt.publications}</div>}
+                              {pt.publications && <div style={{ fontSize: '0.857rem', color: 'var(--accent-purple)', marginTop: 1 }}>📚 {pt.publications}</div>}
                             </div>
                           )}
                         </div>;
@@ -3506,13 +3480,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         finally { setTxtSaving(false); }
                       }} disabled={txtSaving} style={{
                         width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', marginTop: 6,
-                        background: txtSaving ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+                        background: txtSaving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                         fontSize: '0.929rem', fontWeight: 700, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       }}>
                         {txtSaving && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', borderRadius: 8, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
                         <span style={{ position: 'relative', zIndex: 1 }}>{txtSaving ? '저장 중...' : '골자 저장'}</span>
                       </button>
-                      {txtResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: txtResult.startsWith('✓') ? '#1D9E75' : '#c44' }}>{txtResult}</div>}
+                      {txtResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: txtResult.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{txtResult}</div>}
                     </div>
                   )}
                 </div>
@@ -3521,21 +3495,21 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {/* 출판물 입력 (Phase 5-3B-2: [구조화]에서 [가져오기]로 이동) */}
               {prepMode === 'pub_input' && (<>
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: '#c44' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: 'var(--c-danger)' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>
                   <input value={pubForm.pub_code} onChange={e => setPubForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파10」 11/15 7면 2항" style={{ ...iS, width: '100%' }} />
                   {(pubLookupHint || pubForm.reference) && (
                     <div style={{ marginTop: 3, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
-                      {pubLookupHint && <span style={{ color: '#1D9E75' }}>{pubLookupHint}</span>}
+                      {pubLookupHint && <span style={{ color: 'var(--accent)' }}>{pubLookupHint}</span>}
                       {pubLookupHint && pubForm.reference && <span> </span>}
-                      {pubForm.reference && <span style={{ color: '#7F77DD' }}>{pubForm.reference}</span>}
+                      {pubForm.reference && <span style={{ color: 'var(--accent-purple)' }}>{pubForm.reference}</span>}
                     </div>
                   )}
                   {pubExactMatch && (
-                    <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 6, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', fontSize: '0.714rem', color: '#D85A30', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 6, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', fontSize: '0.714rem', color: 'var(--accent-orange)', display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ fontSize: '0.857rem' }}>⚠️</span>
                       <span style={{ fontWeight: 600 }}>이미 저장됨:</span>
                       <span>{pubExactMatch.pub_title || pubExactMatch.pub_code}</span>
-                      {pubExactMatch.reference && <span style={{ color: '#7F77DD' }}>{pubExactMatch.reference}</span>}
+                      {pubExactMatch.reference && <span style={{ color: 'var(--accent-purple)' }}>{pubExactMatch.reference}</span>}
                     </div>
                   )}
                 </div>
@@ -3548,8 +3522,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {['정기 간행물', '서책', '팜플렛', '소책자', '성경', '웹 연재 기사', '색인'].map(t => (
                       <button key={t} onClick={() => setPubForm(p => ({ ...p, pub_type: t }))} style={{
-                        padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (pubForm.pub_type === t ? '#7F77DD' : 'var(--bd)'),
-                        background: pubForm.pub_type === t ? '#7F77DD10' : 'var(--bg-card)', color: pubForm.pub_type === t ? '#7F77DD' : 'var(--c-faint)',
+                        padding: '4px 12px', borderRadius: 8, border: '1px solid ' + (pubForm.pub_type === t ? 'var(--accent-purple)' : 'var(--bd)'),
+                        background: pubForm.pub_type === t ? '#7F77DD10' : 'var(--bg-card)', color: pubForm.pub_type === t ? 'var(--accent-purple)' : 'var(--c-faint)',
                         fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
                       }}>{t}</button>
                     ))}
@@ -3635,16 +3609,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   })()}
                 </div>
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                   <KoreanTextarea value={pubForm.content} onChange={v => setPubForm(p => ({ ...p, content: v }))}
                     placeholder="출판물 내용을 입력하세요" rows={8}
                     style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
                 </div>
                 <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, _dfPub)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
-                  width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#7F77DD', color: '#fff',
+                  width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                 }}>{saving ? '저장 중...' : '저장'}</button>
-                {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
+                {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
               </>)}
             </div>
           )}
@@ -3661,7 +3635,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.sub_source === s ? 700 : 500,
                     border: 'none', textAlign: 'center',
                     background: addForm.sub_source === s ? (s === '원문' ? '#7F77DD15' : '#D85A3015') : 'transparent',
-                    color: addForm.sub_source === s ? (s === '원문' ? '#7F77DD' : '#D85A30') : 'var(--c-muted)',
+                    color: addForm.sub_source === s ? (s === '원문' ? 'var(--accent-purple)' : 'var(--accent-orange)') : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{s}</button>
                 ))}
@@ -3676,8 +3650,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                 {speechSubTypes.map((t, ti) => (
                   <button key={t} onClick={() => !editingSTypes && setAddForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? '#378ADD' : editingSTypes && !defaultSTypes.includes(t) ? '#fcc' : 'var(--bd)'),
-                    background: addForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: addForm.service_type === t ? '#378ADD' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? 'var(--accent-blue)' : editingSTypes && !defaultSTypes.includes(t) ? '#fcc' : 'var(--bd)'),
+                    background: addForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: addForm.service_type === t ? 'var(--accent-blue)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: editingSTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
@@ -3686,18 +3660,18 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     {editingSTypes && ti < speechSubTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti+1); setSpeechSubTypes(next); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingSTypes && !defaultSTypes.includes(t) && (
                       <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}
-                        style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: '#c44', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
+                        style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
                 ))}
                 {!addingSType && !editingSTypes && <button onClick={() => setAddingSType(true)} style={{ padding: '4px 8px', borderRadius: 8, border: '1px dashed var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>+</button>}
-                {!addingSType && <button onClick={() => setEditingSTypes(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingSTypes ? '#c44' : 'var(--bd)'), background: editingSTypes ? 'var(--tint-red)' : 'var(--bg-card)', color: editingSTypes ? '#c44' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingSTypes ? '완료' : '편집'}</button>}
+                {!addingSType && <button onClick={() => setEditingSTypes(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingSTypes ? 'var(--c-danger)' : 'var(--bd)'), background: editingSTypes ? 'var(--tint-red)' : 'var(--bg-card)', color: editingSTypes ? 'var(--c-danger)' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingSTypes ? '완료' : '편집'}</button>}
                 {addingSType && (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newSType} onChange={e => setNewSType(e.target.value)} placeholder="새 종류"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
                       onKeyDown={e => { if (e.key === 'Enter' && newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}} />
-                    <button onClick={() => { if (newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #378ADD', background: 'var(--tint-blue-light)', color: '#378ADD', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                    <button onClick={() => { if (newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingSType(false); setNewSType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -3766,7 +3740,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           {/* 영적 보물 - 성경 읽기 범위 */}
           {addForm.source === '토의' && addForm.sub_source === '영적 보물' && (
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성경 읽기 범위 <span style={{ color: '#c44' }}>*</span></div>
+              <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성경 읽기 범위 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
               <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))}
                 placeholder="이사야 50-51장" style={{ ...iS, width: '100%' }} />
             </div>
@@ -3779,8 +3753,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                 {discussionTypes.map((t, ti) => (
                   <button key={t} onClick={() => !editingDTypes && setAddForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? '#378ADD' : editingDTypes && !defaultDTypes.includes(t) ? '#fcc' : 'var(--bd)'),
-                    background: addForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: addForm.service_type === t ? '#378ADD' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? 'var(--accent-blue)' : editingDTypes && !defaultDTypes.includes(t) ? '#fcc' : 'var(--bd)'),
+                    background: addForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: addForm.service_type === t ? 'var(--accent-blue)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: editingDTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
@@ -3789,18 +3763,18 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     {editingDTypes && ti < discussionTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti+1); setDiscussionTypes(next); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingDTypes && !defaultDTypes.includes(t) && (
                       <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}
-                        style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: '#c44', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
+                        style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
                 ))}
                 {!addingDType && !editingDTypes && <button onClick={() => setAddingDType(true)} style={{ padding: '4px 8px', borderRadius: 8, border: '1px dashed var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>+</button>}
-                {!addingDType && <button onClick={() => setEditingDTypes(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingDTypes ? '#c44' : 'var(--bd)'), background: editingDTypes ? 'var(--tint-red)' : 'var(--bg-card)', color: editingDTypes ? '#c44' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingDTypes ? '완료' : '편집'}</button>}
+                {!addingDType && <button onClick={() => setEditingDTypes(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingDTypes ? 'var(--c-danger)' : 'var(--bd)'), background: editingDTypes ? 'var(--tint-red)' : 'var(--bg-card)', color: editingDTypes ? 'var(--c-danger)' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingDTypes ? '완료' : '편집'}</button>}
                 {addingDType && (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newDType} onChange={e => setNewDType(e.target.value)} placeholder="새 종류"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
                       onKeyDown={e => { if (e.key === 'Enter' && newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}} />
-                    <button onClick={() => { if (newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #378ADD', background: 'var(--tint-blue-light)', color: '#378ADD', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                    <button onClick={() => { if (newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingDType(false); setNewDType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -3821,7 +3795,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.entry_type === v ? 700 : 500,
                     border: 'none', textAlign: 'center',
                     background: addForm.entry_type === v ? '#378ADD15' : 'transparent',
-                    color: addForm.entry_type === v ? '#378ADD' : 'var(--c-muted)',
+                    color: addForm.entry_type === v ? 'var(--accent-blue)' : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{l}</button>
                 ))}
@@ -3836,8 +3810,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                 {manageServiceTypes.map((t, ti) => (
                   <button key={t} onClick={() => !editingMTypes && setAddForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? '#1D9E75' : editingMTypes && !defaultMTypes.includes(t) ? '#fcc' : 'var(--bd)'),
-                    background: addForm.service_type === t ? 'var(--tint-green)' : 'var(--bg-card)', color: addForm.service_type === t ? '#1D9E75' : 'var(--c-faint)',
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? 'var(--accent)' : editingMTypes && !defaultMTypes.includes(t) ? '#fcc' : 'var(--bd)'),
+                    background: addForm.service_type === t ? 'var(--tint-green)' : 'var(--bg-card)', color: addForm.service_type === t ? 'var(--accent)' : 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: editingMTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
@@ -3854,17 +3828,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         if (cnt > 0) await deleteServiceType(t);
                         setManageServiceTypes(p => p.filter(x => x !== t));
                         if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' }));
-                      }} style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: '#c44', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
+                      }} style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
                 ))}
                 {!addingMType && !editingMTypes && <button onClick={() => setAddingMType(true)} style={{ padding: '4px 8px', borderRadius: 8, border: '1px dashed var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>+</button>}
-                {!addingMType && <button onClick={() => setEditingMTypes(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingMTypes ? '#c44' : 'var(--bd)'), background: editingMTypes ? 'var(--tint-red)' : 'var(--bg-card)', color: editingMTypes ? '#c44' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingMTypes ? '완료' : '편집'}</button>}
+                {!addingMType && <button onClick={() => setEditingMTypes(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingMTypes ? 'var(--c-danger)' : 'var(--bd)'), background: editingMTypes ? 'var(--tint-red)' : 'var(--bg-card)', color: editingMTypes ? 'var(--c-danger)' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingMTypes ? '완료' : '편집'}</button>}
                 {addingMType && (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newMType} onChange={e => setNewMType(e.target.value)} placeholder="새 종류" style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.857rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
                       onKeyDown={e => { if (e.key === 'Enter' && newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setAddForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} />
-                    <button onClick={() => { if (newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setAddForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #1D9E75', background: 'var(--tint-green)', color: '#1D9E75', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                    <button onClick={() => { if (newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setAddForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingMType(false); setNewMType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -3885,7 +3859,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.sub_source === s ? 700 : 500,
                     border: 'none', textAlign: 'center',
                     background: addForm.sub_source === s ? '#D85A3015' : 'transparent',
-                    color: addForm.sub_source === s ? '#D85A30' : 'var(--c-muted)',
+                    color: addForm.sub_source === s ? 'var(--accent-orange)' : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{s}</button>
                 ))}
@@ -3902,8 +3876,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   const sel = selSituations.has(t);
                   return (
                     <button key={t} onClick={() => { if (editingVSits) return; setSelSituations(prev => { const next = new Set(prev); if (next.has(t)) next.delete(t); else next.add(t); return next; }); }} style={{
-                      padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (sel ? '#378ADD' : editingVSits && !defaultVSits.includes(t) ? '#fcc' : 'var(--bd)'),
-                      background: sel ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: sel ? '#378ADD' : 'var(--c-faint)',
+                      padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (sel ? 'var(--accent-blue)' : editingVSits && !defaultVSits.includes(t) ? '#fcc' : 'var(--bd)'),
+                      background: sel ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: sel ? 'var(--accent-blue)' : 'var(--c-faint)',
                       fontSize: '0.786rem', cursor: editingVSits ? 'default' : 'pointer', fontWeight: sel ? 700 : 400, position: 'relative',
                       display: 'flex', alignItems: 'center', gap: 3,
                     }}>
@@ -3912,19 +3886,19 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       {editingVSits && ti < visitSituations.length - 1 && <span onClick={(e) => { e.stopPropagation(); setVisitSituations(swapArr(visitSituations, ti, ti+1)); }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                       {editingVSits && !defaultVSits.includes(t) && (
                         <span onClick={(e) => { e.stopPropagation(); if (!confirm(`"${t}"을(를) 삭제하시겠습니까?`)) return; setVisitSituations(prev => prev.filter(x => x !== t)); setSelSituations(prev => { const next = new Set(prev); next.delete(t); return next; }); }}
-                          style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: '#c44', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
+                          style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                       )}
                     </button>
                   );
                 })}
                 {!addingVSit && !editingVSits && <button onClick={() => setAddingVSit(true)} style={{ padding: '4px 8px', borderRadius: 8, border: '1px dashed var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>+</button>}
-                {!addingVSit && <button onClick={() => setEditingVSits(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingVSits ? '#c44' : 'var(--bd)'), background: editingVSits ? 'var(--tint-red)' : 'var(--bg-card)', color: editingVSits ? '#c44' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingVSits ? '완료' : '편집'}</button>}
+                {!addingVSit && <button onClick={() => setEditingVSits(p => !p)} style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid ' + (editingVSits ? 'var(--c-danger)' : 'var(--bd)'), background: editingVSits ? 'var(--tint-red)' : 'var(--bg-card)', color: editingVSits ? 'var(--c-danger)' : 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>{editingVSits ? '완료' : '편집'}</button>}
                 {addingVSit && (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newVSit} onChange={e => setNewVSit(e.target.value)} placeholder="새 상황"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
                       onKeyDown={e => { if (e.key === 'Enter' && newVSit.trim()) { setVisitSituations(prev => [...prev, newVSit.trim()]); setSelSituations(prev => new Set([...prev, newVSit.trim()])); setNewVSit(''); setAddingVSit(false); }}} />
-                    <button onClick={() => { if (newVSit.trim()) { setVisitSituations(prev => [...prev, newVSit.trim()]); setSelSituations(prev => new Set([...prev, newVSit.trim()])); setNewVSit(''); setAddingVSit(false); }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid #378ADD', background: 'var(--tint-blue-light)', color: '#378ADD', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                    <button onClick={() => { if (newVSit.trim()) { setVisitSituations(prev => [...prev, newVSit.trim()]); setSelSituations(prev => new Set([...prev, newVSit.trim()])); setNewVSit(''); setAddingVSit(false); }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingVSit(false); setNewVSit(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -3970,7 +3944,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           {/* 출판물 코드 */}
           {(addForm.entry_type === 'publication' || (addForm.source === '토의' && (addForm.sub_source === '파수대' || addForm.sub_source === '성서 연구'))) && addForm.sub_source !== '원문' && (
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 {addForm.entry_type === 'publication' && <span style={{ color: '#c44' }}>*</span>}</div>
+              <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 {addForm.entry_type === 'publication' && <span style={{ color: 'var(--c-danger)' }}>*</span>}</div>
               <input value={addForm.pub_code} onChange={e => setAddForm(p => ({ ...p, pub_code: e.target.value }))}
                 placeholder="파26 2월호 2-7면" style={{ ...iS, width: '100%' }} />
             </div>
@@ -3999,7 +3973,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       placeholder="007, 기념식, 자비..." style={{ ...iS, flex: 1 }} />
                     {addForm.outline_num && <button onClick={() => { selectOutline(null); setOutlineQuery(''); }} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0 }}>초기화</button>}
                   </div>
-                  {addForm.outline_num && <div style={{ marginTop: 4, fontSize: '0.786rem', color: '#1D9E75', fontWeight: 600 }}>✅ {addForm.outline_type === '공개강연' || addForm.outline_type?.startsWith('S-34') ? 'S-34_' + addForm.outline_num.padStart(3, '0') : addForm.outline_type === '기념식' ? 'S-31_기념식' : addForm.outline_type?.startsWith('JWBC') ? addForm.outline_type + '_' + addForm.outline_num : addForm.outline_num} - {addForm.outline_title}</div>}
+                  {addForm.outline_num && <div style={{ marginTop: 4, fontSize: '0.786rem', color: 'var(--accent)', fontWeight: 600 }}>✅ {addForm.outline_type === '공개강연' || addForm.outline_type?.startsWith('S-34') ? 'S-34_' + addForm.outline_num.padStart(3, '0') : addForm.outline_type === '기념식' ? 'S-31_기념식' : addForm.outline_type?.startsWith('JWBC') ? addForm.outline_type + '_' + addForm.outline_num : addForm.outline_num} - {addForm.outline_title}</div>}
                   {outlineFocus && outlineQuery && !addForm.outline_num && (() => {
                     const q = outlineQuery.toLowerCase();
                     const filtered = outlines.filter(g => !g.type.startsWith('JWBC')).filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || g.prefix.toLowerCase().includes(q)).slice(0, 10);
@@ -4127,7 +4101,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           {addTab === 'memo' && (<>
           {/* 내용 */}
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: '#c44' }}>*</span></div>
+            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
             <KoreanTextarea value={addForm.content} onChange={v => setAddForm(p => ({ ...p, content: v }))}
               placeholder="내용을 입력하세요" rows={8}
               style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
@@ -4135,7 +4109,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
           {/* 이동 중 표시 */}
           {movingMemo && (
-            <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, fontSize: '0.786rem', color: '#D85A30', fontWeight: 600 }}>
+            <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, fontSize: '0.786rem', color: 'var(--accent-orange)', fontWeight: 600 }}>
               📋 메모에서 이동 중 — 출처와 세부 항목을 선택한 후 저장하세요
             </div>
           )}
@@ -4143,7 +4117,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
           {/* 저장/리셋 */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleSave} disabled={saving || !addForm.content.trim() || (addForm.entry_type === 'publication' && !addForm.pub_code.trim() && addForm.sub_source !== '원문')} style={{
-              flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+              flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
               fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
             }}>{saving ? '저장 중...' : movingMemo ? '이동 저장' : 'DB에 저장'}</button>
             <button onClick={() => { setAddForm(p => ({...defaultForm, source: p.source, sub_source: p.sub_source})); setOutlineQuery(''); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
@@ -4151,7 +4125,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             }}>초기화</button>
           </div>
 
-          {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{saveMsg}</div>}
+          {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
           </div>
         </div>
@@ -4162,7 +4136,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, overflow: 'hidden' }}>
 
           {siTransferMemo && (
-            <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, fontSize: '0.786rem', color: '#D85A30', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, fontSize: '0.786rem', color: 'var(--accent-orange)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
               📋 메모에서 이동 중 — 저장하면 원본 메모가 삭제됩니다
               <div style={{ flex: 1 }} />
               <button onClick={() => setSiTransferMemo(null)} style={{ padding: '2px 6px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>✕</button>
@@ -4174,7 +4148,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
           {/* 1. 골자 선택 / 자유 입력 */}
           <div style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 8, background: 'var(--bg-subtle)', borderRadius: 10, padding: 2 }}>
+            <div style={{ ...S.pillContainer, marginBottom: 8 }}>
               {[['outline', '골자 선택'], ['free', '자유 입력']].map(([k, l]) => (
                 <button key={k} onClick={() => {
                   const isFree = k === 'free';
@@ -4211,13 +4185,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]);
                   }
                   setSiSaveMsg('');
-                }} style={{
-                  flex: 1, padding: '6px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: (k === 'free' ? siNoOutline : !siNoOutline) ? 700 : 500,
-                  border: 'none', background: (k === 'free' ? siNoOutline : !siNoOutline) ? 'var(--bg-card, #fff)' : 'transparent',
-                  color: (k === 'free' ? siNoOutline : !siNoOutline) ? '#1D9E75' : 'var(--c-muted)',
-                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                  boxShadow: (k === 'free' ? siNoOutline : !siNoOutline) ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                }}>{l}</button>
+                }} style={{ ...S.pillL4(k === 'free' ? siNoOutline : !siNoOutline), padding: '6px 0' }}>{l}</button>
               ))}
             </div>
 
@@ -4246,17 +4214,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           // 기본 날짜
                           if (!siDate) { const d = new Date(); setSiDate(String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0')); }
                         }} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontWeight: 700, color: '#1D9E75', fontSize: '0.786rem', flexShrink: 0 }}>{g.outline_num}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{g.outline_num}</span>
                           {g.outline_year && <span style={{
                             display: 'inline-flex', alignItems: 'center',
                             padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                            background: 'var(--tint-orange, #fef3ec)', color: '#D85A30',
+                            background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)',
                             flexShrink: 0, lineHeight: 1.3,
                           }}>{g.outline_year}년</span>}
                           {g.version && <span style={{
                             display: 'inline-flex', alignItems: 'center',
                             padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                            background: 'var(--tint-blue, #eef4fb)', color: '#378ADD',
+                            background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
                             flexShrink: 0, lineHeight: 1.3,
                           }}>v{g.version}</span>}
                           <span style={{ flex: 1, fontSize: '0.786rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
@@ -4272,7 +4240,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             {siOutline && !siNoOutline && (
               <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 8, background: 'var(--tint-green)', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{siOutline.outline_type_name || siOutline.outline_type}</span>
-                <span style={{ fontWeight: 700, color: '#1D9E75', fontSize: '0.786rem' }}>{siOutline.outline_num}</span>
+                <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{siOutline.outline_num}</span>
                 <span style={{ fontSize: '0.786rem', color: 'var(--c-text)' }}>{siOutline.title}</span>
                 <div style={{ flex: 1 }} />
                 <button onClick={() => { setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({}); }} style={{ padding: '2px 6px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>✕</button>
@@ -4351,7 +4319,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 }} style={{
                   flex: 1, padding: '6px 0', border: 'none', fontSize: '0.786rem', fontWeight: siMode === k ? 700 : 500, cursor: 'pointer',
                   background: siMode === k ? 'var(--bg-card, #fff)' : 'transparent',
-                  color: siMode === k ? '#1D9E75' : 'var(--c-muted)',
+                  color: siMode === k ? 'var(--accent)' : 'var(--c-muted)',
                   borderRadius: 8, fontFamily: 'inherit', transition: 'all 0.2s ease',
                   boxShadow: siMode === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
                 }}>{l}</button>
@@ -4370,7 +4338,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <div key={si} style={{ marginBottom: 8, borderRadius: 8, border: '1px solid var(--bd-light)', overflow: 'hidden' }}>
                     {!isStandaloneTopLevel && (
                       <div style={{ padding: '6px 10px', background: 'var(--bg-subtle)', display: 'flex', alignItems: 'center', gap: 6, borderBottom: '1px solid var(--bd-light)' }}>
-                        <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#1D9E75', color: '#fff', fontSize: '0.714rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{si + 1}</span>
+                        <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--accent)', color: '#fff', fontSize: '0.714rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{si + 1}</span>
                         <input value={st.title} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, title: e.target.value } : x))} placeholder="소주제 제목" style={{ flex: 1, padding: '4px 8px', border: 'none', borderRadius: 6, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'transparent', boxSizing: 'border-box' }} />
                         <button onClick={() => setSiFreeSubtopics(p => p.filter((_, j) => j !== si))} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                       </div>
@@ -4390,7 +4358,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         <div key={pi} style={{ marginBottom: 6, padding: 8, borderRadius: 6, background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)' }}>
                           {/* 헤더 */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                            <span style={{ fontSize: '0.714rem', fontWeight: 600, color: '#378ADD', flexShrink: 0 }}>{ptLabel}</span>
+                            <span style={{ fontSize: '0.714rem', fontWeight: 600, color: 'var(--accent-blue)', flexShrink: 0 }}>{ptLabel}</span>
                             <div style={{ flex: 1 }} />
                             <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
                               j === si ? { ...x, points: (x.points || []).filter((_, pj) => pj !== pi) } : x
@@ -4442,7 +4410,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                   padding: '3px 8px', borderRadius: 6, fontSize: '0.714rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
                                   border: 'none',
                                   background: active ? (tag === '표현' ? '#D85A3018' : tag === '예시·성경' ? '#2D8FC718' : '#C7842D18') : 'var(--bg-card)',
-                                  color: active ? (tag === '표현' ? '#D85A30' : tag === '예시·성경' ? '#2D8FC7' : '#C7842D') : 'var(--c-muted)',
+                                  color: active ? (tag === '표현' ? 'var(--accent-orange)' : tag === '예시·성경' ? '#2D8FC7' : 'var(--accent-brown)') : 'var(--c-muted)',
                                   transition: 'all 0.15s',
                                 }}>{tag}</button>
                               );
@@ -4484,8 +4452,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           // 단순 소주제 추가 (Q10 편입 제거)
                           setSiFreeSubtopics(p => [...p, { title: '', memo: '', _mode: 'subtopic', points: [{ title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] }]);
                         }} style={{
-                          flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #1D9E75',
-                          background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                          flex: 1, padding: '8px', borderRadius: 6, border: '1px solid var(--accent)',
+                          background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                         }}>+ 소주제 추가</button>
                       )}
                       {canAddTopLevel && (
@@ -4498,8 +4466,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             ));
                           }
                         }} style={{
-                          flex: 1, padding: '8px', borderRadius: 6, border: '1px solid #378ADD',
-                          background: 'var(--bg-card)', color: '#378ADD', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                          flex: 1, padding: '8px', borderRadius: 6, border: '1px solid var(--accent-blue)',
+                          background: 'var(--bg-card)', color: 'var(--accent-blue)', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
                         }}>+ 최상위 요점 추가</button>
                       )}
                     </div>
@@ -4549,12 +4517,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                               }
                             }} style={{
                               display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
-                              background: siVerseOpen[qPtKey] ? '#7F77DD' : '#7F77DD0A', color: siVerseOpen[qPtKey] ? '#fff' : '#7F77DD', fontWeight: 600, whiteSpace: 'nowrap',
+                              background: siVerseOpen[qPtKey] ? 'var(--accent-purple)' : '#7F77DD0A', color: siVerseOpen[qPtKey] ? '#fff' : 'var(--accent-purple)', fontWeight: 600, whiteSpace: 'nowrap',
                               transition: 'all 0.15s',
                             }}>📖 {scr}</span>
                             <span onClick={(e) => { e.stopPropagation(); const nv = qSu === '낭독' ? '' : '낭독'; setSiDetails(p => ({ ...p, [qPtKey]: { ...p[qPtKey], scripture_usage: nv } })); }} style={{
                               display: 'inline-block', marginLeft: 2, padding: '1px 5px', borderRadius: 4, fontSize: '0.571rem', cursor: 'pointer',
-                              background: qSu === '낭독' ? '#D85A30' : 'var(--bg-subtle, #EFEFF4)', color: qSu === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,
+                              background: qSu === '낭독' ? 'var(--accent-orange)' : 'var(--bg-subtle, #EFEFF4)', color: qSu === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,
                               transition: 'all 0.15s',
                             }}>낭독</span>
                           </>)}
@@ -4566,7 +4534,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                               {siVerseLoading[qPtKey] && <div style={{ height: 14, borderRadius: 4, background: 'linear-gradient(90deg, var(--bd-light) 25%, var(--bd-medium) 50%, var(--bd-light) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
                               {!siVerseLoading[qPtKey] && (siVerseData[qPtKey] || []).length === 0 && <span style={{ color: 'var(--c-dim)' }}>본문을 찾을 수 없습니다.</span>}
                               {!siVerseLoading[qPtKey] && (siVerseData[qPtKey] || []).map((v, vi) => (
-                                <div key={vi}><span style={{ fontWeight: 700, color: '#7F77DD', marginRight: 4 }}>{v.ref}</span>{v.text}</div>
+                                <div key={vi}><span style={{ fontWeight: 700, color: 'var(--accent-purple)', marginRight: 4 }}>{v.ref}</span>{v.text}</div>
                               ))}
                             </div>
                           )}
@@ -4622,12 +4590,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                     }
                                   }} style={{
                                     display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
-                                    background: siVerseOpen[ptKey] ? '#7F77DD' : '#7F77DD0A', color: siVerseOpen[ptKey] ? '#fff' : '#7F77DD', fontWeight: 600, whiteSpace: 'nowrap',
+                                    background: siVerseOpen[ptKey] ? 'var(--accent-purple)' : '#7F77DD0A', color: siVerseOpen[ptKey] ? '#fff' : 'var(--accent-purple)', fontWeight: 600, whiteSpace: 'nowrap',
                                     transition: 'all 0.15s',
                                   }}>📖 {scr}</span>
                                   <span onClick={() => { const nv = (d.scripture_usage || '') === '낭독' ? '' : '낭독'; upd('scripture_usage', nv); }} style={{
                                     display: 'inline-block', marginLeft: 2, padding: '1px 5px', borderRadius: 4, fontSize: '0.571rem', cursor: 'pointer',
-                                    background: d.scripture_usage === '낭독' ? '#D85A30' : 'var(--bg-subtle, #EFEFF4)', color: d.scripture_usage === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,
+                                    background: d.scripture_usage === '낭독' ? 'var(--accent-orange)' : 'var(--bg-subtle, #EFEFF4)', color: d.scripture_usage === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,
                                     transition: 'all 0.15s',
                                   }}>낭독</span>
                                 </>)}
@@ -4641,7 +4609,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 {siVerseLoading[ptKey] && <div style={{ height: 14, borderRadius: 4, background: 'linear-gradient(90deg, var(--bd-light) 25%, var(--bd-medium) 50%, var(--bd-light) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
                                 {!siVerseLoading[ptKey] && (siVerseData[ptKey] || []).length === 0 && <span style={{ color: 'var(--c-dim)' }}>본문을 찾을 수 없습니다.</span>}
                                 {!siVerseLoading[ptKey] && (siVerseData[ptKey] || []).map((v, vi) => (
-                                  <div key={vi}><span style={{ fontWeight: 700, color: '#7F77DD', marginRight: 4 }}>{v.ref}</span>{v.text}</div>
+                                  <div key={vi}><span style={{ fontWeight: 700, color: 'var(--accent-purple)', marginRight: 4 }}>{v.ref}</span>{v.text}</div>
                                 ))}
                               </div>
                             )}
@@ -4664,7 +4632,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                     padding: '3px 8px', borderRadius: 6, fontSize: '0.786rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
                                     border: 'none',
                                     background: active ? (tag === '표현' ? '#D85A3018' : tag === '예시·성경' ? '#2D8FC718' : '#C7842D18') : 'var(--bg-subtle, #EFEFF4)',
-                                    color: active ? (tag === '표현' ? '#D85A30' : tag === '예시·성경' ? '#2D8FC7' : '#C7842D') : 'var(--c-muted)',
+                                    color: active ? (tag === '표현' ? 'var(--accent-orange)' : tag === '예시·성경' ? '#2D8FC7' : 'var(--accent-brown)') : 'var(--c-muted)',
                                     transition: 'all 0.15s',
                                   }}>{tag}</button>
                                 );
@@ -4677,7 +4645,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                   padding: '3px 8px', borderRadius: 6, fontSize: '0.786rem', fontWeight: (d.usage || '사용') === u ? 700 : 500, cursor: 'pointer',
                                   border: 'none',
                                   background: (d.usage || '사용') === u ? '#1D9E7515' : 'var(--bg-subtle, #EFEFF4)',
-                                  color: (d.usage || '사용') === u ? '#1D9E75' : 'var(--c-muted)',
+                                  color: (d.usage || '사용') === u ? 'var(--accent)' : 'var(--c-muted)',
                                   transition: 'all 0.15s',
                                 }}>{u}</button>
                               ))}
@@ -4699,7 +4667,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {/* draft 불러오기 안내 */}
               {siDraftInfo && (
                 <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--tint-blue-soft)', border: '1px solid var(--tint-blue-bd)', marginBottom: 8 }}>
-                  <div style={{ fontSize: '0.786rem', color: '#378ADD', fontWeight: 600, marginBottom: 6 }}>기존 임시저장 데이터 있음 ({siDraftInfo.filled}/{siDraftInfo.total} {siDraftInfo.mode === 'quick' ? '소주제 메모' : '요점'} 입력)</div>
+                  <div style={{ fontSize: '0.786rem', color: 'var(--accent-blue)', fontWeight: 600, marginBottom: 6 }}>기존 임시저장 데이터 있음 ({siDraftInfo.filled}/{siDraftInfo.total} {siDraftInfo.mode === 'quick' ? '소주제 메모' : '요점'} 입력)</div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={async () => {
                       const r = await draftLoad({ outline_num: siOutline?.outline_num || '', speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline?.outline_type || '' });
@@ -4716,7 +4684,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         setSiDraftInfo(null);
                         setSiSaveMsg('✓ 임시저장 불러오기 완료');
                       }
-                    }} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: '#378ADD', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
+                    }} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
                     <button onClick={async () => {
                       if (!confirm('기존 데이터가 삭제됩니다. 새로 만드시겠습니까?')) return;
                       await draftDelete(siDraftInfo.draft_id);
@@ -4730,7 +4698,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {/* 간단 메모 불러오기 안내 (상세 입력 모드에서) */}
               {siNoteInfo && siMode === 'detail' && (
                 <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '0.786rem', color: '#D85A30', fontWeight: 600 }}>간단 입력 데이터 있음</span>
+                  <span style={{ fontSize: '0.786rem', color: 'var(--accent-orange)', fontWeight: 600 }}>간단 입력 데이터 있음</span>
                   <div style={{ flex: 1 }} />
                   <button onClick={() => {
                     const text = (siNoteInfo.text || '').replace(/\[.*?\].*\n?/g, '').trim();
@@ -4740,7 +4708,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     }
                     setSiNoteInfo(null);
                     setSiSaveMsg('✓ 간단 메모 불러오기 완료');
-                  }} style={{ padding: '3px 10px', borderRadius: 6, border: 'none', background: '#D85A30', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
+                  }} style={{ padding: '3px 10px', borderRadius: 6, border: 'none', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
                 </div>
               )}
 
@@ -4889,7 +4857,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   finally { setSiCompleting(false); }
                 }} disabled={siSaving || siCompleting} style={{
                   flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                  background: siCompleting ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+                  background: siCompleting ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                   fontSize: '0.929rem', fontWeight: 700, cursor: siCompleting ? 'default' : 'pointer',
                   position: 'relative', overflow: 'hidden',
                 }}>
@@ -4910,7 +4878,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   try { localStorage.removeItem('jw-si-state'); } catch {}
                 }} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
               </div>
-              {siSaveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: siSaveMsg.startsWith('✓') ? '#1D9E75' : '#c44', fontWeight: 600 }}>{siSaveMsg}</div>}
+              {siSaveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: siSaveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>{siSaveMsg}</div>}
             </div>
           )}
 
@@ -4920,16 +4888,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       {addTab === 'drafts' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
           {/* 임시저장 하위 — 카드 헤더 언더라인 */}
-          <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
-            {[['draft', '연설 draft', '#378ADD'], ['memo', '메모', '#D85A30']].map(([k, l, c]) => {
+          <div style={S.underlineContainer}>
+            {[['draft', '연설 draft', 'var(--accent-blue)'], ['memo', '메모', 'var(--accent-orange)']].map(([k, l, c]) => {
               const active = draftsFilter === k;
               return (
-                <button key={k} onClick={() => { setDraftsFilter(k); if (k === 'memo' && memoEntries.length === 0) { setMemoLoading(true); listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}).finally(() => setMemoLoading(false)); } }} style={{
-                  flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? `2px solid ${c}` : '2px solid transparent',
-                  background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? c : 'var(--c-muted)', lineHeight: 1.2 }}>{l}</span>
+                <button key={k} onClick={() => { setDraftsFilter(k); if (k === 'memo' && memoEntries.length === 0) { setMemoLoading(true); listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}).finally(() => setMemoLoading(false)); } }} style={S.underlineTab(active, c)}>
+                  <span style={S.underlineLabel(active, c)}>{l}</span>
                   <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                 </button>
               );
@@ -4958,16 +4922,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               return (
               <div key={dr.draft_id} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 6 }}>
                 <div style={{ padding: '8px 10px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#378ADD', flexShrink: 0 }} />
-                  {isStt && <span title="STT에서 전달됨" style={{ fontSize: '0.643rem', padding: '1px 6px', borderRadius: 4, background: 'rgba(55,138,221,0.15)', color: '#378ADD', fontWeight: 600 }}>STT</span>}
-                  {dr.outline_num && <span style={{ fontSize: '0.786rem', color: '#1D9E75', fontWeight: 700 }}>{dr.outline_num}</span>}
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent-blue)', flexShrink: 0 }} />
+                  {isStt && <span title="STT에서 전달됨" style={{ fontSize: '0.643rem', padding: '1px 6px', borderRadius: 4, background: 'rgba(55,138,221,0.15)', color: 'var(--accent-blue)', fontWeight: 600 }}>STT</span>}
+                  {dr.outline_num && <span style={{ fontSize: '0.786rem', color: 'var(--accent)', fontWeight: 700 }}>{dr.outline_num}</span>}
                   <span style={{ fontSize: '0.786rem', color: 'var(--c-text)' }}>{dr.outline_title || dr.free_topic || (isStt ? '(STT 녹음)' : '')}</span>
                   {dr.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{dr.speaker}</span>}
                   {dr.date && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{dr.date}</span>}
                   <div style={{ flex: 1 }} />
                   {!isStt && (isQuickInput
-                    ? <span style={{ fontSize: '0.643rem', color: '#D85A30', fontWeight: 600 }}>{(dr.free_text || '').length}자</span>
-                    : <span style={{ fontSize: '0.643rem', color: '#378ADD', fontWeight: 600 }}>{dr.filled}/{dr.total} {(dr.no_outline || dr.mode !== 'quick') ? '요점' : '소주제'}</span>
+                    ? <span style={{ fontSize: '0.643rem', color: 'var(--accent-orange)', fontWeight: 600 }}>{(dr.free_text || '').length}자</span>
+                    : <span style={{ fontSize: '0.643rem', color: 'var(--accent-blue)', fontWeight: 600 }}>{dr.filled}/{dr.total} {(dr.no_outline || dr.mode !== 'quick') ? '요점' : '소주제'}</span>
                   )}
                 </div>
                 <div style={{ padding: '6px 10px', display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -4982,14 +4946,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <div style={{ flex: 1 }} />
                   {/* Phase 5-2: 통합 [이동] 버튼 — draft 타입별 라우팅은 handleDraftMove 내부 */}
                   <button onClick={() => handleDraftMove(dr)}
-                    style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
+                    style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
                     이동
                   </button>
                   <button onClick={async () => {
                     if (!confirm('이 임시저장을 삭제하시겠습니까?')) return;
                     await draftDelete(dr.draft_id);
                     setDbDrafts(p => p.filter((_, i) => i !== di));
-                  }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
+                  }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                 </div>
               </div>
               );
@@ -5013,7 +4977,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               return (
                 <div key={me.id} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 6 }}>
                   <div style={{ padding: '8px 10px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#D85A30', flexShrink: 0 }} />
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent-orange)', flexShrink: 0 }} />
                     <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1 }}>{mt.outline_title || mt.topic || '(제목 없음)'}</span>
                     {mt.date && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{mt.date}</span>}
                   </div>
@@ -5021,12 +4985,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-sub)', lineHeight: 1.6, maxHeight: 60, overflow: 'hidden' }}>{body || '(내용 없음)'}</div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 6, justifyContent: 'flex-end' }}>
                       <button onClick={() => setMemoMoveModal({ id: me.id, collection: 'speech_expressions', topic: mt.outline_title || mt.topic || '', body })}
-                        style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #D85A30', background: 'var(--bg-card)', color: '#D85A30', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>이동</button>
+                        style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>이동</button>
                       <button onClick={async () => {
                         if (!confirm('이 메모를 삭제하시겠습니까?')) return;
                         await dbDelete('speech_expressions', me.id);
                         setMemoEntries(p => p.filter(e => e.id !== me.id));
-                      }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
+                      }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                     </div>
                   </div>
                 </div>
@@ -5047,7 +5011,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               </div>
               {memoMoveModal.topic && <div style={{ fontSize: '0.786rem', color: 'var(--c-sub)', marginBottom: 10, padding: '4px 8px', borderRadius: 6, background: 'var(--bg-subtle)' }}>{memoMoveModal.topic}</div>}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {[['speech_input', '연설 입력', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => (
+                {[['speech_input', '연설 입력', 'var(--accent)'], ['discussion', '토의', 'var(--accent-blue)'], ['service', '봉사 모임', 'var(--accent)'], ['visit_input', '방문', 'var(--accent-orange)'], ['pub_input', '출판물', 'var(--accent-purple)']].map(([k, l, c]) => (
                   <button key={k} onClick={() => {
                     const m = memoMoveModal;
                     setMovingMemo({ id: m.id, collection: m.collection });
@@ -5091,7 +5055,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
         {/* DB 탭 — 카드 헤더 언더라인 */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
+        <div style={S.underlineContainer}>
             {_dbTabs.map(({ key: t, color: tc }) => {
               const active = viewSource === t;
               const cnt = dbTabCounts[t];
@@ -5099,18 +5063,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <button key={t} onClick={() => {
                 if (t === viewSource) return;
                 setViewSource(t); setDbSearch(''); setExpandedDbEntry({}); setDbShowLimit(50); setDbSelected(new Set());
-                // 캐시 있으면 스킵
                 if (t === '연사메모') { if (!speakerMemos.length) { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(() => {}).finally(() => setSpMemoLoading(false)); } return; }
                 if (dbCache[t]?.length) return;
                 _loadDbTab(t);
-              }} style={{
-                flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? `2px solid ${tc}` : '2px solid transparent',
-                background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
-                transition: 'all 0.15s',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-              }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? tc : 'var(--c-muted)', lineHeight: 1.2 }}>{t}</span>
-                <span style={{ fontSize: '0.571rem', fontWeight: 600, color: active ? tc : 'var(--c-dim)', visibility: cnt != null ? 'visible' : 'hidden' }}>{cnt ?? 0}</span>
+              }} style={S.underlineTab(active, tc)}>
+                <span style={S.underlineLabel(active, tc)}>{t}</span>
+                <span style={{ ...S.underlineCount(active, tc), visibility: cnt != null ? 'visible' : 'hidden' }}>{cnt ?? 0}</span>
               </button>
               );
             })}
@@ -5121,15 +5079,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         <div style={{ padding: 12 }}>
           {/* 연설 필터 */}
           {viewSource === '연설' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 8, background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2 }}>
+            <div style={{ ...S.pillContainer, marginBottom: 8 }}>
               {['그룹', '목록'].map(f => (
-                <button key={f} onClick={() => { setSpeechFilter(f); }} style={{
-                  flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: speechFilter === f ? 700 : 500,
-                  border: 'none', background: speechFilter === f ? 'var(--bg-card, #fff)' : 'transparent',
-                  color: speechFilter === f ? '#D85A30' : 'var(--c-muted)',
-                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-                  boxShadow: speechFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                }}>{f}</button>
+                <button key={f} onClick={() => { setSpeechFilter(f); }} style={S.pillL4(speechFilter === f, 'var(--accent-orange)')}>{f}</button>
               ))}
             </div>
           )}
@@ -5156,7 +5108,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       setDbSelected(new Set(Object.keys(groups)));
                     } else setDbSelected(new Set(dbEntries.map(r => r.id)));
                   } else setDbSelected(new Set());
-                }} style={{ accentColor: '#1D9E75' }} />
+                }} style={{ accentColor: 'var(--accent)' }} />
                 전체 선택
               </label>
               <div style={{ flex: 1 }} />
@@ -5170,7 +5122,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               </>)}
               {dbSelected.size > 0 && (
                 <>
-                  <span style={{ fontSize: '0.786rem', color: '#c44', fontWeight: 600 }}>{dbSelected.size}개 선택</span>
+                  <span style={{ fontSize: '0.786rem', color: 'var(--c-danger)', fontWeight: 600 }}>{dbSelected.size}개 선택</span>
                   <button onClick={() => setDbSelected(new Set())} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.714rem', cursor: 'pointer' }}>선택 해제</button>
                   <button onClick={async () => {
                     const count = viewSource === '골자'
@@ -5226,7 +5178,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       setDbSelected(new Set());
                     } catch (e) { alert('오류: ' + e.message); }
                     finally { setDbDeleting(false); }
-                  }} disabled={dbDeleting} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #c44', background: dbDeleting ? 'var(--bd)' : 'var(--bg-card)', color: '#c44', fontSize: '0.714rem', cursor: dbDeleting ? 'default' : 'pointer', fontWeight: 600 }}>{dbDeleting ? '삭제 중...' : '선택 삭제'}</button>
+                  }} disabled={dbDeleting} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--c-danger)', background: dbDeleting ? 'var(--bd)' : 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.714rem', cursor: dbDeleting ? 'default' : 'pointer', fontWeight: 600 }}>{dbDeleting ? '삭제 중...' : '선택 삭제'}</button>
                 </>
               )}
             </div>
@@ -5279,25 +5231,25 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     padding: '8px 10px', background: 'var(--bg-subtle)', cursor: 'pointer',
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
-                    <input type="checkbox" checked={dbSelected.has(gKey)} onChange={e => { e.stopPropagation(); setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(gKey); else n.delete(gKey); return n; }); }} onClick={e => e.stopPropagation()} style={{ accentColor: '#1D9E75', cursor: 'pointer' }} />
+                    <input type="checkbox" checked={dbSelected.has(gKey)} onChange={e => { e.stopPropagation(); setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(gKey); else n.delete(gKey); return n; }); }} onClick={e => e.stopPropagation()} style={{ accentColor: 'var(--accent)', cursor: 'pointer' }} />
                     <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
-                    <span style={{ fontWeight: 700, color: '#1D9E75', fontSize: '0.786rem' }}>{pfxBase || g.num}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{pfxBase || g.num}</span>
                     {sbLabel && sbLabel !== num && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                      background: 'var(--tint-green, #e6f5ec)', color: '#1D9E75',
+                      background: 'var(--tint-green, #e6f5ec)', color: 'var(--accent)',
                       flexShrink: 0, lineHeight: 1.3,
                     }}>{sbLabel}</span>}
                     {g.year && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                      background: 'var(--tint-orange, #fef3ec)', color: '#D85A30',
+                      background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)',
                       flexShrink: 0, lineHeight: 1.3,
                     }}>{g.year}년</span>}
                     {g.version && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                      background: 'var(--tint-blue, #eef4fb)', color: '#378ADD',
+                      background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
                       flexShrink: 0, lineHeight: 1.3,
                     }}>v{g.version}</span>}
                     <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
@@ -5314,7 +5266,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         setDbCache(p => ({ ...p, '골자': (p['골자'] || []).filter(r => !g.items.some(gi => gi.id === r.id)) }));
                         setDbTabCounts(p => ({ ...p, '골자': Math.max(0, (p['골자'] || 0) - g.items.length) }));
                       } catch (err) { alert('오류: ' + err.message); }
-                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
+                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
                   </div>
                   {isOpen && (
                     <div style={{ padding: '4px 10px 6px', maxHeight: 250, overflowY: 'auto' }} className="chat-input">
@@ -5330,9 +5282,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         const m = r.metadata || {};
                         return (
                           <div key={r.id} style={{ fontSize: '0.786rem', padding: '3px 0', borderBottom: ri < g.items.length - 1 ? '1px solid var(--bd-light)' : 'none', display: 'flex', gap: 4, alignItems: 'baseline' }}>
-                            <span style={{ fontWeight: 600, color: '#1D9E75', flexShrink: 0 }}>{m.point_num || ''}</span>
+                            <span style={{ fontWeight: 600, color: 'var(--accent)', flexShrink: 0 }}>{m.point_num || ''}</span>
                             <span style={{ color: 'var(--c-text)', flex: 1 }}>{cleanMd(m.point_content || '')}</span>
-                            {m.scriptures && <span style={{ color: '#7F77DD', fontSize: '0.643rem', flexShrink: 0 }}>{cleanMd(m.scriptures)}</span>}
+                            {m.scriptures && <span style={{ color: 'var(--accent-purple)', fontSize: '0.643rem', flexShrink: 0 }}>{cleanMd(m.scriptures)}</span>}
                           </div>
                         );
                       })}
@@ -5379,10 +5331,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       padding: '8px 10px', background: 'var(--bg-subtle)', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', gap: 6,
                     }}>
-                      <input type="checkbox" checked={dbSelected.has(gKey)} onChange={e => { e.stopPropagation(); setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(gKey); else n.delete(gKey); return n; }); }} onClick={e => e.stopPropagation()} style={{ accentColor: '#D85A30', cursor: 'pointer' }} />
+                      <input type="checkbox" checked={dbSelected.has(gKey)} onChange={e => { e.stopPropagation(); setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(gKey); else n.delete(gKey); return n; }); }} onClick={e => e.stopPropagation()} style={{ accentColor: 'var(--accent-orange)', cursor: 'pointer' }} />
                       <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
-                      {pfx && <span style={{ fontWeight: 700, color: '#1D9E75', fontSize: '0.786rem' }}>{pfx}</span>}
-                      {g.items[0]?.metadata?.source === 'discussion' && (g.items[0]?.metadata?.discussion_type || g.items[0]?.metadata?.sub_source) && <span style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: '#378ADD', fontWeight: 600 }}>{g.items[0].metadata.discussion_type || g.items[0].metadata.sub_source}</span>}
+                      {pfx && <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{pfx}</span>}
+                      {g.items[0]?.metadata?.source === 'discussion' && (g.items[0]?.metadata?.discussion_type || g.items[0]?.metadata?.sub_source) && <span style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: 'var(--accent-blue)', fontWeight: 600 }}>{g.items[0].metadata.discussion_type || g.items[0].metadata.sub_source}</span>}
                       <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
                       {g.speaker && <span style={{ fontSize: '0.714rem', color: 'var(--c-faint)', flexShrink: 0 }}>{g.speaker}</span>}
                       {g.date && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.date}</span>}
@@ -5403,9 +5355,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           return (
                             <div key={r.id} style={{ fontSize: '0.786rem', padding: '4px 0', borderBottom: ri < g.items.length - 1 ? '1px solid var(--bd-light)' : 'none', marginLeft: Math.max(0, lvl - 1) * 12 }}>
                               <div style={{ display: 'flex', gap: 4, alignItems: 'baseline' }}>
-                                <span style={{ fontWeight: 600, color: '#D85A30', flexShrink: 0 }}>{m.point_num || m.sub_topic || ''}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--accent-orange)', flexShrink: 0 }}>{m.point_num || m.sub_topic || ''}</span>
                                 <span style={{ color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanMd(m.point_content || parsed?.point || '')}</span>
-                                {m.source === 'note' && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#C7842D20', color: '#C7842D', fontWeight: 600 }}>간단</span>}
+                                {m.source === 'note' && <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#C7842D20', color: 'var(--accent-brown)', fontWeight: 600 }}>간단</span>}
                               </div>
                               {(m.scriptures || m.keywords) && (
                                 <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginTop: 1 }}>
@@ -5441,7 +5393,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             const parsed = parseDocument(r.text || '');
             const isExpanded = expandedDbEntry[r.id];
             const body = (r.text || '').replace(/\[.*?\].*\n?/g, '').trim();
-            const cColor = r.collection === 'speech_points' ? '#1D9E75' : r.collection === 'publications' ? '#7F77DD' : '#D85A30';
+            const cColor = r.collection === 'speech_points' ? 'var(--accent)' : r.collection === 'publications' ? 'var(--accent-purple)' : 'var(--accent-orange)';
             const isPub = r.collection === 'publications';
             const gt = meta.outline_type || '';
             const gn = meta.outline_num || '';
@@ -5461,10 +5413,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             const discTopic = meta.topic || parsed?.topic || meta.outline_title || '';
             const discQuestion = meta.question || parsed?.question || meta.subtopic || '';
             const metaRows = [
-              isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
-              isDisc && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+              isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
+              isDisc && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
               isDisc && discTopic && { label: '주제', value: discTopic },
-              isDisc && discQuestion && { label: '질문', value: discQuestion, color: '#378ADD' },
+              isDisc && discQuestion && { label: '질문', value: discQuestion, color: 'var(--accent-blue)' },
               !isPub && !isDisc && title && { label: '주제', value: (prefix ? prefix + ' ' : '') + title },
               !isPub && !isDisc && subTopic && { label: '소주제', value: subTopic },
               !isDisc && (parsed?.point || meta.point_content) && { label: '요점', value: parsed?.point || meta.point_content, color: cColor },
@@ -5483,21 +5435,21 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     <input type="checkbox" checked={dbSelected.has(r.id)} onChange={e => setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} style={{ accentColor: cColor, cursor: 'pointer' }} />
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: cColor, flexShrink: 0 }} />
                     <span style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--c-hint)' }}>{sourceLabel[meta.source] || meta.source || viewSource}</span>
-                    {meta.source === 'discussion' && (meta.discussion_type || meta.sub_source) && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: '#378ADD', fontWeight: 600 }}>{meta.discussion_type || meta.sub_source}</span>}
-                    {meta.service_type && meta.service_type !== '일반' && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#1D9E7515', color: '#1D9E75', fontWeight: 600 }}>{meta.service_type}</span>}
-                    {meta.visit_target && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: '#D85A30', fontWeight: 600 }}>{meta.visit_target}</span>}
-                    {meta.favorite === 'true' && <span style={{ fontSize: '0.714rem', color: '#F5A623' }}>★</span>}
-                    {parseInt(meta.rating || '0') > 0 && <span style={{ fontSize: '0.571rem', color: '#F5A623', letterSpacing: -1 }}>{'★'.repeat(parseInt(meta.rating))}{'☆'.repeat(5 - parseInt(meta.rating))}</span>}
+                    {meta.source === 'discussion' && (meta.discussion_type || meta.sub_source) && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: 'var(--accent-blue)', fontWeight: 600 }}>{meta.discussion_type || meta.sub_source}</span>}
+                    {meta.service_type && meta.service_type !== '일반' && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#1D9E7515', color: 'var(--accent)', fontWeight: 600 }}>{meta.service_type}</span>}
+                    {meta.visit_target && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: 'var(--accent-orange)', fontWeight: 600 }}>{meta.visit_target}</span>}
+                    {meta.favorite === 'true' && <span style={{ fontSize: '0.714rem', color: 'var(--accent-gold)' }}>★</span>}
+                    {parseInt(meta.rating || '0') > 0 && <span style={{ fontSize: '0.571rem', color: 'var(--accent-gold)', letterSpacing: -1 }}>{'★'.repeat(parseInt(meta.rating))}{'☆'.repeat(5 - parseInt(meta.rating))}</span>}
                     {meta.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{meta.speaker}</span>}
                     {meta.date && meta.date !== '0000' && <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)' }}>{meta.date}</span>}
                     {meta.tags && (() => {
                       const t = meta.tags;
                       const badges = [];
-                      if (t.includes('표현')) badges.push({ label: '표현', bg: '#D85A30' });
-                      if (t.includes('예시(실화)') || t.includes('예시·실화')) badges.push({ label: '예시·실화', bg: '#C7842D' });
-                      if (t.includes('예시(비유)') || t.includes('예시·비유')) badges.push({ label: '예시·비유', bg: '#C7842D' });
+                      if (t.includes('표현')) badges.push({ label: '표현', bg: 'var(--accent-orange)' });
+                      if (t.includes('예시(실화)') || t.includes('예시·실화')) badges.push({ label: '예시·실화', bg: 'var(--accent-brown)' });
+                      if (t.includes('예시(비유)') || t.includes('예시·비유')) badges.push({ label: '예시·비유', bg: 'var(--accent-brown)' });
                       if (t.includes('예시(성경)') || t.includes('예시·성경')) badges.push({ label: '예시·성경', bg: '#2D8FC7' });
-                      if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: '#C7842D' });
+                      if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: 'var(--accent-brown)' });
                       return badges.map((b, bi) => <span key={bi} style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: b.bg, color: '#fff', fontWeight: 700 }}>{b.label}</span>);
                     })()}
                   </div>
@@ -5512,12 +5464,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           memoId: r.id, memoCol: r.collection,
                         })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
                         if (onGoAdd) onGoAdd(); else { setAddTab('structure'); setInputMode('speech_input'); setMode('add'); }
-                      }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>→상세</button>
+                      }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>→상세</button>
                     )}
                     <button onClick={async () => {
                       if (!confirm('삭제하시겠습니까?')) return;
                       try { await dbDelete(r.collection, r.id); setDbEntries(p => p.filter(e => e.id !== r.id)); } catch (e) { alert('오류: ' + e.message); }
-                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
+                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </div>
                 </div>
                 {/* 메타 그리드 */}
@@ -5597,24 +5549,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         {viewSource === '연사메모' && (<>
         <div style={{ padding: 12 }}>
           {/* [그룹] [목록] 세그먼트 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 8, background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2 }}>
+          <div style={{ ...S.pillContainer, marginBottom: 8 }}>
             {['그룹', '목록'].map(m => (
-              <button key={m} onClick={() => { setMemoViewMode(m); setDbSelected(new Set()); }} style={{
-                flex: 1, padding: '5px 0', border: 'none', borderRadius: 8, fontSize: '0.786rem', fontWeight: memoViewMode === m ? 700 : 500,
-                background: memoViewMode === m ? 'var(--bg-card, #fff)' : 'transparent', color: memoViewMode === m ? '#C7842D' : 'var(--c-muted)',
-                cursor: 'pointer', fontFamily: 'inherit', boxShadow: memoViewMode === m ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.15s',
-              }}>{m}</button>
+              <button key={m} onClick={() => { setMemoViewMode(m); setDbSelected(new Set()); }} style={S.pillL4(memoViewMode === m, 'var(--accent-brown)')}>{m}</button>
             ))}
           </div>
           {/* 카테고리 필터 — 목록에서만 */}
           {memoViewMode === '목록' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 6, background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2 }}>
+            <div style={{ ...S.pillContainer, marginBottom: 6 }}>
               {['전체', '원본', '도입', '구조', '성구', '예시', '언어습관', '마무리'].map(cat => (
-                <button key={cat} onClick={() => setMemoCatFilter(cat)} style={{
-                  flex: 1, padding: '4px 0', border: 'none', borderRadius: 8, fontSize: '0.714rem', fontWeight: memoCatFilter === cat ? 700 : 500, whiteSpace: 'nowrap',
-                  background: memoCatFilter === cat ? 'var(--bg-card, #fff)' : 'transparent', color: memoCatFilter === cat ? '#7F77DD' : 'var(--c-muted)',
-                  cursor: 'pointer', fontFamily: 'inherit', boxShadow: memoCatFilter === cat ? '0 1px 3px rgba(0,0,0,0.1)' : 'none', transition: 'all 0.15s',
-                }}>{cat}</button>
+                <button key={cat} onClick={() => setMemoCatFilter(cat)} style={{ ...S.pillL4(memoCatFilter === cat, 'var(--accent-purple)'), padding: '4px 0', fontSize: '0.714rem', whiteSpace: 'nowrap' }}>{cat}</button>
               ))}
             </div>
           )}
@@ -5629,7 +5573,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <input type="checkbox" checked={dbSelected.size > 0 && dbSelected.size === speakerMemos.length} onChange={e => {
                   if (e.target.checked) setDbSelected(new Set(speakerMemos.map(m => m.id)));
                   else setDbSelected(new Set());
-                }} style={{ accentColor: '#7F77DD' }} />
+                }} style={{ accentColor: 'var(--accent-purple)' }} />
                 전체 선택
               </label>
               <div style={{ flex: 1 }} />
@@ -5646,7 +5590,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               </>)}
               {dbSelected.size > 0 && (
                 <>
-                  <span style={{ fontSize: '0.786rem', color: '#c44', fontWeight: 600 }}>{dbSelected.size}개 선택</span>
+                  <span style={{ fontSize: '0.786rem', color: 'var(--c-danger)', fontWeight: 600 }}>{dbSelected.size}개 선택</span>
                   <button onClick={() => setDbSelected(new Set())} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.714rem', cursor: 'pointer' }}>선택 해제</button>
                   <button onClick={async () => {
                     if (!confirm(`선택한 ${dbSelected.size}개 연사메모를 삭제하시겠습니까?`)) return;
@@ -5658,7 +5602,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       setDbSelected(new Set());
                     } catch (e) { alert('오류: ' + e.message); }
                     finally { setDbDeleting(false); }
-                  }} disabled={dbDeleting} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #c44', background: dbDeleting ? 'var(--bd)' : 'var(--bg-card)', color: '#c44', fontSize: '0.714rem', cursor: dbDeleting ? 'default' : 'pointer', fontWeight: 600 }}>{dbDeleting ? '삭제 중...' : '선택 삭제'}</button>
+                  }} disabled={dbDeleting} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--c-danger)', background: dbDeleting ? 'var(--bd)' : 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.714rem', cursor: dbDeleting ? 'default' : 'pointer', fontWeight: 600 }}>{dbDeleting ? '삭제 중...' : '선택 삭제'}</button>
                 </>
               )}
             </div>
@@ -5686,12 +5630,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <div onClick={() => setExpandedDbEntry(p => ({ ...p, [gKey]: !p[gKey] }))} style={{
                     padding: '8px 10px', background: 'var(--bg-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
                   }}>
-                    <input type="checkbox" checked={items.every(m => dbSelected.has(m.id))} onChange={e => { e.stopPropagation(); setDbSelected(p => { const n = new Set(p); items.forEach(m => e.target.checked ? n.add(m.id) : n.delete(m.id)); return n; }); }} onClick={e => e.stopPropagation()} style={{ accentColor: '#C7842D', cursor: 'pointer' }} />
+                    <input type="checkbox" checked={items.every(m => dbSelected.has(m.id))} onChange={e => { e.stopPropagation(); setDbSelected(p => { const n = new Set(p); items.forEach(m => e.target.checked ? n.add(m.id) : n.delete(m.id)); return n; }); }} onClick={e => e.stopPropagation()} style={{ accentColor: 'var(--accent-brown)', cursor: 'pointer' }} />
                     <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
-                    <span style={{ fontWeight: 700, color: '#C7842D', fontSize: '0.786rem' }}>{speaker}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--accent-brown)', fontSize: '0.786rem' }}>{speaker}</span>
                     <div style={{ flex: 1, display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                       {Object.entries(cats).map(([c, n]) => (
-                        <span key={c} style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#7F77DD15', color: '#7F77DD', fontWeight: 600 }}>{c} {n}</span>
+                        <span key={c} style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#7F77DD15', color: 'var(--accent-purple)', fontWeight: 600 }}>{c} {n}</span>
                       ))}
                     </div>
                     <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{items.length}건</span>
@@ -5705,8 +5649,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         return (
                           <div key={m.id} style={{ fontSize: '0.786rem', padding: '4px 0', borderBottom: mi < items.length - 1 ? '1px solid var(--bd-light)' : 'none' }}>
                             <div style={{ display: 'flex', gap: 4, alignItems: 'baseline' }}>
-                              <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#7F77DD15', color: '#7F77DD', fontWeight: 600, flexShrink: 0 }}>{meta.memo_category || '원본'}</span>
-                              {meta.outline_num && <span style={{ color: '#1D9E75', fontWeight: 600, flexShrink: 0 }}>{meta.outline_num}</span>}
+                              <span style={{ fontSize: '0.571rem', padding: '1px 4px', borderRadius: 3, background: '#7F77DD15', color: 'var(--accent-purple)', fontWeight: 600, flexShrink: 0 }}>{meta.memo_category || '원본'}</span>
+                              {meta.outline_num && <span style={{ color: 'var(--accent)', fontWeight: 600, flexShrink: 0 }}>{meta.outline_num}</span>}
                               <span style={{ color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{body.split('\n')[0] || '(내용 없음)'}</span>
                             </div>
                           </div>
@@ -5738,18 +5682,18 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             return (
               <div key={m.id || i} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 4 }}>
                 <div style={{ padding: '6px 10px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <input type="checkbox" checked={dbSelected.has(m.id)} onChange={e => setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(m.id); else n.delete(m.id); return n; })} style={{ accentColor: '#7F77DD', cursor: 'pointer' }} />
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#7F77DD', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.786rem', fontWeight: 600, color: '#7F77DD' }}>{meta.memo_category || '원본'}</span>
+                  <input type="checkbox" checked={dbSelected.has(m.id)} onChange={e => setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(m.id); else n.delete(m.id); return n; })} style={{ accentColor: 'var(--accent-purple)', cursor: 'pointer' }} />
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent-purple)', flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--accent-purple)' }}>{meta.memo_category || '원본'}</span>
                   {meta.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{meta.speaker}</span>}
                   {meta.outline_num && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>{meta.outline_num}</span>}
                   <div style={{ flex: 1 }} />
                   {!isEditing && <>
-                    <button onClick={() => setEditingSpMemo(p => ({ ...p, [i]: body }))} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #7F77DD', background: 'var(--bg-card)', color: '#7F77DD', fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
+                    <button onClick={() => setEditingSpMemo(p => ({ ...p, [i]: body }))} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent-purple)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
                     <button onClick={async () => {
                       if (!confirm('삭제하시겠습니까?')) return;
                       try { await dbDelete(m.collection || 'speech_expressions', m.id); setSpeakerMemos(p => p.filter((_, j) => j !== i)); } catch (e) { alert('오류: ' + e.message); }
-                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
+                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </>}
                 </div>
                 {!isEditing && (
@@ -5764,7 +5708,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button onClick={async () => {
                         try { await dbUpdate(m.collection || 'speech_expressions', m.id, editingSpMemo[i]); setSpeakerMemos(p => p.map((x, j) => j === i ? { ...x, document: editingSpMemo[i] } : x)); setEditingSpMemo(p => { const n = { ...p }; delete n[i]; return n; }); } catch (e) { alert('오류: ' + e.message); }
-                      }} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#7F77DD', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
+                      }} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
                       <button onClick={() => setEditingSpMemo(p => { const n = { ...p }; delete n[i]; return n; })} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
                     </div>
                   </div>
@@ -5825,12 +5769,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     return (
                       <div key={i} onClick={() => setMemoDateFilter(isSelected ? 'all' : dateStr)} style={{
                         textAlign: 'center', padding: '6px 0', borderRadius: 8, cursor: 'pointer',
-                        background: isSelected ? '#D85A30' : isToday ? 'var(--tint-blue-soft)' : 'transparent',
-                        color: isSelected ? 'var(--tab-active-c)' : isToday ? '#378ADD' : count ? 'var(--c-text)' : 'var(--bd-medium)',
+                        background: isSelected ? 'var(--accent-orange)' : isToday ? 'var(--tint-blue-soft)' : 'transparent',
+                        color: isSelected ? 'var(--tab-active-c)' : isToday ? 'var(--accent-blue)' : count ? 'var(--c-text)' : 'var(--bd-medium)',
                         fontWeight: count ? 700 : 400, fontSize: '0.857rem', position: 'relative',
                       }}>
                         {d}
-                        {count > 0 && <div style={{ position: 'absolute', bottom: 1, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: isSelected ? 'var(--tab-active-c)' : '#D85A30' }} />}
+                        {count > 0 && <div style={{ position: 'absolute', bottom: 1, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: isSelected ? 'var(--tab-active-c)' : 'var(--accent-orange)' }} />}
                       </div>
                     );
                   })}
@@ -5843,7 +5787,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             <button onClick={() => setMemoDateFilter('all')} style={{
               padding: '4px 10px', borderRadius: 8, border: 'none',
               background: memoDateFilter === 'all' ? '#D85A3015' : 'var(--bg-subtle, #EFEFF4)',
-              color: memoDateFilter === 'all' ? '#D85A30' : 'var(--c-muted)',
+              color: memoDateFilter === 'all' ? 'var(--accent-orange)' : 'var(--c-muted)',
               fontSize: '0.786rem', cursor: 'pointer', fontWeight: memoDateFilter === 'all' ? 700 : 500, transition: 'all 0.15s',
             }}>전체</button>
             <button onClick={() => setMemoSortOrder(p => p === 'desc' ? 'asc' : 'desc')} style={{
@@ -5907,8 +5851,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {/* 헤더 */}
               <div style={{ padding: '8px 10px', background: 'var(--bg-subtle)', borderBottom: '1px solid var(--bd-light)' }}>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#D85A30', flexShrink: 0 }} />
-                  <span style={{ fontSize: '0.786rem', fontWeight: 600, color: '#D85A30' }}>메모</span>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent-orange)', flexShrink: 0 }} />
+                  <span style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--accent-orange)' }}>메모</span>
                   {meta.speaker && <span style={{ fontSize: '0.786rem', color: 'var(--c-faint)' }}>{meta.speaker}</span>}
                   {meta.date && meta.date !== '0000' && <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)' }}>{meta.date}</span>}
                 </div>
@@ -5926,10 +5870,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
                       if (onGoAdd) onGoAdd();
                       else { setAddTab('structure'); setInputMode('speech_input'); setMode('add'); }
-                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #1D9E75', background: 'var(--bg-card)', color: '#1D9E75', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>이동</button>
+                    }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>이동</button>
                     <button onClick={() => { setMemoEditIdx(i); setMemoEditVal(r.text || ''); setMemoStat(''); }} style={{
                       padding: '2px 6px', borderRadius: 4, border: '1px solid var(--tint-red-bd)',
-                      background: 'var(--bg-card)', color: '#c44', fontSize: '0.643rem', cursor: 'pointer', minWidth: 32, textAlign: 'center',
+                      background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer', minWidth: 32, textAlign: 'center',
                     }}>DB</button>
                   </>}
                 </div>
@@ -5937,11 +5881,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {/* 메타 그리드 */}
               {(() => {
                 const metaRows = [
-                  meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+                  meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
                   meta.pub_title && { label: '출판물명', value: meta.pub_title },
                   meta.outline_title && { label: '주제', value: meta.outline_title },
                   (parsed?.subtopic || meta.sub_topic || meta.subtopic) && { label: '소주제', value: parsed?.subtopic || meta.sub_topic || meta.subtopic },
-                  (parsed?.point || meta.point_content) && { label: '요점', value: parsed?.point || meta.point_content, color: '#D85A30' },
+                  (parsed?.point || meta.point_content) && { label: '요점', value: parsed?.point || meta.point_content, color: 'var(--accent-orange)' },
                   cleanMd(parsed?.scripture || meta.scriptures || '') && { label: '성구', value: cleanMd(parsed?.scripture || meta.scriptures || ''), color: '#2D8FC7' },
                   (parsed?.keywords || meta.keywords) && { label: '키워드', value: parsed?.keywords || meta.keywords },
                 ].filter(Boolean);
@@ -5966,13 +5910,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               )}
               {memoEditIdx === i && (
                 <div style={{ padding: '8px 10px', borderTop: '1px solid var(--tint-red-bd)' }}>
-                  <div style={{ fontSize: '0.786rem', fontWeight: 600, color: '#c44', marginBottom: 4 }}>DB 직접 편집</div>
+                  <div style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--c-danger)', marginBottom: 4 }}>DB 직접 편집</div>
                   <KoreanTextarea value={memoEditVal} onChange={setMemoEditVal} rows={8} style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                   <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
-                    <button onClick={async () => { setMemoStat('저장 중...'); try { await dbUpdate(col, r.id, memoEditVal); setMemoStat('저장 완료'); setMemoEntries(prev => prev.map(rr => rr.id === r.id ? { ...rr, text: memoEditVal } : rr)); } catch (e) { setMemoStat('오류: ' + e.message); } }} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: '#1D9E75', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
-                    <button onClick={async () => { if (!confirm('정말 삭제하시겠습니까?')) return; setMemoStat('삭제 중...'); try { await dbDelete(col, r.id); setMemoEntries(prev => prev.filter(rr => rr.id !== r.id)); setMemoEditIdx(-1); } catch (e) { setMemoStat('오류: ' + e.message); } }} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
+                    <button onClick={async () => { setMemoStat('저장 중...'); try { await dbUpdate(col, r.id, memoEditVal); setMemoStat('저장 완료'); setMemoEntries(prev => prev.map(rr => rr.id === r.id ? { ...rr, text: memoEditVal } : rr)); } catch (e) { setMemoStat('오류: ' + e.message); } }} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
+                    <button onClick={async () => { if (!confirm('정말 삭제하시겠습니까?')) return; setMemoStat('삭제 중...'); try { await dbDelete(col, r.id); setMemoEntries(prev => prev.filter(rr => rr.id !== r.id)); setMemoEditIdx(-1); } catch (e) { setMemoStat('오류: ' + e.message); } }} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
                     <button onClick={() => setMemoEditIdx(-1)} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                    {memoStat && <span style={{ fontSize: '0.786rem', color: memoStat.includes('오류') ? '#c44' : '#1D9E75', marginLeft: 4 }}>{memoStat}</span>}
+                    {memoStat && <span style={{ fontSize: '0.786rem', color: memoStat.includes('오류') ? 'var(--c-danger)' : 'var(--accent)', marginLeft: 4 }}>{memoStat}</span>}
                   </div>
                 </div>
               )}
@@ -5997,35 +5941,35 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div style={{ fontSize: '0.929rem', fontWeight: 700 }}>AI 모델 관리</div>
               <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                {aiModelsSaveMsg && <span style={{ fontSize: '0.786rem', color: aiModelsSaveMsg.includes('실패') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{aiModelsSaveMsg}</span>}
-                {aiModelsDirty && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#D85A30' }} />}
+                {aiModelsSaveMsg && <span style={{ fontSize: '0.786rem', color: aiModelsSaveMsg.includes('실패') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{aiModelsSaveMsg}</span>}
+                {aiModelsDirty && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-orange)' }} />}
                 <button onClick={resetAiModels}
                   style={{ padding: '2px 8px', borderRadius: 8, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
                 <button onClick={() => setAiEditMode(p => !p)}
-                  style={{ padding: '2px 8px', borderRadius: 8, border: '1px solid ' + (aiEditMode ? '#7F77DD' : 'var(--bd)'), background: aiEditMode ? 'var(--tint-purple)' : 'transparent', color: aiEditMode ? '#7F77DD' : 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: aiEditMode ? 600 : 400 }}>{aiEditMode ? '완료' : '편집'}</button>
+                  style={{ padding: '2px 8px', borderRadius: 8, border: '1px solid ' + (aiEditMode ? 'var(--accent-purple)' : 'var(--bd)'), background: aiEditMode ? 'var(--tint-purple)' : 'transparent', color: aiEditMode ? 'var(--accent-purple)' : 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: aiEditMode ? 600 : 400 }}>{aiEditMode ? '완료' : '편집'}</button>
                 <button onClick={saveAiModelsToServer}
-                  style={{ padding: '2px 8px', borderRadius: 8, border: '1px solid ' + (aiModelsDirty ? '#1D9E75' : 'var(--bd)'), background: aiModelsDirty ? '#1D9E75' : 'transparent', color: aiModelsDirty ? '#fff' : 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: aiModelsDirty ? 600 : 400 }}>저장</button>
+                  style={{ padding: '2px 8px', borderRadius: 8, border: '1px solid ' + (aiModelsDirty ? 'var(--accent)' : 'var(--bd)'), background: aiModelsDirty ? 'var(--accent)' : 'transparent', color: aiModelsDirty ? '#fff' : 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: aiModelsDirty ? 600 : 400 }}>저장</button>
               </div>
             </div>
 
-            <div style={{ padding: '6px 10px', borderRadius: 8, background: selectingFor ? 'var(--tint-purple)' : 'var(--bg-subtle)', marginBottom: 10, fontSize: '0.786rem', display: 'flex', flexDirection: 'column', gap: 5, border: selectingFor ? '1.5px solid #7F77DD' : '1px solid transparent' }}>
+            <div style={{ padding: '6px 10px', borderRadius: 8, background: selectingFor ? 'var(--tint-purple)' : 'var(--bg-subtle)', marginBottom: 10, fontSize: '0.786rem', display: 'flex', flexDirection: 'column', gap: 5, border: selectingFor ? '1.5px solid var(--accent-purple)' : '1px solid transparent' }}>
               {selectingFor && (
-                <div style={{ fontSize: '0.786rem', fontWeight: 700, color: '#7F77DD', textAlign: 'center' }}>
+                <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--accent-purple)', textAlign: 'center' }}>
                   {selectingFor === 'default' ? '기본 모델을 선택하세요' : '대화 모델을 선택하세요'} — 아래 모델을 탭
                 </div>
               )}
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ color: 'var(--c-muted)', fontSize: '0.786rem', width: 52, flexShrink: 0 }}>기본 모델</span>
                 {savedDefault ? (
-                  <span style={{ flex: 1, color: savedChatDefault?.platform === savedDefault.platform && savedChatDefault?.model === savedDefault.model ? '#8B6914' : '#D85A30', fontWeight: 700, fontSize: '0.786rem' }}>★ {savedDefault.platform} / {savedDefault.model}</span>
+                  <span style={{ flex: 1, color: savedChatDefault?.platform === savedDefault.platform && savedChatDefault?.model === savedDefault.model ? '#8B6914' : 'var(--accent-orange)', fontWeight: 700, fontSize: '0.786rem' }}>★ {savedDefault.platform} / {savedDefault.model}</span>
                 ) : (
                   <span style={{ flex: 1, color: 'var(--c-dim)', fontSize: '0.786rem' }}>설정 안됨</span>
                 )}
                 <button onClick={() => setSelectingFor(selectingFor === 'default' ? null : 'default')}
                   style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
-                    border: '1px solid ' + (selectingFor === 'default' ? '#7F77DD' : '#D85A30'),
-                    background: selectingFor === 'default' ? '#7F77DD' : 'transparent',
-                    color: selectingFor === 'default' ? '#fff' : '#D85A30', fontWeight: 600 }}>
+                    border: '1px solid ' + (selectingFor === 'default' ? 'var(--accent-purple)' : 'var(--accent-orange)'),
+                    background: selectingFor === 'default' ? 'var(--accent-purple)' : 'transparent',
+                    color: selectingFor === 'default' ? '#fff' : 'var(--accent-orange)', fontWeight: 600 }}>
                   {selectingFor === 'default' ? '취소' : '선택'}
                 </button>
                 {savedDefault && (
@@ -6036,15 +5980,15 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ color: 'var(--c-muted)', fontSize: '0.786rem', width: 52, flexShrink: 0 }}>대화 모델</span>
                 {savedChatDefault ? (
-                  <span style={{ flex: 1, color: savedDefault?.platform === savedChatDefault.platform && savedDefault?.model === savedChatDefault.model ? '#8B6914' : '#7F77DD', fontWeight: 700, fontSize: '0.786rem' }}>★ {savedChatDefault.platform} / {savedChatDefault.model}</span>
+                  <span style={{ flex: 1, color: savedDefault?.platform === savedChatDefault.platform && savedDefault?.model === savedChatDefault.model ? '#8B6914' : 'var(--accent-purple)', fontWeight: 700, fontSize: '0.786rem' }}>★ {savedChatDefault.platform} / {savedChatDefault.model}</span>
                 ) : (
                   <span style={{ flex: 1, color: 'var(--c-dim)', fontSize: '0.786rem' }}>설정 안됨</span>
                 )}
                 <button onClick={() => setSelectingFor(selectingFor === 'chat' ? null : 'chat')}
                   style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
-                    border: '1px solid ' + (selectingFor === 'chat' ? '#7F77DD' : '#7F77DD'),
-                    background: selectingFor === 'chat' ? '#7F77DD' : 'transparent',
-                    color: selectingFor === 'chat' ? '#fff' : '#7F77DD', fontWeight: 600 }}>
+                    border: '1px solid ' + (selectingFor === 'chat' ? 'var(--accent-purple)' : 'var(--accent-purple)'),
+                    background: selectingFor === 'chat' ? 'var(--accent-purple)' : 'transparent',
+                    color: selectingFor === 'chat' ? '#fff' : 'var(--accent-purple)', fontWeight: 600 }}>
                   {selectingFor === 'chat' ? '취소' : '선택'}
                 </button>
                 {savedChatDefault && (
@@ -6087,8 +6031,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     const isDefault = savedDefault?.platform === platform && savedDefault?.model === m.value;
                     const isChatDef = savedChatDefault?.platform === platform && savedChatDefault?.model === m.value;
                     const isBoth = isDefault && isChatDef;
-                    const borderColor = isBoth ? '#8B6914' : isDefault ? '#D85A30' : isChatDef ? '#7F77DD' : selectingFor ? '#7F77DD44' : 'var(--bd)';
-                    const textColor = isBoth ? '#8B6914' : isDefault ? '#D85A30' : isChatDef ? '#7F77DD' : 'var(--c-sub)';
+                    const borderColor = isBoth ? '#8B6914' : isDefault ? 'var(--accent-orange)' : isChatDef ? 'var(--accent-purple)' : selectingFor ? '#7F77DD44' : 'var(--bd)';
+                    const textColor = isBoth ? '#8B6914' : isDefault ? 'var(--accent-orange)' : isChatDef ? 'var(--accent-purple)' : 'var(--c-sub)';
                     const handleCardClick = () => {
                       if (aiEditMode) return;
                       if (selectingFor === 'default') { saveAiDefault(platform, m.value); setSelectingFor(null); }
@@ -6112,17 +6056,17 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       }}>
                         <span style={{ fontWeight: (isDefault || isChatDef) ? 700 : 400 }}>{m.label || m.value}</span>
                         {mIsLocal && installedModels && (
-                          isInstalled ? <span style={{ color: '#1D9E75', fontSize: '0.571rem' }}>●</span>
-                          : isPulling ? <span style={{ color: '#D85A30' }}>{pullProgress}%</span>
+                          isInstalled ? <span style={{ color: 'var(--accent)', fontSize: '0.571rem' }}>●</span>
+                          : isPulling ? <span style={{ color: 'var(--accent-orange)' }}>{pullProgress}%</span>
                           : <button onClick={async (e) => {
                               e.stopPropagation();
                               setPullingModel(m.value); setPullProgress(0);
                               try { await ollamaPull(m.value, (ev) => { if (ev.progress) setPullProgress(ev.progress); if (ev.status === 'done' || ev.status === 'error') { setPullingModel(''); ollamaModels().then(r => setInstalledModels(r)).catch(() => {}); } }); } catch { setPullingModel(''); }
                             }}
-                            style={{ padding: 0, border: 'none', background: 'none', color: '#D85A30', fontSize: '0.643rem', cursor: 'pointer', textDecoration: 'underline' }}>pull</button>
+                            style={{ padding: 0, border: 'none', background: 'none', color: 'var(--accent-orange)', fontSize: '0.643rem', cursor: 'pointer', textDecoration: 'underline' }}>pull</button>
                         )}
-                        {isDefault && <span style={{ fontSize: '0.643rem', color: '#D85A30' }}>★</span>}
-                        {isChatDef && <span style={{ fontSize: '0.571rem', color: '#7F77DD' }}>💬</span>}
+                        {isDefault && <span style={{ fontSize: '0.643rem', color: 'var(--accent-orange)' }}>★</span>}
+                        {isChatDef && <span style={{ fontSize: '0.571rem', color: 'var(--accent-purple)' }}>💬</span>}
                         {aiEditMode && (
                           <button onClick={(e) => { e.stopPropagation(); removeAiModel(platform, idx); }}
                             style={{ padding: 0, border: 'none', background: 'none', color: '#e55', fontSize: '0.786rem', cursor: 'pointer', lineHeight: 1, fontWeight: 800 }}>×</button>
@@ -6146,7 +6090,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       placeholder="표시명" onKeyDown={e => e.key === 'Enter' && addAiModel(platform)}
                       style={{ flex: 1, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', fontFamily: 'inherit' }} />
                     <button onClick={() => addAiModel(platform)}
-                      style={{ padding: '3px 8px', borderRadius: 8, border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                      style={{ padding: '3px 8px', borderRadius: 8, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => setNewModelInputs(prev => ({ ...prev, [platform]: { value: '', label: '' } }))}
                       style={{ padding: '3px 6px', borderRadius: 8, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
                   </div>
@@ -6179,9 +6123,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             {filterModel ? (
               <div style={{ marginTop: 10 }}>
                 <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--bg-subtle)', marginBottom: 10, fontSize: '0.786rem', color: 'var(--c-sub)' }}>
-                  필터 모델: <b style={{ color: '#7F77DD' }}>{filterModel.current}</b>
+                  필터 모델: <b style={{ color: 'var(--accent-purple)' }}>{filterModel.current}</b>
                   <span style={{ marginLeft: 8, fontSize: '0.786rem', color: 'var(--c-muted)' }}>연설 검색 시 관련성 판단</span>
-                  {ollamaCtx && <span style={{ marginLeft: 8 }}>| 필터: <b style={{ color: '#1D9E75' }}>{(ollamaCtx.filter_ctx / 1024).toFixed(0)}K</b> · 생성: <b style={{ color: '#D85A30' }}>{(ollamaCtx.gen_ctx / 1024).toFixed(0)}K</b> · 대화: <b style={{ color: '#7F77DD' }}>{(ollamaCtx.chat_ctx / 1024).toFixed(0)}K</b></span>}
+                  {ollamaCtx && <span style={{ marginLeft: 8 }}>| 필터: <b style={{ color: 'var(--accent)' }}>{(ollamaCtx.filter_ctx / 1024).toFixed(0)}K</b> · 생성: <b style={{ color: 'var(--accent-orange)' }}>{(ollamaCtx.gen_ctx / 1024).toFixed(0)}K</b> · 대화: <b style={{ color: 'var(--accent-purple)' }}>{(ollamaCtx.chat_ctx / 1024).toFixed(0)}K</b></span>}
                 </div>
 
                 {/* 필터 모델 선택 */}
@@ -6200,9 +6144,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     }} disabled={filterModelSaving}
                       style={{
                         flex: 1, padding: '6px 12px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                        border: `1.5px solid ${isCurrent ? '#7F77DD' : 'var(--bd)'}`,
+                        border: `1.5px solid ${isCurrent ? 'var(--accent-purple)' : 'var(--bd)'}`,
                         background: isCurrent ? '#7F77DD18' : 'transparent',
-                        color: isCurrent ? '#7F77DD' : 'var(--c-sub)',
+                        color: isCurrent ? 'var(--accent-purple)' : 'var(--c-sub)',
                         fontWeight: isCurrent ? 700 : 400,
                       }}>
                       {isCurrent ? '✓ ' : ''}{m.name}
@@ -6230,7 +6174,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 )}
 
                 {/* 컨텍스트 크기 — 필터 */}
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginTop: 12, marginBottom: 4 }}>필터 컨텍스트 <span style={{ color: '#1D9E75' }}>(LLM 필터용 · 짧은 프롬프트)</span></div>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginTop: 12, marginBottom: 4 }}>필터 컨텍스트 <span style={{ color: 'var(--accent)' }}>(LLM 필터용 · 짧은 프롬프트)</span></div>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {[2048, 4096, 8192, 16384, 32768, 65536].map(v => (
                     <button key={v} onClick={async () => {
@@ -6241,9 +6185,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     }}
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                        border: `1.5px solid ${ollamaCtx?.filter_ctx === v ? '#1D9E75' : 'var(--bd)'}`,
+                        border: `1.5px solid ${ollamaCtx?.filter_ctx === v ? 'var(--accent)' : 'var(--bd)'}`,
                         background: ollamaCtx?.filter_ctx === v ? '#1D9E7518' : 'transparent',
-                        color: ollamaCtx?.filter_ctx === v ? '#1D9E75' : 'var(--c-sub)',
+                        color: ollamaCtx?.filter_ctx === v ? 'var(--accent)' : 'var(--c-sub)',
                         fontWeight: ollamaCtx?.filter_ctx === v ? 700 : 400,
                       }}>
                       {ollamaCtx?.filter_ctx === v ? '✓ ' : ''}{(v / 1024)}K
@@ -6252,7 +6196,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 </div>
 
                 {/* 컨텍스트 크기 — 생성 */}
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginTop: 8, marginBottom: 4 }}>생성 컨텍스트 <span style={{ color: '#D85A30' }}>(연설문/스크립트 생성용)</span></div>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginTop: 8, marginBottom: 4 }}>생성 컨텍스트 <span style={{ color: 'var(--accent-orange)' }}>(연설문/스크립트 생성용)</span></div>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {[4096, 8192, 16384, 32768, 65536, 131072, 262144].map(v => (
                     <button key={v} onClick={async () => {
@@ -6263,9 +6207,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     }}
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                        border: `1.5px solid ${ollamaCtx?.gen_ctx === v ? '#D85A30' : 'var(--bd)'}`,
+                        border: `1.5px solid ${ollamaCtx?.gen_ctx === v ? 'var(--accent-orange)' : 'var(--bd)'}`,
                         background: ollamaCtx?.gen_ctx === v ? '#D85A3018' : 'transparent',
-                        color: ollamaCtx?.gen_ctx === v ? '#D85A30' : 'var(--c-sub)',
+                        color: ollamaCtx?.gen_ctx === v ? 'var(--accent-orange)' : 'var(--c-sub)',
                         fontWeight: ollamaCtx?.gen_ctx === v ? 700 : 400,
                       }}>
                       {ollamaCtx?.gen_ctx === v ? '✓ ' : ''}{(v / 1024)}K
@@ -6274,7 +6218,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 </div>
 
                 {/* 컨텍스트 크기 — 대화 */}
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginTop: 8, marginBottom: 4 }}>대화 컨텍스트 <span style={{ color: '#7F77DD' }}>(AI 대화 검색용)</span></div>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginTop: 8, marginBottom: 4 }}>대화 컨텍스트 <span style={{ color: 'var(--accent-purple)' }}>(AI 대화 검색용)</span></div>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                   {[4096, 8192, 16384, 32768, 65536, 131072, 262144].map(v => (
                     <button key={v} onClick={async () => {
@@ -6285,9 +6229,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     }}
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                        border: `1.5px solid ${ollamaCtx?.chat_ctx === v ? '#7F77DD' : 'var(--bd)'}`,
+                        border: `1.5px solid ${ollamaCtx?.chat_ctx === v ? 'var(--accent-purple)' : 'var(--bd)'}`,
                         background: ollamaCtx?.chat_ctx === v ? '#7F77DD18' : 'transparent',
-                        color: ollamaCtx?.chat_ctx === v ? '#7F77DD' : 'var(--c-sub)',
+                        color: ollamaCtx?.chat_ctx === v ? 'var(--accent-purple)' : 'var(--c-sub)',
                         fontWeight: ollamaCtx?.chat_ctx === v ? 700 : 400,
                       }}>
                       {ollamaCtx?.chat_ctx === v ? '✓ ' : ''}{(v / 1024)}K
@@ -6310,9 +6254,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         } catch {}
                       }}
                         style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
-                          border: `1.5px solid ${ollamaThink.filter_no_think ? 'var(--bd)' : '#7F77DD'}`,
+                          border: `1.5px solid ${ollamaThink.filter_no_think ? 'var(--bd)' : 'var(--accent-purple)'}`,
                           background: ollamaThink.filter_no_think ? 'transparent' : '#7F77DD18',
-                          color: ollamaThink.filter_no_think ? 'var(--c-muted)' : '#7F77DD',
+                          color: ollamaThink.filter_no_think ? 'var(--c-muted)' : 'var(--accent-purple)',
                           fontWeight: ollamaThink.filter_no_think ? 400 : 700 }}>
                         필터: {ollamaThink.filter_no_think ? '🧠 OFF' : '🧠 ON'}
                       </button>
@@ -6323,9 +6267,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         } catch {}
                       }}
                         style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
-                          border: `1.5px solid ${ollamaThink.gen_no_think ? 'var(--bd)' : '#7F77DD'}`,
+                          border: `1.5px solid ${ollamaThink.gen_no_think ? 'var(--bd)' : 'var(--accent-purple)'}`,
                           background: ollamaThink.gen_no_think ? 'transparent' : '#7F77DD18',
-                          color: ollamaThink.gen_no_think ? 'var(--c-muted)' : '#7F77DD',
+                          color: ollamaThink.gen_no_think ? 'var(--c-muted)' : 'var(--accent-purple)',
                           fontWeight: ollamaThink.gen_no_think ? 400 : 700 }}>
                         생성: {ollamaThink.gen_no_think ? '🧠 OFF' : '🧠 ON'}
                       </button>
@@ -6336,9 +6280,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         } catch {}
                       }}
                         style={{ flex: 1, padding: '8px 0', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
-                          border: `1.5px solid ${ollamaThink.chat_no_think ? 'var(--bd)' : '#7F77DD'}`,
+                          border: `1.5px solid ${ollamaThink.chat_no_think ? 'var(--bd)' : 'var(--accent-purple)'}`,
                           background: ollamaThink.chat_no_think ? 'transparent' : '#7F77DD18',
-                          color: ollamaThink.chat_no_think ? 'var(--c-muted)' : '#7F77DD',
+                          color: ollamaThink.chat_no_think ? 'var(--c-muted)' : 'var(--accent-purple)',
                           fontWeight: ollamaThink.chat_no_think ? 400 : 700 }}>
                         대화: {ollamaThink.chat_no_think ? '🧠 OFF' : '🧠 ON'}
                       </button>
@@ -6353,13 +6297,13 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 {(chatTurns !== null || chatSearchTopK !== null) && (
                   <>
                     <div style={{ borderTop: '1px solid var(--bd)', marginTop: 14, paddingTop: 10 }}>
-                      <div style={{ fontSize: '0.786rem', fontWeight: 700, color: '#7F77DD', marginBottom: 8 }}>💬 AI 대화 설정</div>
+                      <div style={{ fontSize: '0.786rem', fontWeight: 700, color: 'var(--accent-purple)', marginBottom: 8 }}>💬 AI 대화 설정</div>
                     </div>
 
                     {/* 대화 이력 턴 수 */}
                     {chatTurns !== null && (
                       <div style={{ marginBottom: 10 }}>
-                        <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>대화 이력 턴 수 <span style={{ color: '#7F77DD' }}>(AI가 기억하는 이전 질문-답변 쌍 수)</span></div>
+                        <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>대화 이력 턴 수 <span style={{ color: 'var(--accent-purple)' }}>(AI가 기억하는 이전 질문-답변 쌍 수)</span></div>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                           {[5, 10, 15, 20, 30, 50].map(v => (
                             <button key={v} onClick={async () => {
@@ -6370,9 +6314,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             }}
                               style={{
                                 padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                                border: `1.5px solid ${chatTurns === v ? '#7F77DD' : 'var(--bd)'}`,
+                                border: `1.5px solid ${chatTurns === v ? 'var(--accent-purple)' : 'var(--bd)'}`,
                                 background: chatTurns === v ? '#7F77DD18' : 'transparent',
-                                color: chatTurns === v ? '#7F77DD' : 'var(--c-sub)',
+                                color: chatTurns === v ? 'var(--accent-purple)' : 'var(--c-sub)',
                                 fontWeight: chatTurns === v ? 700 : 400,
                               }}>
                               {chatTurns === v ? '✓ ' : ''}{v}턴
@@ -6388,7 +6332,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     {/* 검색 결과 수 */}
                     {chatSearchTopK !== null && (
                       <div>
-                        <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>검색 결과 수 <span style={{ color: '#D85A30' }}>(AI 대화 시 DB에서 가져오는 자료 수)</span></div>
+                        <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>검색 결과 수 <span style={{ color: 'var(--accent-orange)' }}>(AI 대화 시 DB에서 가져오는 자료 수)</span></div>
                         <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                           {[5, 10, 15, 20, 30].map(v => (
                             <button key={v} onClick={async () => {
@@ -6399,9 +6343,9 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             }}
                               style={{
                                 padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
-                                border: `1.5px solid ${chatSearchTopK === v ? '#D85A30' : 'var(--bd)'}`,
+                                border: `1.5px solid ${chatSearchTopK === v ? 'var(--accent-orange)' : 'var(--bd)'}`,
                                 background: chatSearchTopK === v ? '#D85A3018' : 'transparent',
-                                color: chatSearchTopK === v ? '#D85A30' : 'var(--c-sub)',
+                                color: chatSearchTopK === v ? 'var(--accent-orange)' : 'var(--c-sub)',
                                 fontWeight: chatSearchTopK === v ? 700 : 400,
                               }}>
                               {chatSearchTopK === v ? '✓ ' : ''}{v}건
@@ -6434,11 +6378,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             {promptData ? (
               <div style={{ marginTop: 10 }}>
                 {[
-                  { key: 'speech', label: '연설문 생성', color: '#1D9E75' },
-                  { key: 'service_meeting', label: '봉사 모임', color: '#D85A30' },
-                  { key: 'visit', label: '방문', color: '#7F77DD' },
+                  { key: 'speech', label: '연설문 생성', color: 'var(--accent)' },
+                  { key: 'service_meeting', label: '봉사 모임', color: 'var(--accent-orange)' },
+                  { key: 'visit', label: '방문', color: 'var(--accent-purple)' },
                   { key: 'refine', label: '다듬기', color: 'var(--c-sub)' },
-                  { key: 'style_both', label: '스타일 지시', color: '#7F77DD' },
+                  { key: 'style_both', label: '스타일 지시', color: 'var(--accent-purple)' },
                 ].map(({ key, label, color }) => {
                   const isModified = promptEdits[key] !== promptData.defaults[key];
                   const hasCustomDefault = promptData.original_defaults && promptData.defaults[key] !== promptData.original_defaults[key];
@@ -6447,7 +6391,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <span style={{ fontSize: '0.786rem', fontWeight: 700, color }}>{label}</span>
-                        {hasCustomDefault && <span style={{ fontSize: '0.571rem', color: '#D85A30' }}>★</span>}
+                        {hasCustomDefault && <span style={{ fontSize: '0.571rem', color: 'var(--accent-orange)' }}>★</span>}
                       </div>
                       <div style={{ display: 'flex', gap: 4 }}>
                         {isModified && (
@@ -6466,7 +6410,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             setPromptData(prev => ({ ...prev, defaults: { ...prev.defaults, [key]: promptEdits[key] } }));
                           } catch (e) { alert(e.message); }
                         }} disabled={promptEdits[key] === promptData.defaults[key]}
-                          style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (promptEdits[key] !== promptData.defaults[key] ? '#D85A30' : 'var(--bd)'), background: promptEdits[key] !== promptData.defaults[key] ? '#D85A30' : 'transparent', color: promptEdits[key] !== promptData.defaults[key] ? '#fff' : 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>기본값 저장</button>
+                          style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'var(--bd)'), background: promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'transparent', color: promptEdits[key] !== promptData.defaults[key] ? '#fff' : 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>기본값 저장</button>
                         <button onClick={async () => {
                           setPromptSaving(key);
                           try {
@@ -6475,7 +6419,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           } catch (e) { alert(e.message); }
                           finally { setPromptSaving(''); }
                         }} disabled={promptSaving === key || promptEdits[key] === promptData.prompts[key]}
-                          style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #1D9E75', background: (promptEdits[key] !== promptData.prompts[key]) ? '#1D9E75' : 'transparent', color: (promptEdits[key] !== promptData.prompts[key]) ? '#fff' : 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
+                          style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent)', background: (promptEdits[key] !== promptData.prompts[key]) ? 'var(--accent)' : 'transparent', color: (promptEdits[key] !== promptData.prompts[key]) ? '#fff' : 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
                           {promptSaving === key ? '...' : '저장'}
                         </button>
                       </div>
@@ -6523,8 +6467,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     <span style={{ width: 60, fontSize: '0.786rem', color: 'var(--c-sub)', flexShrink: 0 }}>{label}</span>
                     <input type="password" autoComplete="off" value={apiKeyInputs[key] ?? ''} onChange={e => setApiKeyInputs(prev => ({ ...prev, [key]: e.target.value }))}
                       placeholder={apiKeyStatus[key] || placeholder}
-                      style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: `1px solid ${apiKeyStatus[key] ? '#1D9E75' : 'var(--bd)'}`, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', fontFamily: 'inherit' }} />
-                    {apiKeyStatus[key] && <span style={{ fontSize: '0.786rem', color: '#1D9E75' }}>✓</span>}
+                      style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: `1px solid ${apiKeyStatus[key] ? 'var(--accent)' : 'var(--bd)'}`, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', fontFamily: 'inherit' }} />
+                    {apiKeyStatus[key] && <span style={{ fontSize: '0.786rem', color: 'var(--accent)' }}>✓</span>}
                     {apiKeyStatus[key] && (
                       <button onClick={async () => {
                         if (!aiPassword) { setAiError('비밀번호를 입력하세요'); return; }
@@ -6548,11 +6492,11 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     catch (e) { setAiError('저장 오류: ' + e.message); }
                     finally { setApiKeySaving(false); }
                   }} disabled={apiKeySaving}
-                    style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
+                    style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
                     {apiKeySaving ? '저장 중...' : '저장'}
                   </button>
                 </div>
-                {aiError && <div style={{ marginTop: 6, fontSize: '0.786rem', color: aiError.startsWith('✓') ? '#1D9E75' : '#c44' }}>{aiError}</div>}
+                {aiError && <div style={{ marginTop: 6, fontSize: '0.786rem', color: aiError.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{aiError}</div>}
               </div>
             )}
             {apiVersions && (
@@ -6566,7 +6510,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <button onClick={async () => {
                     try { await saveApiVersions({ anthropic: apiVersions.anthropic }); setAiError('✓ 버전 저장 완료'); setTimeout(() => setAiError(''), 2000); }
                     catch (e) { setAiError('버전 저장 오류: ' + e.message); }
-                  }} style={{ padding: '4px 10px', borderRadius: 8, border: 'none', background: '#7F77DD', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>저장</button>
+                  }} style={{ padding: '4px 10px', borderRadius: 8, border: 'none', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>저장</button>
                 </div>
               </div>
             )}
@@ -6595,7 +6539,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             {pwStatus && (
               <div style={{ marginTop: 10 }}>
                 <div style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--bg-subtle)', marginBottom: 10, fontSize: '0.786rem', color: 'var(--c-sub)' }}>
-                  상태: <b style={{ color: pwStatus.has_password ? '#1D9E75' : '#c44' }}>{pwStatus.has_password ? '설정됨 ✓' : '미설정'}</b>
+                  상태: <b style={{ color: pwStatus.has_password ? 'var(--accent)' : 'var(--c-danger)' }}>{pwStatus.has_password ? '설정됨 ✓' : '미설정'}</b>
                 </div>
                 {pwStatus.has_password && (
                   <div style={{ marginBottom: 8 }}>
@@ -6613,7 +6557,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>새 비밀번호 확인</div>
                   <input type="password" autoComplete="off" value={pwConfirm} onChange={e => setPwConfirm(e.target.value)} placeholder="새 비밀번호 재입력"
                     style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', fontFamily: 'inherit', boxSizing: 'border-box' }} />
-                  {pwConfirm && pwNew !== pwConfirm && <div style={{ fontSize: '0.786rem', color: '#c44', marginTop: 2 }}>비밀번호가 일치하지 않습니다</div>}
+                  {pwConfirm && pwNew !== pwConfirm && <div style={{ fontSize: '0.786rem', color: 'var(--c-danger)', marginTop: 2 }}>비밀번호가 일치하지 않습니다</div>}
                 </div>
                 <button onClick={async () => {
                   if (!pwNew || pwNew.length < 4) { setPwMsg('새 비밀번호는 4자 이상이어야 합니다'); return; }
@@ -6628,12 +6572,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   finally { setPwChanging(false); }
                 }} disabled={pwChanging || !pwNew || pwNew !== pwConfirm}
                   style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: 'none',
-                    background: (!pwNew || pwNew !== pwConfirm) ? 'var(--bd)' : '#1D9E75', color: '#fff',
+                    background: (!pwNew || pwNew !== pwConfirm) ? 'var(--bd)' : 'var(--accent)', color: '#fff',
                     fontSize: '0.929rem', fontWeight: 700, cursor: (!pwNew || pwNew !== pwConfirm) ? 'not-allowed' : 'pointer',
                     opacity: (!pwNew || pwNew !== pwConfirm) ? 0.5 : 1 }}>
                   {pwChanging ? '변경 중...' : pwStatus.has_password ? '비밀번호 변경' : '비밀번호 설정'}
                 </button>
-                {pwMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', color: pwMsg.startsWith('✓') ? '#1D9E75' : '#c44' }}>{pwMsg}</div>}
+                {pwMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', color: pwMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{pwMsg}</div>}
               </div>
             )}
           </div>}</div>
@@ -6675,7 +6619,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     if (ch.removed > 0) parts.push(`-${ch.removed}삭제`);
                     if (parts.length === 0) return null;
                     return (
-                      <div style={{ fontSize: '0.714rem', color: '#F5A623', marginTop: 2 }}>
+                      <div style={{ fontSize: '0.714rem', color: 'var(--accent-gold)', marginTop: 2 }}>
                         ⚠️ 변경: {parts.join(' · ')}
                       </div>
                     );
@@ -6688,15 +6632,15 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   </button>
                   {preprocDirty && (
                     <button onClick={revertPreproc} disabled={preprocSaving}
-                      style={{ padding: '5px 12px', border: '1px solid #F5A623', borderRadius: 8, background: 'var(--bg-subtle)', color: '#F5A623', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
+                      style={{ padding: '5px 12px', border: '1px solid var(--accent-gold)', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--accent-gold)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
                       되돌리기
                     </button>
                   )}
                   <button onClick={savePreproc} disabled={!preprocDirty || preprocSaving}
                     style={{
-                      padding: '5px 14px', border: '1px solid ' + (preprocDirty ? '#D85A30' : 'var(--bd)'),
+                      padding: '5px 14px', border: '1px solid ' + (preprocDirty ? 'var(--accent-orange)' : 'var(--bd)'),
                       borderRadius: 8,
-                      background: preprocDirty ? '#D85A30' : 'var(--bg-subtle)',
+                      background: preprocDirty ? 'var(--accent-orange)' : 'var(--bg-subtle)',
                       color: preprocDirty ? '#fff' : 'var(--c-dim)',
                       fontSize: '0.786rem', fontWeight: 600,
                       cursor: preprocDirty && !preprocSaving ? 'pointer' : 'not-allowed',
@@ -6715,7 +6659,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                 <div style={{
                   padding: '6px 12px', marginBottom: 12, borderRadius: 6,
                   background: preprocStatus.includes('실패') ? '#ffebeb' : preprocStatus.includes('경고') ? '#fff5e6' : '#e6f7ed',
-                  color: preprocStatus.includes('실패') ? '#c44' : preprocStatus.includes('경고') ? '#F5A623' : '#1D9E75',
+                  color: preprocStatus.includes('실패') ? 'var(--c-danger)' : preprocStatus.includes('경고') ? 'var(--accent-gold)' : 'var(--accent)',
                   fontSize: '0.786rem',
                 }}>
                   {preprocStatus}
@@ -6725,16 +6669,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
               {/* 경고 배지 */}
               {preprocValidation?.warnings?.length > 0 && (
                 <div style={{
-                  padding: '8px 12px', marginBottom: 12, border: '1px solid #F5A623',
+                  padding: '8px 12px', marginBottom: 12, border: '1px solid var(--accent-gold)',
                   borderRadius: 8, background: '#fff5e6',
                 }}>
                   <div onClick={() => setPreprocShowWarnings(p => !p)}
-                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.857rem', fontWeight: 600, color: '#F5A623' }}>
+                    style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.857rem', fontWeight: 600, color: 'var(--accent-gold)' }}>
                     ⚠️ 경고 {preprocValidation.warnings.length}건
                     <span style={{ marginLeft: 'auto', fontSize: '0.714rem' }}>{preprocShowWarnings ? '▲' : '▼'}</span>
                   </div>
                   {preprocShowWarnings && (
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid #F5A623' }}>
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--accent-gold)' }}>
                       {preprocValidation.warnings.map((w, i) => (
                         <div key={i} style={{ fontSize: '0.786rem', color: 'var(--c-text-dark)', marginBottom: 4 }}>
                           • <b>{w.section_id}</b> {w.target && `→ ${w.target}`}{w.error_text && ` (${w.error_text})`}: {w.issue}
@@ -6776,7 +6720,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         <input type="checkbox" checked={section.enabled !== false}
                           onChange={() => togglePreprocSection(section.id)}
                           style={{ cursor: 'pointer' }} />
-                        <span style={{ fontSize: '0.714rem', color: section.enabled !== false ? '#1D9E75' : 'var(--c-dim)' }}>
+                        <span style={{ fontSize: '0.714rem', color: section.enabled !== false ? 'var(--accent)' : 'var(--c-dim)' }}>
                           {section.enabled !== false ? '활성' : '비활성'}
                         </span>
                       </label>
@@ -6802,7 +6746,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 {getSelectedCountInSection(section.id)}개 선택
                               </span>
                               <button onClick={() => deleteSelectedInSection(section.id)}
-                                style={{ padding: '4px 10px', border: '1px solid #c44', borderRadius: 6, background: '#c44', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                                style={{ padding: '4px 10px', border: '1px solid var(--c-danger)', borderRadius: 6, background: 'var(--c-danger)', color: '#fff', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                                 선택 삭제
                               </button>
                               <button onClick={() => clearSelectionInSection(section.id)}
@@ -6812,7 +6756,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                             </>
                           )}
                           <button onClick={() => startAddGroup(section.id)}
-                            style={{ padding: '4px 10px', border: '1px solid #1D9E75', borderRadius: 6, background: 'var(--bg-subtle)', color: '#1D9E75', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                            style={{ padding: '4px 10px', border: '1px solid var(--accent)', borderRadius: 6, background: 'var(--bg-subtle)', color: 'var(--accent)', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                             + 새 그룹
                           </button>
                         </div>
@@ -6828,7 +6772,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 style={{
                                   padding: '3px 8px',
                                   border: '1px solid var(--bd)',
-                                  background: current === '전체' ? '#1D9E75' : 'var(--bg-subtle)',
+                                  background: current === '전체' ? 'var(--accent)' : 'var(--bg-subtle)',
                                   color: current === '전체' ? '#fff' : 'var(--c-muted)',
                                   borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer',
                                   fontWeight: current === '전체' ? 600 : 500,
@@ -6845,7 +6789,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                     style={{
                                       padding: '3px 8px',
                                       border: '1px solid var(--bd)',
-                                      background: isActive ? '#1D9E75' : 'var(--bg-subtle)',
+                                      background: isActive ? 'var(--accent)' : 'var(--bg-subtle)',
                                       color: isActive ? '#fff' : 'var(--c-muted)',
                                       borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer',
                                       fontWeight: isActive ? 600 : 500,
@@ -6860,7 +6804,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
                         {/* 새 그룹 추가 폼 */}
                         {preprocAddingGroupTo?.sectionId === section.id && (
-                          <div style={{ padding: 10, marginBottom: 10, border: '1px dashed #1D9E75', borderRadius: 6, background: 'var(--bg-subtle)' }}>
+                          <div style={{ padding: 10, marginBottom: 10, border: '1px dashed var(--accent)', borderRadius: 6, background: 'var(--bg-subtle)' }}>
                             <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                               <input type="text" placeholder="타겟 (예: 여호와)" autoFocus
                                 value={preprocAddingGroupTo.target}
@@ -6877,7 +6821,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                 style={{ flex: 1, padding: '4px 8px', border: '1px solid var(--bd)', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
                               />
                               <button onClick={commitAddGroup}
-                                style={{ padding: '4px 12px', border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                                style={{ padding: '4px 12px', border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                                 추가
                               </button>
                               <button onClick={() => setPreprocAddingGroupTo(null)}
@@ -6900,16 +6844,16 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                   <input type="text" value={preprocEditingTarget.newTarget} autoFocus
                                     onChange={e => setPreprocEditingTarget(p => ({ ...p, newTarget: e.target.value }))}
                                     onKeyDown={e => { if (e.key === 'Enter') commitEditTarget(); if (e.key === 'Escape') setPreprocEditingTarget(null); }}
-                                    style={{ flex: 1, padding: '3px 8px', border: '1px solid #378ADD', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontWeight: 600, outline: 'none' }}
+                                    style={{ flex: 1, padding: '3px 8px', border: '1px solid var(--accent-blue)', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontWeight: 600, outline: 'none' }}
                                   />
                                   <button onClick={commitEditTarget}
-                                    style={{ padding: '2px 8px', border: '1px solid #378ADD', background: '#378ADD', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>확인</button>
+                                    style={{ padding: '2px 8px', border: '1px solid var(--accent-blue)', background: 'var(--accent-blue)', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>확인</button>
                                   <button onClick={() => setPreprocEditingTarget(null)}
                                     style={{ padding: '2px 8px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
                                 </>
                               ) : (
                                 <>
-                                  <span style={{ flex: 1, fontSize: '0.857rem', fontWeight: 600, color: '#1D9E75' }}>
+                                  <span style={{ flex: 1, fontSize: '0.857rem', fontWeight: 600, color: 'var(--accent)' }}>
                                     {group.target}
                                   </span>
                                   <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)' }}>
@@ -6918,7 +6862,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                   <button onClick={() => startEditTarget(section.id, group.target)}
                                     style={{ padding: '2px 6px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-muted)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
                                   <button onClick={() => deleteGroup(section.id, group.target)}
-                                    style={{ padding: '2px 6px', border: '1px solid #c44', background: 'var(--bg-subtle)', color: '#c44', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
+                                    style={{ padding: '2px 6px', border: '1px solid var(--c-danger)', background: 'var(--bg-subtle)', color: 'var(--c-danger)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                                 </>
                               )}
                             </div>
@@ -6942,7 +6886,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                           onChange={e => setPreprocEditingError(p => ({ ...p, text: e.target.value }))}
                                           onKeyDown={e => { if (e.key === 'Enter') commitEditError(); if (e.key === 'Escape') setPreprocEditingError(null); }}
                                           placeholder="오류 텍스트"
-                                          style={{ flex: 1, padding: '3px 8px', border: '1px solid #378ADD', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
+                                          style={{ flex: 1, padding: '3px 8px', border: '1px solid var(--accent-blue)', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
                                         />
                                         <input type="text" value={preprocEditingError.note}
                                           onChange={e => setPreprocEditingError(p => ({ ...p, note: e.target.value }))}
@@ -6951,7 +6895,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                           style={{ width: 120, padding: '3px 8px', border: '1px solid var(--bd)', borderRadius: 4, fontSize: '0.714rem', background: 'var(--bg-card)', color: 'var(--c-dim)', outline: 'none' }}
                                         />
                                         <button onClick={commitEditError}
-                                          style={{ padding: '2px 8px', border: '1px solid #378ADD', background: '#378ADD', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>확인</button>
+                                          style={{ padding: '2px 8px', border: '1px solid var(--accent-blue)', background: 'var(--accent-blue)', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>확인</button>
                                         <button onClick={() => setPreprocEditingError(null)}
                                           style={{ padding: '2px 8px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
                                       </>
@@ -6972,7 +6916,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                         <button onClick={() => startEditError(section.id, group.target, errIdx, err)}
                                           style={{ padding: '1px 6px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-muted)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
                                         <button onClick={() => deleteError(section.id, group.target, errIdx)}
-                                          style={{ padding: '1px 6px', border: '1px solid #c44', background: 'var(--bg-subtle)', color: '#c44', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>×</button>
+                                          style={{ padding: '1px 6px', border: '1px solid var(--c-danger)', background: 'var(--bg-subtle)', color: 'var(--c-danger)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>×</button>
                                       </>
                                     )}
                                   </div>
@@ -6986,7 +6930,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                     value={preprocAddingErrorTo.text}
                                     onChange={e => setPreprocAddingErrorTo(p => ({ ...p, text: e.target.value }))}
                                     onKeyDown={e => { if (e.key === 'Enter') commitAddError(); if (e.key === 'Escape') setPreprocAddingErrorTo(null); }}
-                                    style={{ flex: 1, padding: '3px 8px', border: '1px solid #1D9E75', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
+                                    style={{ flex: 1, padding: '3px 8px', border: '1px solid var(--accent)', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
                                   />
                                   <input type="text" placeholder="메모"
                                     value={preprocAddingErrorTo.note}
@@ -6995,7 +6939,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                                     style={{ width: 120, padding: '3px 8px', border: '1px solid var(--bd)', borderRadius: 4, fontSize: '0.714rem', background: 'var(--bg-card)', color: 'var(--c-dim)', outline: 'none' }}
                                   />
                                   <button onClick={commitAddError}
-                                    style={{ padding: '2px 10px', border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>추가</button>
+                                    style={{ padding: '2px 10px', border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>추가</button>
                                   <button onClick={() => setPreprocAddingErrorTo(null)}
                                     style={{ padding: '2px 8px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
                                 </div>
@@ -7062,14 +7006,14 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                     수정 제외 단어 <span style={{ fontSize: '0.714rem', color: 'var(--c-dim)', fontWeight: 400 }}>({(preprocData.skip_words || []).length})</span>
                   </div>
                   <button onClick={startAddSkip}
-                    style={{ padding: '3px 10px', border: '1px solid #1D9E75', borderRadius: 6, background: 'var(--bg-subtle)', color: '#1D9E75', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
+                    style={{ padding: '3px 10px', border: '1px solid var(--accent)', borderRadius: 6, background: 'var(--bg-subtle)', color: 'var(--accent)', fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>
                     + 단어 추가
                   </button>
                 </div>
 
                 {/* 추가 폼 */}
                 {preprocSkipAdding && (
-                  <div style={{ display: 'flex', gap: 6, padding: 8, marginBottom: 8, border: '1px dashed #1D9E75', borderRadius: 6, background: 'var(--bg-subtle)' }}>
+                  <div style={{ display: 'flex', gap: 6, padding: 8, marginBottom: 8, border: '1px dashed var(--accent)', borderRadius: 6, background: 'var(--bg-subtle)' }}>
                     <input type="text" placeholder="단어" autoFocus
                       value={preprocSkipAdding.word}
                       onChange={e => setPreprocSkipAdding(p => ({ ...p, word: e.target.value }))}
@@ -7083,7 +7027,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       style={{ flex: 2, padding: '4px 8px', border: '1px solid var(--bd)', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
                     />
                     <button onClick={commitAddSkip}
-                      style={{ padding: '3px 12px', border: '1px solid #1D9E75', background: '#1D9E75', color: '#fff', borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>추가</button>
+                      style={{ padding: '3px 12px', border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600 }}>추가</button>
                     <button onClick={() => setPreprocSkipAdding(null)}
                       style={{ padding: '3px 10px', border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', borderRadius: 4, fontSize: '0.714rem', cursor: 'pointer' }}>취소</button>
                   </div>
@@ -7097,7 +7041,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         <input type="text" value={preprocSkipEditing.word} autoFocus
                           onChange={e => setPreprocSkipEditing(p => ({ ...p, word: e.target.value }))}
                           onKeyDown={e => { if (e.key === 'Enter') commitEditSkip(); if (e.key === 'Escape') setPreprocSkipEditingIdx(null); }}
-                          style={{ flex: 1, padding: '3px 8px', border: '1px solid #378ADD', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
+                          style={{ flex: 1, padding: '3px 8px', border: '1px solid var(--accent-blue)', borderRadius: 4, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none' }}
                         />
                         <input type="text" value={preprocSkipEditing.reason} placeholder="이유"
                           onChange={e => setPreprocSkipEditing(p => ({ ...p, reason: e.target.value }))}
@@ -7105,7 +7049,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           style={{ flex: 2, padding: '3px 8px', border: '1px solid var(--bd)', borderRadius: 4, fontSize: '0.714rem', background: 'var(--bg-card)', color: 'var(--c-dim)', outline: 'none' }}
                         />
                         <button onClick={commitEditSkip}
-                          style={{ padding: '2px 8px', border: '1px solid #378ADD', background: '#378ADD', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>확인</button>
+                          style={{ padding: '2px 8px', border: '1px solid var(--accent-blue)', background: 'var(--accent-blue)', color: '#fff', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>확인</button>
                         <button onClick={() => setPreprocSkipEditingIdx(null)}
                           style={{ padding: '2px 8px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
                       </>
@@ -7122,7 +7066,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         <button onClick={() => startEditSkip(idx, s)}
                           style={{ padding: '1px 6px', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-muted)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
                         <button onClick={() => deleteSkip(idx)}
-                          style={{ padding: '1px 6px', border: '1px solid #c44', background: 'var(--bg-subtle)', color: '#c44', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>×</button>
+                          style={{ padding: '1px 6px', border: '1px solid var(--c-danger)', background: 'var(--bg-subtle)', color: 'var(--c-danger)', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer' }}>×</button>
                       </>
                     )}
                   </div>

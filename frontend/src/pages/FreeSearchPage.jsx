@@ -89,7 +89,7 @@ export default function FreeSearchPage({ fontSize }) {
                 padding: '5px 12px', borderRadius: 8, fontSize: '0.821rem', fontWeight: chipFilter === f ? 700 : 500,
                 border: 'none', whiteSpace: 'nowrap', flexShrink: 0,
                 background: chipFilter === f ? 'var(--bg-card, #fff)' : 'transparent',
-                color: chipFilter === f ? '#1D9E75' : 'var(--c-muted)',
+                color: chipFilter === f ? 'var(--accent)' : 'var(--c-muted)',
                 cursor: 'pointer', fontFamily: 'inherit',
                 transition: 'all 0.2s ease',
                 boxShadow: chipFilter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
@@ -110,7 +110,7 @@ export default function FreeSearchPage({ fontSize }) {
           )}
           <button onClick={doSearch} disabled={loading || !query.trim()} style={{
             width: 80, padding: '5px 0', borderRadius: 8, border: 'none', textAlign: 'center',
-            background: (loading || !query.trim()) ? 'var(--bd-medium)' : '#1D9E75', color: '#fff',
+            background: (loading || !query.trim()) ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
             fontSize: '0.786rem', fontWeight: 700, cursor: (loading || !query.trim()) ? 'default' : 'pointer',
             position: 'relative', overflow: 'hidden',
           }}>
@@ -155,17 +155,17 @@ export default function FreeSearchPage({ fontSize }) {
                 {meta.tags && (() => {
                   const t = meta.tags;
                   const badges = [];
-                  if (t.includes('표현')) badges.push({ label: '표현', bg: '#D85A30' });
-                  if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: '#C7842D' });
-                  if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: '#C7842D' });
+                  if (t.includes('표현')) badges.push({ label: '표현', bg: 'var(--accent-orange)' });
+                  if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: 'var(--accent-brown)' });
+                  if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: 'var(--accent-brown)' });
                   if (t.includes('예시(성경)')) badges.push({ label: '예시·성경', bg: '#2D8FC7' });
-                  if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: '#C7842D' });
+                  if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: 'var(--accent-brown)' });
                   return badges.map((b, bi) => <span key={bi} style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: b.bg, color: '#fff', fontWeight: 700 }}>{b.label}</span>);
                 })()}
                 <div style={{ flex: 1 }} />
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span style={{ width: 44, height: 4, borderRadius: 2, background: 'var(--bg-dim)', overflow: 'hidden' }}>
-                    <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? '#1D9E75' : score > 50 ? '#BA7517' : '#c44' }} />
+                    <span style={{ display: 'block', width: Math.min(score, 100) + '%', height: '100%', borderRadius: 2, background: score > 80 ? 'var(--accent)' : score > 50 ? '#BA7517' : 'var(--c-danger)' }} />
                   </span>
                   <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)', minWidth: 26 }}>{Math.min(score, 100)}%</span>
                 </span>
@@ -175,13 +175,13 @@ export default function FreeSearchPage({ fontSize }) {
                 {dbEditIdx !== i && (
                   <>
                     <button onClick={() => copyText(i, body)} style={{
-                      padding: '3px 8px', borderRadius: 6, border: '1px solid ' + (copied[i] ? '#1D9E75' : 'var(--bd)'),
-                      background: copied[i] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied[i] ? '#1D9E75' : 'var(--c-faint)',
+                      padding: '3px 8px', borderRadius: 6, border: '1px solid ' + (copied[i] ? 'var(--accent)' : 'var(--bd)'),
+                      background: copied[i] ? 'var(--tint-green)' : 'var(--bg-card)', color: copied[i] ? 'var(--accent)' : 'var(--c-faint)',
                       fontSize: '0.714rem', cursor: 'pointer', fontWeight: 600,
                     }}>{copied[i] ? '✓ 복사됨' : '복사'}</button>
                     <button onClick={() => { setDbEditIdx(i); setDbEditVal(r.text || ''); setDbEditMeta({ point_content: meta.point_content || '', pub_code: meta.pub_code || '', keywords: parsed?.keywords || '', scriptures: parsed?.scripture || '', outline_title: meta.outline_title || meta.topic || '', source: meta.source || '', sub_source: meta.sub_source || '', service_type: meta.service_type || '', memo: meta.memo || '', importance: parseInt(meta.importance || '0'), rating_note: meta.rating_note || '', rating: parseInt(meta.rating || '0'), favorite: meta.favorite === 'true' }); setDbStat(''); }} style={{
                       padding: '3px 8px', borderRadius: 6, border: '1px solid var(--tint-red-bd)',
-                      background: 'var(--bg-card)', color: '#c44', fontSize: '0.714rem', cursor: 'pointer', minWidth: 32, textAlign: 'center',
+                      background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.714rem', cursor: 'pointer', minWidth: 32, textAlign: 'center',
                     }}>DB</button>
                   </>
                 )}
@@ -192,7 +192,7 @@ export default function FreeSearchPage({ fontSize }) {
               const cColor = tagColor[col] || 'var(--c-muted)';
               const title = meta.outline_title || '';
               const metaRows = [
-                isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+                isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
                 isPub && meta.pub_title && { label: '출판물명', value: meta.pub_title },
                 !isPub && title && { label: '주제', value: (prefix ? prefix + ' ' : '') + title },
                 (parsed?.subtopic || meta.sub_topic || meta.subtopic) && { label: '소주제', value: parsed?.subtopic || meta.sub_topic || meta.subtopic },
@@ -225,7 +225,7 @@ export default function FreeSearchPage({ fontSize }) {
             )}
             {dbEditIdx === i && (
               <div style={{ padding: '8px 10px', borderTop: '1px solid var(--tint-red-bd)' }}>
-                <div style={{ fontSize: '0.786rem', fontWeight: 600, color: '#c44', marginBottom: 6 }}>DB 직접 편집</div>
+                <div style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--c-danger)', marginBottom: 6 }}>DB 직접 편집</div>
                 {(meta.mode === 'manual' || meta.pub_type === 'manual') && (<>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
                   <div style={{ flex: 1 }}>
@@ -285,9 +285,9 @@ export default function FreeSearchPage({ fontSize }) {
                     {[1,2,3,4,5].map(n => (
                       <button key={n} onClick={() => setDbEditMeta(p => ({ ...p, rating: p.rating === n ? 0 : n }))} style={{
                         width: 28, height: 28, borderRadius: 6,
-                        border: '1px solid ' + (n <= (dbEditMeta.rating || 0) ? '#F5A623' : 'var(--bd)'),
+                        border: '1px solid ' + (n <= (dbEditMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--bd)'),
                         background: n <= (dbEditMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)',
-                        color: n <= (dbEditMeta.rating || 0) ? '#F5A623' : 'var(--c-dim)',
+                        color: n <= (dbEditMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--c-dim)',
                         fontSize: '0.714rem', fontWeight: 700, cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                       }}>{n}</button>
@@ -295,9 +295,9 @@ export default function FreeSearchPage({ fontSize }) {
                   </div>
                   <button onClick={() => setDbEditMeta(p => ({ ...p, favorite: !p.favorite }))} style={{
                     padding: '3px 10px', borderRadius: 6,
-                    border: '1px solid ' + (dbEditMeta.favorite ? '#F5A623' : 'var(--bd)'),
+                    border: '1px solid ' + (dbEditMeta.favorite ? 'var(--accent-gold)' : 'var(--bd)'),
                     background: dbEditMeta.favorite ? '#F5A62318' : 'var(--bg-card)',
-                    color: dbEditMeta.favorite ? '#F5A623' : 'var(--c-dim)',
+                    color: dbEditMeta.favorite ? 'var(--accent-gold)' : 'var(--c-dim)',
                     fontSize: '0.786rem', cursor: 'pointer', fontWeight: 700,
                   }}>{dbEditMeta.favorite ? '★' : '☆'}</button>
                 </div>
@@ -308,8 +308,8 @@ export default function FreeSearchPage({ fontSize }) {
                       <div style={{ display: 'flex', gap: 2 }}>
                         {[1,2,3,4,5].map(n => (
                           <button key={n} onClick={() => setDbEditMeta(p => ({ ...p, importance: p.importance === n ? 0 : n }))} style={{
-                            width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (dbEditMeta.importance || 0) ? '#378ADD' : 'var(--bd)'),
-                            background: n <= (dbEditMeta.importance || 0) ? '#378ADD18' : 'var(--bg-card)', color: n <= (dbEditMeta.importance || 0) ? '#378ADD' : 'var(--c-dim)',
+                            width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (dbEditMeta.importance || 0) ? 'var(--accent-blue)' : 'var(--bd)'),
+                            background: n <= (dbEditMeta.importance || 0) ? '#378ADD18' : 'var(--bg-card)', color: n <= (dbEditMeta.importance || 0) ? 'var(--accent-blue)' : 'var(--c-dim)',
                             fontSize: '0.714rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                           }}>{n}</button>
                         ))}
@@ -349,7 +349,7 @@ export default function FreeSearchPage({ fontSize }) {
                       setResults(prev => prev.map(rr => rr.id === r.id ? { ...rr, text: finalText, metadata: { ...rr.metadata, ...saveMeta } } : rr));
                       setDbStat('저장 완료'); setTimeout(() => { setDbEditIdx(-1); setDbStat(''); }, 1000);
                     } catch (e) { setDbStat('오류: ' + e.message); }
-                  }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #D85A30', background: '#D85A30', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
+                  }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                   <button onClick={async () => {
                     if (!confirm('이 항목을 DB에서 삭제하시겠습니까?')) return;
                     setDbStat('삭제 중...');
@@ -358,9 +358,9 @@ export default function FreeSearchPage({ fontSize }) {
                       setResults(prev => prev.filter(rr => rr.id !== r.id));
                       setDbEditIdx(-1); setDbStat('');
                     } catch (e) { setDbStat('오류: ' + e.message); }
-                  }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
+                  }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
                   <button onClick={() => { setDbEditIdx(-1); setDbStat(''); }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                  {dbStat && <span style={{ fontSize: '0.786rem', color: dbStat.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{dbStat}</span>}
+                  {dbStat && <span style={{ fontSize: '0.786rem', color: dbStat.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{dbStat}</span>}
                 </div>
               </div>
             )}

@@ -69,7 +69,7 @@ export default function RefinePanel({
             width: activeProgress >= 20 ? activeProgress + '%' : '100%',
             background: activeProgress >= 20
               ? (refining ? '#7F77DD20' : '#1D9E7520')
-              : `linear-gradient(90deg, transparent, ${refining ? '#7F77DD' : '#1D9E75'}15, transparent)`,
+              : `linear-gradient(90deg, transparent, ${refining ? 'var(--accent-purple)' : 'var(--accent)'}15, transparent)`,
             transition: activeProgress >= 20 ? 'width 0.3s ease' : 'none',
             animation: activeProgress < 20 ? 'shimmer 1.5s ease-in-out infinite' : 'none',
           }} />
@@ -83,9 +83,9 @@ export default function RefinePanel({
           {!isActive && !refineMode ? (
             <>
               <button onClick={() => { setRefineMode(true); setRefineInstr(''); }}
-                style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #7F77DD', background: 'var(--bg-card)', color: '#7F77DD', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>다듬기</button>
+                style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--accent-purple)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>다듬기</button>
               <button onClick={onRegenerate}
-                style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #D85A30', background: 'var(--bg-card)', color: '#D85A30', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>다시 만들기</button>
+                style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>다시 만들기</button>
               <CopyButton text={script} />
             </>
           ) : !isActive && refineMode ? (
@@ -112,7 +112,7 @@ export default function RefinePanel({
           <KoreanTextarea value={script} onChange={onScriptChange} placeholder="스크립트를 수정하세요" rows={15}
             style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 2, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
           <div style={{ marginTop: 10, borderRadius: 8, border: '1px solid var(--opt-bd)', background: 'var(--opt-bg)', padding: 12 }}>
-            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: '#D85A30', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <div style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--accent-orange)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
               <span style={{ fontSize: '0.857rem' }}>⚙</span> 다듬기 옵션
             </div>
             <div style={{ marginBottom: 6 }}>
@@ -124,7 +124,7 @@ export default function RefinePanel({
               rows={3} style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
           </div>
           <button onClick={doRefine} disabled={refining}
-            style={{ display: 'block', width: '100%', marginTop: 10, padding: '12px 0', borderRadius: 10, border: 'none', background: refining ? 'var(--bd-medium)' : '#7F77DD', color: '#fff', fontSize: '1.0rem', fontWeight: 700, cursor: 'pointer' }}>
+            style={{ display: 'block', width: '100%', marginTop: 10, padding: '12px 0', borderRadius: 10, border: 'none', background: refining ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff', fontSize: '1.0rem', fontWeight: 700, cursor: 'pointer' }}>
             {refining ? '다듬기 중...' : '다듬기 실행'}
           </button>
         </div>

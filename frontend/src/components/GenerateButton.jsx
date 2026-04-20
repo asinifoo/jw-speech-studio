@@ -18,7 +18,7 @@ export default function GenerateButton({ onClick, disabled, generating, streamPr
       <button onClick={onClick} disabled={disabled || generating}
         style={{
           display: 'block', width: '100%', padding: 0, borderRadius: 10, border: 'none',
-          background: generating ? 'var(--bd-medium)' : disabled ? 'var(--bd)' : '#1D9E75',
+          background: generating ? 'var(--bd-medium)' : disabled ? 'var(--bd)' : 'var(--accent)',
           color: '#fff', fontSize: '1.0rem', fontWeight: 700,
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.5 : 1,
@@ -27,7 +27,7 @@ export default function GenerateButton({ onClick, disabled, generating, streamPr
         {generating && streamProgress >= 20 && (
           <div style={{
             position: 'absolute', left: 0, top: 0, bottom: 0,
-            width: streamProgress + '%', background: '#1D9E75',
+            width: streamProgress + '%', background: 'var(--accent)',
             transition: 'width 0.3s ease', borderRadius: 10,
           }} />
         )}

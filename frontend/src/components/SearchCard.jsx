@@ -1,3 +1,4 @@
+import { S } from '../styles';
 import { useState, Fragment } from 'react';
 import ScoreBar from './ScoreBar';
 import KoreanTextarea from './KoreanTextarea';
@@ -98,27 +99,27 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
           <input type="checkbox" checked={checked} readOnly style={{ cursor: 'pointer', accentColor: tagColor[col] || 'var(--c-muted)' }} />
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: tagColor[col] || 'var(--c-muted)', flexShrink: 0 }} />
           <span style={{ fontSize: rem(11), fontWeight: 600, color: 'var(--c-hint)' }}>{sourceLabel[meta.source] || meta.source || tagLabel[col] || col}</span>
-          {meta.source === 'discussion' && (meta.discussion_type || meta.sub_source) && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: '#378ADD', fontWeight: 600 }}>{meta.discussion_type || meta.sub_source}</span>}
+          {meta.source === 'discussion' && (meta.discussion_type || meta.sub_source) && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: 'var(--accent-blue)', fontWeight: 600 }}>{meta.discussion_type || meta.sub_source}</span>}
           {meta.speaker && <span style={{ fontSize: rem(11), color: 'var(--c-faint)' }}>{meta.speaker}</span>}
           {meta.date && meta.date !== '0000' && <span style={{ fontSize: rem(10), color: 'var(--c-dim)' }}>{meta.date}</span>}
           {meta.tags && (() => {
             const t = meta.tags;
             const badges = [];
-            if (t.includes('표현')) badges.push({ label: '표현', bg: '#D85A30' });
-            if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: '#C7842D' });
-            if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: '#C7842D' });
+            if (t.includes('표현')) badges.push({ label: '표현', bg: 'var(--accent-orange)' });
+            if (t.includes('예시(실화)')) badges.push({ label: '예시·실화', bg: 'var(--accent-brown)' });
+            if (t.includes('예시(비유)')) badges.push({ label: '예시·비유', bg: 'var(--accent-brown)' });
             if (t.includes('예시(성경)')) badges.push({ label: '예시·성경', bg: '#2D8FC7' });
-            if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: '#C7842D' });
+            if (!badges.length && t.includes('예시')) badges.push({ label: '예시', bg: 'var(--accent-brown)' });
             return badges.map((b, bi) => <span key={bi} style={{ fontSize: rem(8), padding: '1px 5px', borderRadius: 3, background: b.bg, color: '#fff', fontWeight: 700 }}>{b.label}</span>);
           })()}
           {meta.service_type && meta.service_type !== '일반' && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: 'var(--tint-green-soft)', color: '#2e7d32', fontWeight: 600 }}>{meta.service_type}</span>}
-          {meta.visit_target && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: '#D85A30', fontWeight: 600 }}>{meta.visit_target}</span>}
-          {meta.favorite === 'true' && <span style={{ fontSize: rem(10), color: '#F5A623' }}>★</span>}
-          {parseInt(meta.rating || '0') > 0 && <span style={{ fontSize: rem(8), color: '#F5A623', letterSpacing: -1 }}>{'★'.repeat(parseInt(meta.rating))}{'☆'.repeat(5 - parseInt(meta.rating))}</span>}
+          {meta.visit_target && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: 'var(--accent-orange)', fontWeight: 600 }}>{meta.visit_target}</span>}
+          {meta.favorite === 'true' && <span style={{ fontSize: rem(10), color: 'var(--accent-gold)' }}>★</span>}
+          {parseInt(meta.rating || '0') > 0 && <span style={{ fontSize: rem(8), color: 'var(--accent-gold)', letterSpacing: -1 }}>{'★'.repeat(parseInt(meta.rating))}{'☆'.repeat(5 - parseInt(meta.rating))}</span>}
           {meta.rating_note && <span style={{ fontSize: rem(9), color: 'var(--c-hint)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meta.rating_note}</span>}
-          {parseInt(meta.importance || '0') > 0 && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#378ADD18', color: '#378ADD', fontWeight: 700 }}>★{parseInt(meta.importance)}</span>}
-          {isFiltered && <span style={{ fontSize: rem(10), fontWeight: 700, color: '#c44' }}>LLM 제외</span>}
-          {isEdited && <span style={{ fontSize: rem(9), padding: '1px 4px', borderRadius: 3, background: 'var(--tint-blue)', color: '#378ADD', fontWeight: 600 }}>편집됨</span>}
+          {parseInt(meta.importance || '0') > 0 && <span style={{ fontSize: rem(9), padding: '1px 5px', borderRadius: 3, background: '#378ADD18', color: 'var(--accent-blue)', fontWeight: 700 }}>★{parseInt(meta.importance)}</span>}
+          {isFiltered && <span style={{ fontSize: rem(10), fontWeight: 700, color: 'var(--c-danger)' }}>LLM 제외</span>}
+          {isEdited && <span style={{ fontSize: rem(9), padding: '1px 4px', borderRadius: 3, background: 'var(--tint-blue)', color: 'var(--accent-blue)', fontWeight: 600 }}>편집됨</span>}
           <div style={{ flex: 1 }} />
           <ScoreBar score={item.score || 0} />
         </div>
@@ -127,16 +128,8 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
           <div style={{ flex: 1 }} />
           {!editing && !dbEditing && (
             <>
-              <button onClick={startEdit} style={{
-                height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--bd)',
-                background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: rem(9), cursor: 'pointer', minWidth: 36,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit',
-              }}>수정</button>
-              <button onClick={startDbEdit} style={{
-                height: 20, padding: '0 8px', borderRadius: 5, border: '1px solid var(--tint-red-bd)',
-                background: 'var(--bg-card)', color: '#c44', fontSize: rem(9), cursor: 'pointer', minWidth: 36,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, fontFamily: 'inherit',
-              }}>DB</button>
+              <button onClick={startEdit} style={S.btnXs}>수정</button>
+              <button onClick={startDbEdit} style={S.btnXsDanger}>DB</button>
             </>
           )}
         </div>
@@ -148,7 +141,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
             <div key={i} style={{ marginBottom: 4 }}>
               <span style={{
                 display: 'inline-block', fontSize: rem(10), padding: '1px 6px', borderRadius: 4,
-                background: 'var(--tint-orange)', color: '#D85A30', fontWeight: 600, marginRight: 6,
+                background: 'var(--tint-orange)', color: 'var(--accent-orange)', fontWeight: 600, marginRight: 6,
               }}>{sec.label}</span>
               <span style={{ fontSize: rem(12), color: 'var(--c-hint)' }}>
                 {expanded || sec.content.length <= 80 ? sec.content : sec.content.slice(0, 80) + '...'}
@@ -175,13 +168,13 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
           const svcTopic = meta.topic || parsed?.topic || meta.outline_title || '';
           const svcSituation = meta.situation || parsed?.situation || '';
           const metaRows = [
-            isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+            isPub && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
             isPub && meta.pub_title && meta.pub_title !== meta.pub_code && { label: '출판물명', value: meta.pub_title },
-            isDisc && meta.pub_code && { label: '출판물', value: meta.pub_code, color: '#7F77DD' },
+            isDisc && meta.pub_code && { label: '출판물', value: meta.pub_code, color: 'var(--accent-purple)' },
             isDisc && discTopic && { label: '주제', value: discTopic },
-            isDisc && discQuestion && { label: '질문', value: discQuestion, color: '#378ADD' },
+            isDisc && discQuestion && { label: '질문', value: discQuestion, color: 'var(--accent-blue)' },
             (isSvc || isVisit) && svcTopic && { label: '주제', value: svcTopic },
-            isVisit && meta.visit_target && { label: '대상', value: meta.visit_target, color: '#D85A30' },
+            isVisit && meta.visit_target && { label: '대상', value: meta.visit_target, color: 'var(--accent-orange)' },
             (isSvc || isVisit) && svcSituation && { label: '상황', value: svcSituation },
             !isPub && !isDisc && !isSvc && !isVisit && title && { label: '주제', value: (prefix ? prefix + ' ' : '') + title },
             !isPub && !isDisc && !isSvc && !isVisit && subTopic && { label: '소주제', value: subTopic },
@@ -259,7 +252,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
             return (
               <div key={pbi} style={{ marginBottom: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, fontSize: rem(10) }}>
-                  <span style={{ fontSize: rem(8), padding: '1px 3px', borderRadius: 2, background: '#7F77DD', color: '#fff', fontWeight: 800, flexShrink: 0, marginTop: 2 }}>P</span>
+                  <span style={{ fontSize: rem(8), padding: '1px 3px', borderRadius: 2, background: 'var(--accent-purple)', color: '#fff', fontWeight: 800, flexShrink: 0, marginTop: 2 }}>P</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ color: '#6b5fbd', fontWeight: 600 }}>{pub.pub_code}</span>
                     <div style={{ color: 'var(--c-faint)', fontSize: rem(10), lineHeight: 1.5, marginTop: 1, wordBreak: 'keep-all' }}>{pub.point_content}</div>
@@ -271,7 +264,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
                       setViewingTexts(prev => ({ ...prev, [pbi]: bodyText }));
                     }} style={{
                       padding: '1px 6px', borderRadius: 3, border: '1px solid var(--tint-purple-input)',
-                      background: 'var(--bg-card)', color: '#7F77DD', fontSize: rem(9), cursor: 'pointer', fontWeight: 600, flexShrink: 0,
+                      background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: rem(9), cursor: 'pointer', fontWeight: 600, flexShrink: 0,
                     }}>보기</button>
                   )}
                   {isViewing && !isAdded && (
@@ -281,8 +274,8 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
                         setCardPub(pubKey, viewingTexts[pbi] || bodyText);
                         setViewingPubs(prev => { const n = { ...prev }; delete n[pbi]; return n; });
                       }} style={{
-                        padding: '1px 6px', borderRadius: 3, border: '1px solid #1D9E75',
-                        background: 'var(--tint-green)', color: '#1D9E75', fontSize: rem(9), cursor: 'pointer', fontWeight: 600, flexShrink: 0,
+                        padding: '1px 6px', borderRadius: 3, border: '1px solid var(--accent)',
+                        background: 'var(--tint-green)', color: 'var(--accent)', fontSize: rem(9), cursor: 'pointer', fontWeight: 600, flexShrink: 0,
                       }}>추가</button>
                       <button onClick={(e) => {
                         e.stopPropagation();
@@ -302,7 +295,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
                         setCardPub(pubKey, null);
                       }} style={{
                         padding: '1px 6px', borderRadius: 3, border: '1px solid var(--tint-purple-input)',
-                        background: 'var(--bg-card)', color: '#7F77DD', fontSize: rem(9), cursor: 'pointer', fontWeight: 600, flexShrink: 0,
+                        background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: rem(9), cursor: 'pointer', fontWeight: 600, flexShrink: 0,
                       }}>수정</button>
                       <button onClick={(e) => {
                         e.stopPropagation();
@@ -359,8 +352,8 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
             />
             <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
               <button onClick={confirmEdit} style={{
-                padding: '3px 10px', borderRadius: 8, border: '1px solid #378ADD',
-                background: editValue ? '#378ADD' : 'var(--bd)', color: '#fff', fontSize: rem(11), cursor: 'pointer', fontWeight: 600,
+                padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-blue)',
+                background: editValue ? 'var(--accent-blue)' : 'var(--bd)', color: '#fff', fontSize: rem(11), cursor: 'pointer', fontWeight: 600,
               }}>확인</button>
               {isEdited && (
                 <button onClick={restoreOriginal} style={{
@@ -397,7 +390,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
       )}
       {dbEditing && (
         <div style={{ padding: '8px 10px', borderTop: '1px solid var(--tint-red-bd)' }}>
-          <div style={{ fontSize: rem(10), fontWeight: 600, color: '#c44', marginBottom: 6 }}>DB 직접 편집</div>
+          <div style={{ fontSize: rem(10), fontWeight: 600, color: 'var(--c-danger)', marginBottom: 6 }}>DB 직접 편집</div>
           {(meta.mode === 'manual' || meta.pub_type === 'manual') && (<>
           <div style={{ display: 'flex', gap: 4, marginBottom: 4 }}>
             <div style={{ flex: 1 }}>
@@ -466,15 +459,15 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
             <div style={{ display: 'flex', gap: 2 }}>
               {[1,2,3,4,5].map(n => (
                 <button key={n} onClick={(e) => { e.stopPropagation(); setDbEditMeta(p => ({ ...p, rating: p.rating === n ? 0 : n })); }} style={{
-                  width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (dbEditMeta.rating || 0) ? '#F5A623' : 'var(--bd)'),
-                  background: n <= (dbEditMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)', color: n <= (dbEditMeta.rating || 0) ? '#F5A623' : 'var(--c-dim)',
+                  width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (dbEditMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--bd)'),
+                  background: n <= (dbEditMeta.rating || 0) ? '#F5A62318' : 'var(--bg-card)', color: n <= (dbEditMeta.rating || 0) ? 'var(--accent-gold)' : 'var(--c-dim)',
                   fontSize: rem(10), fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                 }}>{n}</button>
               ))}
             </div>
             <button onClick={(e) => { e.stopPropagation(); setDbEditMeta(p => ({ ...p, favorite: !p.favorite })); }} style={{
-              padding: '3px 10px', borderRadius: 6, border: '1px solid ' + (dbEditMeta.favorite ? '#F5A623' : 'var(--bd)'),
-              background: dbEditMeta.favorite ? '#F5A62318' : 'var(--bg-card)', color: dbEditMeta.favorite ? '#F5A623' : 'var(--c-dim)',
+              padding: '3px 10px', borderRadius: 6, border: '1px solid ' + (dbEditMeta.favorite ? 'var(--accent-gold)' : 'var(--bd)'),
+              background: dbEditMeta.favorite ? '#F5A62318' : 'var(--bg-card)', color: dbEditMeta.favorite ? 'var(--accent-gold)' : 'var(--c-dim)',
               fontSize: rem(11), cursor: 'pointer', fontWeight: 700,
             }}>{dbEditMeta.favorite ? '★' : '☆'}</button>
           </div>
@@ -494,8 +487,8 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
                 <div style={{ display: 'flex', gap: 2 }}>
                   {[1,2,3,4,5].map(n => (
                     <button key={n} onClick={(e) => { e.stopPropagation(); setDbEditMeta(p => ({ ...p, importance: p.importance === n ? 0 : n })); }} style={{
-                      width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (dbEditMeta.importance || 0) ? '#378ADD' : 'var(--bd)'),
-                      background: n <= (dbEditMeta.importance || 0) ? '#378ADD18' : 'var(--bg-card)', color: n <= (dbEditMeta.importance || 0) ? '#378ADD' : 'var(--c-dim)',
+                      width: 28, height: 28, borderRadius: 6, border: '1px solid ' + (n <= (dbEditMeta.importance || 0) ? 'var(--accent-blue)' : 'var(--bd)'),
+                      background: n <= (dbEditMeta.importance || 0) ? '#378ADD18' : 'var(--bg-card)', color: n <= (dbEditMeta.importance || 0) ? 'var(--accent-blue)' : 'var(--c-dim)',
                       fontSize: rem(10), fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                     }}>{n}</button>
                   ))}
@@ -510,18 +503,18 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
           )}
           <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
             <button onClick={saveDb} style={{
-              padding: '3px 10px', borderRadius: 8, border: '1px solid #D85A30',
-              background: '#D85A30', color: '#fff', fontSize: rem(11), cursor: 'pointer', fontWeight: 600,
+              padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)',
+              background: 'var(--accent-orange)', color: '#fff', fontSize: rem(11), cursor: 'pointer', fontWeight: 600,
             }}>DB 저장</button>
             <button onClick={deleteDb} style={{
-              padding: '3px 10px', borderRadius: 8, border: '1px solid #c44',
-              background: 'var(--bg-card)', color: '#c44', fontSize: rem(11), cursor: 'pointer',
+              padding: '3px 10px', borderRadius: 8, border: '1px solid var(--c-danger)',
+              background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: rem(11), cursor: 'pointer',
             }}>DB 삭제</button>
             <button onClick={(e) => { e.stopPropagation(); setDbEditing(false); setDbStatus(''); }} style={{
               padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)',
               background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: rem(11), cursor: 'pointer',
             }}>취소</button>
-            {dbStatus && <span style={{ fontSize: rem(10), color: dbStatus.startsWith('오류') ? '#c44' : '#1D9E75', fontWeight: 600 }}>{dbStatus}</span>}
+            {dbStatus && <span style={{ fontSize: rem(10), color: dbStatus.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{dbStatus}</span>}
           </div>
         </div>
       )}

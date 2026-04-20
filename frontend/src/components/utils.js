@@ -24,7 +24,7 @@ export function parseKeywords(v) {
 }
 
 export const tagColor = {
-  jw_ai: '#2D8FC7', speech_points: '#1D9E75', speech_expressions: '#D85A30', publications: '#7F77DD',
+  jw_ai: '#2D8FC7', speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)',
 };
 
 export const tagLabel = {

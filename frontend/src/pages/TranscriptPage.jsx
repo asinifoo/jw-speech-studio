@@ -81,12 +81,12 @@ export default function TranscriptPage({ fontSize }) {
               const cnt = catCounts[c] || 0;
               return (
                 <button key={c} onClick={() => { setCategory(c); setSelOutline(''); setSelSpeaker(null); setExpanded(false); setEditing(false); setSearchQ(''); }} style={{
-                  flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? '2px solid #D85A30' : '2px solid transparent',
+                  flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? '2px solid var(--accent-orange)' : '2px solid transparent',
                   background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
                 }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? '#D85A30' : 'var(--c-muted)', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{c}</span>
-                  <span style={{ fontSize: '0.571rem', fontWeight: 600, color: active ? '#D85A30' : 'var(--c-dim)', visibility: cnt > 0 ? 'visible' : 'hidden' }}>{cnt}</span>
+                  <span style={{ fontSize: '0.75rem', fontWeight: active ? 700 : 500, color: active ? 'var(--accent-orange)' : 'var(--c-muted)', lineHeight: 1.2, whiteSpace: 'nowrap' }}>{c}</span>
+                  <span style={{ fontSize: '0.571rem', fontWeight: 600, color: active ? 'var(--accent-orange)' : 'var(--c-dim)', visibility: cnt > 0 ? 'visible' : 'hidden' }}>{cnt}</span>
                 </button>
               );
             })}
@@ -115,7 +115,7 @@ export default function TranscriptPage({ fontSize }) {
                     background: isSelected ? 'var(--tint-green)' : 'var(--bg-card)',
                     display: 'flex', alignItems: 'center', gap: 6,
                   }}>
-                    <span style={{ fontWeight: 700, color: '#1D9E75', fontSize: '0.786rem', flexShrink: 0 }}>{getPrefix(t)}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{getPrefix(t)}</span>
                     <span style={{ flex: 1, fontSize: '0.786rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.outline_title || t.outline_title || ''}</span>
                     <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{t.speakers.length}명</span>
                   </div>
@@ -136,7 +136,7 @@ export default function TranscriptPage({ fontSize }) {
                   <button key={i} onClick={() => { setSelSpeaker(selSpeaker?.id === s.id ? null : s); setExpanded(false); setEditing(false); }} style={{
                     padding: '6px 4px', borderRadius: 8, border: 'none',
                     background: selSpeaker?.id === s.id ? '#1D9E7512' : 'var(--bg-subtle, #EFEFF4)',
-                    color: selSpeaker?.id === s.id ? '#1D9E75' : 'var(--c-muted)',
+                    color: selSpeaker?.id === s.id ? 'var(--accent)' : 'var(--c-muted)',
                     fontSize: '0.786rem', fontWeight: selSpeaker?.id === s.id ? 700 : 500,
                     cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
                     transition: 'all 0.15s',
@@ -154,10 +154,10 @@ export default function TranscriptPage({ fontSize }) {
       )}
 
       {selSpeaker && (
-        <div style={{ borderRadius: 10, border: '1px solid #1D9E75', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ borderRadius: 10, border: '1px solid var(--accent)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 14 }}>
           <div style={{ padding: '10px 14px', background: 'var(--tint-green)', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '0.929rem', color: '#1D9E75' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.929rem', color: 'var(--accent)' }}>
                 {getPrefix(transcripts[selOutline])} {transcripts[selOutline]?.outline_title || ''}
               </div>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-faint)', marginTop: 2 }}>{selSpeaker.speaker} | {selSpeaker.date}{selSpeaker.subtopic ? ' | v' + selSpeaker.subtopic : ''}</div>
@@ -177,9 +177,9 @@ export default function TranscriptPage({ fontSize }) {
             {!editing && (
               <>
                 <button onClick={() => setExpanded(p => !p)} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>{expanded ? '접기' : '전체 보기'}</button>
-                <button onClick={async () => { const ok = await copyText(getTranscriptBody(selSpeaker.text)); if (ok) { setCopyLabel('복사됨'); setTimeout(() => setCopyLabel('복사'), 1500); } }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid ' + (copyLabel === '복사됨' ? '#1D9E75' : 'var(--bd)'), background: copyLabel === '복사됨' ? 'var(--tint-green)' : 'var(--bg-card)', color: copyLabel === '복사됨' ? '#1D9E75' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copyLabel === '복사됨' ? 600 : 400 }}>{copyLabel}</button>
+                <button onClick={async () => { const ok = await copyText(getTranscriptBody(selSpeaker.text)); if (ok) { setCopyLabel('복사됨'); setTimeout(() => setCopyLabel('복사'), 1500); } }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid ' + (copyLabel === '복사됨' ? 'var(--accent)' : 'var(--bd)'), background: copyLabel === '복사됨' ? 'var(--tint-green)' : 'var(--bg-card)', color: copyLabel === '복사됨' ? 'var(--accent)' : 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer', fontWeight: copyLabel === '복사됨' ? 600 : 400 }}>{copyLabel}</button>
                 <div style={{ flex: 1 }} />
-                <button onClick={() => { setEditing(true); setEditVal(selSpeaker.text); setEditStat(''); }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #7F77DD', background: 'var(--bg-card)', color: '#7F77DD', fontSize: '0.786rem', cursor: 'pointer' }}>수정</button>
+                <button onClick={() => { setEditing(true); setEditVal(selSpeaker.text); setEditStat(''); }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--accent-purple)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.786rem', cursor: 'pointer' }}>수정</button>
                 <button onClick={async () => {
                   if (!confirm('이 원문을 삭제하시겠습니까?')) return;
                   try {
@@ -194,7 +194,7 @@ export default function TranscriptPage({ fontSize }) {
                     });
                     setSelSpeaker(null);
                   } catch (e) { alert('삭제 오류: ' + e.message); }
-                }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid #c44', background: 'var(--bg-card)', color: '#c44', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
+                }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
               </>
             )}
             {editing && (
@@ -207,9 +207,9 @@ export default function TranscriptPage({ fontSize }) {
                     setSelSpeaker({ ...selSpeaker });
                     setEditing(false); setEditStat('');
                   } catch (e) { setEditStat('오류: ' + e.message); }
-                }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid #7F77DD', background: '#7F77DD', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
+                }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--accent-purple)', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
                 <button onClick={() => { setEditing(false); setEditStat(''); }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                {editStat && <span style={{ fontSize: '0.786rem', color: editStat.includes('오류') ? '#c44' : '#1D9E75' }}>{editStat}</span>}
+                {editStat && <span style={{ fontSize: '0.786rem', color: editStat.includes('오류') ? 'var(--c-danger)' : 'var(--accent)' }}>{editStat}</span>}
               </>
             )}
           </div>

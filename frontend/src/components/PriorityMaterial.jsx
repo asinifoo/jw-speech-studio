@@ -19,7 +19,7 @@ export default function PriorityMaterial({ value, onChange, publications, onPubA
             borderRadius: 4, background: 'var(--tint-purple-badge)', fontWeight: 600,
           }}>{p}</span>
           {onPubAdd && <button onClick={() => onPubAdd(p)} style={{
-            padding: '0px 3px', borderRadius: 3, border: '1px solid #D85A30', background: 'var(--bg-card)', color: '#D85A30', fontSize: '0.571rem', cursor: 'pointer', fontWeight: 800, lineHeight: '14px',
+            padding: '0px 3px', borderRadius: 3, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.571rem', cursor: 'pointer', fontWeight: 800, lineHeight: '14px',
           }}>+</button>}
         </span>
       ))}
@@ -45,11 +45,11 @@ export default function PriorityMaterial({ value, onChange, publications, onPubA
         {pubTags}
         <div style={{ borderRadius: 8, border: '1px solid var(--tint-purple-input)', background: 'var(--tint-purple)', overflow: 'hidden' }}>
           <div style={{ padding: '6px 10px', background: 'var(--tint-purple-badge)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: '#7F77DD' }}>P</span>
+            <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: 'var(--accent-purple)' }}>P</span>
             <span style={{ fontSize: '0.786rem', fontWeight: 600, color: '#6b5fbd' }}>출판물 자료</span>
-            <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 4, background: '#e0dbf5', color: '#7F77DD', fontWeight: 600 }}>우선 참고</span>
+            <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 4, background: '#e0dbf5', color: 'var(--accent-purple)', fontWeight: 600 }}>우선 참고</span>
             <div style={{ flex: 1 }} />
-            <button onClick={() => { if (value) setEditing(false); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #7F77DD', background: value ? '#7F77DD' : 'var(--bd)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>확인</button>
+            <button onClick={() => { if (value) setEditing(false); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent-purple)', background: value ? 'var(--accent-purple)' : 'var(--bd)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>확인</button>
             <button onClick={() => { onChange(''); setEditing(false); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #d0c8e8', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
           </div>
           <div style={{ padding: 8 }}>
@@ -66,11 +66,11 @@ export default function PriorityMaterial({ value, onChange, publications, onPubA
       {pubTags}
       <div style={{ borderRadius: 8, border: '1px solid var(--tint-purple-input)', background: 'var(--tint-purple)', overflow: 'hidden' }}>
         <div style={{ padding: '6px 10px', background: 'var(--tint-purple-badge)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: '#7F77DD' }}>P</span>
+          <span style={{ width: 20, height: 20, borderRadius: 4, flexShrink: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.786rem', fontWeight: 800, color: '#fff', background: 'var(--accent-purple)' }}>P</span>
           <span style={{ fontSize: '0.786rem', fontWeight: 600, color: '#6b5fbd' }}>출판물 자료</span>
-          <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 4, background: '#e0dbf5', color: '#7F77DD', fontWeight: 600 }}>우선 참고</span>
+          <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 4, background: '#e0dbf5', color: 'var(--accent-purple)', fontWeight: 600 }}>우선 참고</span>
           <div style={{ flex: 1 }} />
-          <button onClick={() => setEditing(true)} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #d0c8e8', background: 'var(--bg-card)', color: '#7F77DD', fontSize: '0.786rem', cursor: 'pointer' }}>수정</button>
+          <button onClick={() => setEditing(true)} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #d0c8e8', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.786rem', cursor: 'pointer' }}>수정</button>
           <button onClick={() => { onChange(''); }} style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid #d0c8e8', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
         </div>
         <div style={{ padding: '8px 10px' }}>
@@ -78,7 +78,7 @@ export default function PriorityMaterial({ value, onChange, publications, onPubA
             {expanded || value.length <= 200 ? value : value.slice(0, 200) + '...'}
           </div>
           {value.length > 200 && (
-            <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 4, padding: '3px 10px', borderRadius: 8, border: '1px solid #d0c8e8', background: 'var(--tint-purple)', color: '#7F77DD', fontSize: '0.786rem', cursor: 'pointer' }}>{expanded ? '접기' : '전체 보기'}</button>
+            <button onClick={() => setExpanded(!expanded)} style={{ marginTop: 4, padding: '3px 10px', borderRadius: 8, border: '1px solid #d0c8e8', background: 'var(--tint-purple)', color: 'var(--accent-purple)', fontSize: '0.786rem', cursor: 'pointer' }}>{expanded ? '접기' : '전체 보기'}</button>
           )}
         </div>
       </div>
