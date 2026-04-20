@@ -83,6 +83,12 @@ def save_draft_internal(req: dict) -> dict:
         "free_subtopics": req.get("free_subtopics", []),
         "free_mode": req.get("free_mode", "subtopic"),
         "no_outline": bool(req.get("no_outline", False)),
+        # 빠른 입력 모드 (Phase 5-1)
+        "quick_type": req.get("quick_type", ""),
+        "speech_type": req.get("speech_type", ""),
+        "target": req.get("target", ""),
+        "pub_code": req.get("pub_code", ""),
+        "pub_title": req.get("pub_title", ""),
         # STT 링크
         "source_stt_job_id": source_stt_id,
         "source_type": req.get("source_type", ""),

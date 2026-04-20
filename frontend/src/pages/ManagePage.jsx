@@ -197,9 +197,15 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const defaultMTypes = ['일반', '재방문', '기념식', '지역대회', '특별활동'];
   // ── 연설 입력 state ──
   const [addTab, setAddTab] = useState(() => { try { const s = localStorage.getItem('jw-add-tab'); return ['input', 'preprocess', 'drafts'].includes(s) ? s : 'input'; } catch { return 'input'; } });
-  const [inputMode, setInputMode] = useState(() => { try { return localStorage.getItem('jw-input-mode') || 'speech_input'; } catch { return 'speech_input'; } });
+  const [inputMode, setInputMode] = useState(() => { try { return localStorage.getItem('jw-input-mode') || 'quick_input'; } catch { return 'quick_input'; } });
   useEffect(() => { try { localStorage.setItem('jw-add-tab', addTab); } catch {} }, [addTab]);
   useEffect(() => { try { localStorage.setItem('jw-input-mode', inputMode); } catch {} }, [inputMode]);
+  // Phase 5-1: 빠른 입력 state
+  const _qiDefault = { type: 'speech', speech_type: '생활과 봉사', speaker: '', date: '', topic: '', target: '', pub_code: '', pub_title: '', content: '' };
+  const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-qi-form')) || _qiDefault; } catch { return _qiDefault; } });
+  useEffect(() => { try { localStorage.setItem('jw-qi-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
+  const [qiSaving, setQiSaving] = useState(false);
+  const [qiSaveMsg, setQiSaveMsg] = useState('');
   const [draftsFilter, setDraftsFilter] = useState('draft'); // draft | memo
   const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-si-state')) || {}; } catch { return {}; } })();
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
@@ -1637,10 +1643,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
           {/* 입력 하위 — 카드 헤더 언더라인 */}
           <div style={{ display: 'flex', borderBottom: '1px solid var(--bd-light)', background: 'var(--bg-subtle)' }}>
-            {[['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => {
+            {[['quick_input', '빠른 입력', '#D85A30'], ['speech_input', '연설', '#1D9E75'], ['discussion', '토의', '#378ADD'], ['service', '봉사 모임', '#1D9E75'], ['visit_input', '방문', '#D85A30'], ['pub_input', '출판물', '#7F77DD']].map(([k, l, c]) => {
               const active = inputMode === k;
               return (
-                <button key={k} onClick={() => { setInputMode(k); setSaveMsg(''); }} style={{
+                <button key={k} onClick={() => { setInputMode(k); setSaveMsg(''); setQiSaveMsg(''); }} style={{
                   flex: 1, padding: '9px 0 7px', border: 'none', borderBottom: active ? `2px solid ${c}` : '2px solid transparent',
                   background: 'transparent', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
@@ -1652,6 +1658,186 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
             })}
           </div>
           <div style={{ padding: 14 }}>
+
+          {/* ─── 빠른 입력 (Phase 5-1) ─── */}
+          {inputMode === 'quick_input' && (<>
+            {/* 타입 선택 */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>타입</div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {[
+                  ['speech', '연설'],
+                  ['discussion', '토의'],
+                  ['service', '봉사 모임'],
+                  ['visit', '방문'],
+                  ['publication', '출판물'],
+                  ['other', '기타'],
+                ].map(([k, l]) => {
+                  const active = qiForm.type === k;
+                  return (
+                    <button key={k} onClick={() => setQiForm(p => ({ ...p, type: k }))}
+                      style={{
+                        flex: '1 1 30%', padding: '6px 4px', borderRadius: 6,
+                        border: '1px solid ' + (active ? '#D85A30' : 'var(--bd)'),
+                        background: active ? '#D85A3010' : 'var(--bg-card)',
+                        color: active ? '#D85A30' : 'var(--c-faint)',
+                        fontSize: '0.786rem', fontWeight: active ? 700 : 500,
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}>{l}</button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 타입별 필드 */}
+            {qiForm.type === 'speech' && (
+              <>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
+                  <select value={qiForm.speech_type} onChange={e => setQiForm(p => ({ ...p, speech_type: e.target.value }))}
+                    style={{ ...iS, width: '100%', cursor: 'pointer', appearance: 'none' }}>
+                    <option>공개강연</option>
+                    <option>생활과 봉사</option>
+                    <option>JW방송</option>
+                    <option>대회</option>
+                    <option>기타</option>
+                  </select>
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연사</div>
+                    <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="김형제" style={{ ...iS, width: '100%' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
+                    <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605 (YYMM)" style={{ ...iS, width: '100%' }} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {qiForm.type === 'discussion' && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>출판물 코드</div>
+                  <input value={qiForm.pub_code} onChange={e => setQiForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...iS, width: '100%' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
+                  <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...iS, width: '100%' }} />
+                </div>
+              </div>
+            )}
+
+            {qiForm.type === 'service' && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
+                <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...iS, width: '100%' }} />
+              </div>
+            )}
+
+            {qiForm.type === 'visit' && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>대상</div>
+                  <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수 형제님" style={{ ...iS, width: '100%' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
+                  <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...iS, width: '100%' }} />
+                </div>
+              </div>
+            )}
+
+            {qiForm.type === 'publication' && (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>출판물 코드</div>
+                  <input value={qiForm.pub_code} onChange={e => setQiForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...iS, width: '100%' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>제목</div>
+                  <input value={qiForm.pub_title} onChange={e => setQiForm(p => ({ ...p, pub_title: e.target.value }))} placeholder="출판물 제목" style={{ ...iS, width: '100%' }} />
+                </div>
+              </div>
+            )}
+
+            {qiForm.type === 'other' && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
+                <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605 (선택)" style={{ ...iS, width: '100%' }} />
+              </div>
+            )}
+
+            {/* 주제 (공통 — service/publication 제외) */}
+            {qiForm.type !== 'service' && qiForm.type !== 'publication' && (
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>
+                  주제 {qiForm.type === 'other' && <span style={{ color: 'var(--c-dim)' }}>(선택)</span>}
+                </div>
+                <input value={qiForm.topic} onChange={e => setQiForm(p => ({ ...p, topic: e.target.value }))} placeholder="주제" style={{ ...iS, width: '100%' }} />
+              </div>
+            )}
+
+            {/* 내용 textarea */}
+            <div style={{ marginBottom: 10 }}>
+              <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>내용</div>
+              <textarea value={qiForm.content} onChange={e => setQiForm(p => ({ ...p, content: e.target.value }))}
+                placeholder="들은 내용을 빠르게 적어보세요..." rows={12}
+                style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.929rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
+            </div>
+
+            {/* 저장 버튼 */}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={async () => {
+                if (!qiForm.content.trim()) { setQiSaveMsg('내용을 입력해주세요'); return; }
+                setQiSaving(true); setQiSaveMsg('');
+                try {
+                  // 백엔드 _draft_id는 outline_num 없으면 ETC로 붕괴 → 타입 토큰을 outline_num에 실어 prefix 생성
+                  // 결과 draft_id 패턴: QUICK_{타입코드}_{timestamp}_{speaker|target|pub_code}_{date}
+                  const typeCode = { speech: 'SP', discussion: 'DC', service: 'SV', visit: 'VS', publication: 'PB', other: 'ET' }[qiForm.type] || 'ET';
+                  const uniq = String(Date.now()).slice(-8);
+                  const idPart = (qiForm.speaker || qiForm.target || qiForm.pub_code || qiForm.pub_title || 'unknown').trim() || 'unknown';
+                  const resp = await draftSave({
+                    outline_type: 'QUICK',
+                    outline_num: `${typeCode}_${uniq}`,
+                    outline_title: qiForm.topic || '',
+                    speaker: idPart,
+                    date: qiForm.date || '',
+                    mode: 'quick_input',
+                    quick_type: qiForm.type,
+                    speech_type: qiForm.speech_type || '',
+                    target: qiForm.target || '',
+                    pub_code: qiForm.pub_code || '',
+                    pub_title: qiForm.pub_title || '',
+                    free_text: qiForm.content,
+                    notes: {}, details: {}, free_subtopics: [],
+                  });
+                  const savedId = (resp && resp.draft_id) || '';
+                  setQiSaveMsg(`✓ 저장됨 (${savedId})`);
+                  setQiForm(_qiDefault);
+                  setTimeout(() => setQiSaveMsg(''), 3000);
+                } catch (e) {
+                  setQiSaveMsg('오류: ' + e.message);
+                } finally {
+                  setQiSaving(false);
+                }
+              }} disabled={qiSaving || !qiForm.content.trim()} style={{
+                flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
+                background: qiSaving || !qiForm.content.trim() ? 'var(--bd-medium)' : '#D85A30', color: '#fff',
+                fontSize: '0.929rem', fontWeight: 700, cursor: qiSaving || !qiForm.content.trim() ? 'default' : 'pointer',
+              }}>
+                {qiSaving ? '저장 중...' : '빠른 저장'}
+              </button>
+            </div>
+
+            {qiSaveMsg && (
+              <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center',
+                color: qiSaveMsg.startsWith('✓') ? '#1D9E75' : '#c44', fontWeight: 600 }}>
+                {qiSaveMsg}
+              </div>
+            )}
+          </>)}
 
           {/* 토의 입력 */}
           {inputMode === 'discussion' && (<>
