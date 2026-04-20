@@ -221,6 +221,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [siFreeTopic, setSiFreeTopic] = useState(_siInit.freeTopic || '');
   const [siFreeSubtopics, setSiFreeSubtopics] = useState(_siInit.freeSubtopics || []); // [{ title, memo }]
   const [siFreeMode, setSiFreeMode] = useState(_siInit.freeMode || 'subtopic'); // subtopic | bulk
+  const [siFreeType, setSiFreeType] = useState(_siInit.freeType || '생활과 봉사'); // 생활과 봉사 | JW방송 | 대회 | 기타
   const [siSourceSttJobId, setSiSourceSttJobId] = useState(_siInit.sourceSttJobId || '');
   // Build-5D-2: STT 원본 텍스트 (골자 모드에서도 보존, 상단 고정)
   const [siSttOriginalText, setSiSttOriginalText] = useState(_siInit.sttOriginalText || '');
@@ -230,12 +231,12 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   useEffect(() => { try { localStorage.setItem('jw-si-state', JSON.stringify({
     outline: siOutline, query: siQuery, speaker: siSpeaker, date: siDate,
     mode: siMode, notes: siNotes, details: siDetails,
-    noOutline: siNoOutline, freeText: siFreeText, freeTopic: siFreeTopic, freeSubtopics: siFreeSubtopics, freeMode: siFreeMode,
+    noOutline: siNoOutline, freeText: siFreeText, freeTopic: siFreeTopic, freeSubtopics: siFreeSubtopics, freeMode: siFreeMode, freeType: siFreeType,
     // STT ID는 자유 입력 모드일 때만 persist (골자 모드 오염 방지)
     sourceSttJobId: siNoOutline ? siSourceSttJobId : '',
     // STT 원본은 존재만으로 persist (골자 선택 후에도 참조 유지)
     sttOriginalText: siSttOriginalText || '',
-  })); } catch {} }, [siOutline, siQuery, siSpeaker, siDate, siMode, siNotes, siDetails, siNoOutline, siFreeText, siFreeTopic, siFreeSubtopics, siFreeMode, siSourceSttJobId, siSttOriginalText]);
+  })); } catch {} }, [siOutline, siQuery, siSpeaker, siDate, siMode, siNotes, siDetails, siNoOutline, siFreeText, siFreeTopic, siFreeSubtopics, siFreeMode, siFreeType, siSourceSttJobId, siSttOriginalText]);
   // 마운트 시 골자 복원 → 소주제 재로드
   useEffect(() => {
     if (!siOutline || !siOutline.outline_num) return;
@@ -261,7 +262,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
     if (!t) return;
     // 기존 state 전부 리셋
     setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({});
-    setSiExpanded({}); setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]);
+    setSiExpanded({}); setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사');
     setSiVerseOpen({}); setSiVerseData({}); setSiDraftInfo(null); setSiNoteInfo(null);
     setSiSourceSttJobId('');
     setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
@@ -293,6 +294,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       setSiFreeText(t.free_text || '');
       setSiFreeTopic(t.free_topic || '');
       setSiFreeSubtopics(t.free_subtopics || []);
+      setSiFreeType(t.free_type || '생활과 봉사');  // Hotfix 3: 연설 유형 복원
       setSiSourceSttJobId(t.source_stt_job_id || '');
       setSiSttOriginalText(t.stt_original_text || '');
       setSiSttOriginalEditing(false);
@@ -3825,7 +3827,22 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
             {siNoOutline && (
               <div style={{ marginTop: 6 }}>
-                <input value={siFreeTopic} onChange={e => setSiFreeTopic(e.target.value)} placeholder="연설 주제" style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box', marginBottom: 6 }} />
+                {/* 연설 유형 (Hotfix 3) */}
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
+                  <select value={siFreeType} onChange={e => setSiFreeType(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', outline: 'none', boxSizing: 'border-box', appearance: 'none', cursor: 'pointer' }}>
+                    {['생활과 봉사', 'JW방송', '대회', '기타'].map(v => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* 주제 (Hotfix 3) */}
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>주제</div>
+                  <input value={siFreeTopic} onChange={e => setSiFreeTopic(e.target.value)} placeholder="연설 주제 입력..."
+                    style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' }} />
+                </div>
               </div>
             )}
           </div>
@@ -3920,13 +3937,6 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#1D9E75', color: '#fff', fontSize: '0.714rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{si + 1}</span>
                         <input value={st.title} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, title: e.target.value } : x))} placeholder="소주제 제목" style={{ flex: 1, padding: '4px 8px', border: 'none', borderRadius: 6, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'transparent', boxSizing: 'border-box' }} />
                         <button onClick={() => setSiFreeSubtopics(p => p.filter((_, j) => j !== si))} style={{ width: 22, height: 22, borderRadius: 6, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-                      </div>
-                    )}
-                    {!isStandaloneTopLevel && (
-                      <div style={{ padding: '6px 10px', borderBottom: '1px solid var(--bd-light)' }}>
-                        <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 3 }}>전체 메모 (선택)</div>
-                        <textarea value={st.memo || ''} onChange={e => setSiFreeSubtopics(p => p.map((x, j) => j === si ? { ...x, memo: e.target.value } : x))} placeholder="소주제 전체 요약..." rows={2}
-                          style={{ display: 'block', width: '100%', padding: '6px 8px', boxSizing: 'border-box', border: 'none', borderRadius: 6, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                       </div>
                     )}
                     {/* 요점 배열 */}
@@ -4306,6 +4316,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                       free_topic: siFreeTopic,
                       free_subtopics: siFreeSubtopics,
                       free_mode: siFreeMode,
+                      free_type: siFreeType,
                       // STT ID는 자유 입력 모드일 때만 전송
                       source_stt_job_id: siNoOutline ? siSourceSttJobId : '',
                       // STT 원본은 존재만으로 전송 (링크 독립, 골자 전환 후에도 참조 유지)
@@ -4391,6 +4402,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                         files: [{
                           meta: {
                             outline_type: 'ETC',
+                            outline_type_name: siFreeType || '생활과 봉사',
                             outline_num: '',
                             title: siFreeTopic || '',
                             version: '',
@@ -4448,7 +4460,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                   if (!confirm('입력한 내용을 모두 초기화하시겠습니까?')) return;
                   setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiSpeaker(''); setSiDate(_siDateDefault);
                   setSiMode('quick'); setSiExpanded({}); setSiNotes({}); setSiDetails({});
-                  setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); siDraftLoadedRef.current = false;
+                  setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사'); siDraftLoadedRef.current = false;
                   setSiSourceSttJobId(''); setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
                   setSiVerseOpen({}); setSiVerseData({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
                   try { localStorage.removeItem('jw-si-state'); } catch {}
@@ -4528,6 +4540,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
                           free_text: full.free_text || '',
                           free_subtopics: full.free_subtopics || [],
                           free_mode: full.free_mode || 'subtopic',
+                          free_type: full.free_type || '생활과 봉사',
                           stt_original_text: full.stt_original_text || '',
                           source_stt_job_id: full.source_stt_job_id || '',
                         }));
