@@ -182,7 +182,6 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const [addTab, setAddTab] = useState(() => {
     // Phase 5-3B-1: addTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
     if (pageType === 'input') return 'structure';
-    if (pageType === 'add') return 'gather';
     try {
       const s = localStorage.getItem('jw-add-tab');
       // 기존 값 마이그레이션
