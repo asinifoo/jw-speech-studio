@@ -1367,7 +1367,7 @@ export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, cle
                   setQiSaveMsg(wasEditing
                     ? `✓ 수정 저장됨 (${savedId})`
                     : `✓ 저장됨 — [전처리] > [임시저장]에서 확인 가능 (${savedId})`);
-                  setQiForm(_qiDefault);
+                  setQiForm(prev => ({ ..._qiDefault, type: prev.type }));
                   setQiEditingOutlineNum('');
                   setTimeout(() => setQiSaveMsg(''), 4000);
                 } catch (e) {
