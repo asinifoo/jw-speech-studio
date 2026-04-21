@@ -580,16 +580,19 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       if (ids.length === 0) { clearInterval(interval); return; }
       try {
         const results = await Promise.all(ids.map(id => sttJobDetail(id).catch(() => null)));
+        // stillActive 계산을 setter 바깥에서 동기적으로 수행 (React setter는 비동기)
         const stillActive = new Set();
+        results.forEach(res => {
+          if (res && (res.status === 'transcribing' || res.status === 'correcting')) {
+            stillActive.add(res.job_id);
+          }
+        });
         setSttJobs(prev => {
           const updated = [...prev];
           results.forEach(res => {
             if (!res) return;
             const idx = updated.findIndex(j => j.job_id === res.job_id);
             if (idx >= 0) updated[idx] = { ...updated[idx], ...res };
-            if (res.status === 'transcribing' || res.status === 'correcting') {
-              stillActive.add(res.job_id);
-            }
           });
           return updated;
         });

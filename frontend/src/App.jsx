@@ -37,6 +37,10 @@ export default function App() {
   }, []);
 
   const [page, setPage] = useState(() => { try { return localStorage.getItem('jw-page') || 'speech'; } catch(e) { return 'speech'; } });
+  // STT 변환 폴링이 ManagePage 언마운트 시 중단되는 문제 해결.
+  // 최초 진입 후 display 토글로 마운트 유지. Phase 1/2의 preprocVisited/aiVisited와 동일 패턴.
+  const [addVisited, setAddVisited] = useState(() => page === 'add');
+  useEffect(() => { if (page === 'add' && !addVisited) setAddVisited(true); }, [page, addVisited]);
   const [pendingPub, setPendingPub] = useState(null);
   const pendingPubRef = useRef(null);
   const [resetKey, setResetKey] = useState(0);
@@ -609,23 +613,27 @@ textarea { resize: vertical; }
           }));
         }
       }} />}
-      {page === 'add' && <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={(savedPubData) => {
-        setPage('speech');
-        const ref = pendingPubRef.current;
-        pendingPubRef.current = null;
-        const pi = ref?.pointIndex;
-        if (pi !== undefined && savedPubData) {
-          setPoints(prev => prev.map((pt, i) => i !== pi ? pt : {
-            ...pt,
-            auto_publications: [...(pt.auto_publications || []), {
-              pub_code: savedPubData.pub_code || ref.pub_code || '',
-              point_content: savedPubData.point || pt.title || '',
-              text: savedPubData.content || '',
-              matched_ref: ref.pub_code || savedPubData.pub_code || '',
-            }],
-          }));
-        }
-      }} />}
+      {addVisited && (
+        <div style={{ display: page === 'add' ? 'contents' : 'none' }}>
+          <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={(savedPubData) => {
+            setPage('speech');
+            const ref = pendingPubRef.current;
+            pendingPubRef.current = null;
+            const pi = ref?.pointIndex;
+            if (pi !== undefined && savedPubData) {
+              setPoints(prev => prev.map((pt, i) => i !== pi ? pt : {
+                ...pt,
+                auto_publications: [...(pt.auto_publications || []), {
+                  pub_code: savedPubData.pub_code || ref.pub_code || '',
+                  point_content: savedPubData.point || pt.title || '',
+                  text: savedPubData.content || '',
+                  matched_ref: ref.pub_code || savedPubData.pub_code || '',
+                }],
+              }));
+            }
+          }} />
+        </div>
+      )}
       {page === 'manage' && <ManagePage pageType="manage" key={'manage-' + resetKey} fontSize={fontSize} onGoAdd={() => setPage('add')} />}
 
       {page === 'speech' && (<>
