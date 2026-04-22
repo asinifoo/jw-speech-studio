@@ -8,7 +8,7 @@ import { cleanMd } from '../../components/utils';
 const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; } catch { return {}; } })();
 const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
 
-export default function ManageSpeechInput({ siTransferTick, outlines, subtopics }) {
+export default function ManageSpeechInput({ siTransferTick, outlines }) {
 
   // ── si* state (33개) ──
   const [siOutline, setSiOutline] = useState(_siInit.outline || null);
@@ -28,14 +28,13 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
   const [siFreeText, setSiFreeText] = useState(_siInit.freeText || '');
   const [siFreeTopic, setSiFreeTopic] = useState(_siInit.freeTopic || '');
   const [siFreeSubtopics, setSiFreeSubtopics] = useState(_siInit.freeSubtopics || []); // [{ title, memo }]
-  const [siFreeMode, setSiFreeMode] = useState(_siInit.freeMode || 'subtopic'); // subtopic | bulk
+  const [siFreeMode, setSiFreeMode] = useState(_siInit.freeMode || 'subtopic'); // 항상 'subtopic' (bulk 제거됨)
   const [siFreeType, setSiFreeType] = useState(_siInit.freeType || '생활과 봉사'); // 생활과 봉사 | JW방송 | 대회 | 기타
   const [siSourceSttJobId, setSiSourceSttJobId] = useState(_siInit.sourceSttJobId || '');
   const [siSttOriginalText, setSiSttOriginalText] = useState(_siInit.sttOriginalText || '');
   const [siSttOriginalEditing, setSiSttOriginalEditing] = useState(false);
   const [siSttOriginalCollapsed, setSiSttOriginalCollapsed] = useState(false);
   const [siOriginType, setSiOriginType] = useState(_siInit.originType || '');
-  const [siAiToast, setSiAiToast] = useState('');
   const [siVerseOpen, setSiVerseOpen] = useState({}); // { ptKey: true }
   const [siVerseData, setSiVerseData] = useState({}); // { ptKey: [{ ref, text }] }
   const [siVerseLoading, setSiVerseLoading] = useState({}); // { ptKey: true }
@@ -66,7 +65,6 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
     setSiSubLoading(true);
     outlineDetail(oid, siOutline.outline_type_name || siOutline.outline_type || '', siOutline.version || '', siOutline.outline_year || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => {}).finally(() => setSiSubLoading(false));
   }, []);
-  // 빠른메모 → 연설 입력 전달 처리
 
   // ── useEffect 3: transfer 처리 (subTab/structureMode 조건 제거, siTransferTick만 의존) ──
   useEffect(() => {
@@ -917,7 +915,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
                         setSiCompleting(false);
                         return;
                       }
-                      const sourceKo = _siInit.sourceType || '연설';
+                      const sourceKo = '연설';
                       // text = pt.title (point_content), speech_text = pt.content (document 본문)
                       let _globalPtNum = 0;
                       const subList = meaningfulSubs.length > 0
