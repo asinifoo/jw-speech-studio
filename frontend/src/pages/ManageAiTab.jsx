@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAiModels, saveAiModels as saveAiModelsAPI, getApiKeys, saveApiKeys, getApiVersions, saveApiVersions, ollamaModels, ollamaPull, ollamaDelete, getPasswordStatus, changePassword, getFilterModel, setFilterModel, getOllamaCtx, setOllamaCtx, getOllamaThink, setOllamaThink, getChatTurns, setChatTurns, setChatSearchTopK, getPrompts, setPrompt, resetPrompt, savePromptDefault } from '../api';
 
+// AI 탭 UI state persist (Phase 5b-1) — 탭 discard 후 재로드 시 열어둔 섹션 복원
+const _aiInit = (() => {
+  try { return JSON.parse(localStorage.getItem('jw-ai-ui') || '{}'); }
+  catch { return {}; }
+})();
+
 export default function ManageAiTab() {
   // ── AI_MODELS_DEFAULT (원본 ManagePage.jsx L558-563) ──
   const AI_MODELS_DEFAULT = {
@@ -11,7 +17,10 @@ export default function ManageAiTab() {
   };
 
   // ── state (원본 ManagePage.jsx L104, L564-622, L1222-1225) ──
-  const [aiOpenSections, setAiOpenSections] = useState({ model: true });
+  const [aiOpenSections, setAiOpenSections] = useState(_aiInit.openSections || { model: true });
+  useEffect(() => {
+    try { localStorage.setItem('jw-ai-ui', JSON.stringify({ openSections: aiOpenSections })); } catch {}
+  }, [aiOpenSections]);
   const [aiModels, setAiModels] = useState(() => { try { const s = JSON.parse(localStorage.getItem('jw-ai-models')); if (s && typeof s === 'object') return s; } catch {} return AI_MODELS_DEFAULT; });
   const serverAiModels = useRef(null); // 서버에 저장된 상태 기억
   const serverAiDefault = useRef(null);
@@ -42,6 +51,27 @@ export default function ManageAiTab() {
         setDefaultTick(t => t + 1);
       }
     }).catch(() => {});
+  }, []);
+
+  // mount 시 복원된 openSections 기반 자동 fetch (Phase 5b-1)
+  // toggleAiSection 의 lazy fetch 로직과 동일 — 섹션이 열려있고 데이터 아직 없을 때만
+  useEffect(() => {
+    if (aiOpenSections.llm) {
+      Promise.all([getFilterModel(), ollamaModels(), getOllamaCtx(), getOllamaThink(), getChatTurns()])
+        .then(([fm, om, ctx, think, turns]) => {
+          setFilterModelState({ current: fm.filter_model, models: om.models || [] });
+          setOllamaCtxState(ctx);
+          setOllamaThinkState(think);
+          setChatTurnsState(turns.chat_max_turns || 10);
+          setChatSearchTopKState(turns.chat_search_top_k || 10);
+        }).catch(() => {});
+    }
+    if (aiOpenSections.prompt) {
+      getPrompts().then(data => { setPromptData(data); setPromptEdits({ ...data.prompts }); }).catch(() => {});
+    }
+    if (aiOpenSections.api) {
+      getApiVersions().then(setApiVersions).catch(() => {});
+    }
   }, []);
   const [newModelInputs, setNewModelInputs] = useState({});
   const [newPlatformName, setNewPlatformName] = useState('');
