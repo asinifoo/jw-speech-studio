@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import KoreanTextarea from '../components/KoreanTextarea';
 import { S } from '../styles';
 import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../api';
 import { cleanMd } from '../components/utils';

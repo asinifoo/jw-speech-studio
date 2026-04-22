@@ -14,7 +14,7 @@ export default function ManageAddQuickInput() {
   const [qiEditingOutlineNum, setQiEditingOutlineNum] = useState('');
 
   return (
-    <div style={{ padding: 14 }}>
+    <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12, padding: 14 }}>
       {/* ─── 빠른 입력 (Phase 5-1) ─── */}
       {/* 타입 선택 — Level 2 pill */}
       <div style={{ ...S.pillContainer, marginBottom: 10 }}>
