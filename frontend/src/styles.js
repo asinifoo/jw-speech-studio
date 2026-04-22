@@ -221,4 +221,5 @@ export const S = {
   // 입력
   input: INPUT,
   textarea: TEXTAREA,
+  inputField: { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' },
 };

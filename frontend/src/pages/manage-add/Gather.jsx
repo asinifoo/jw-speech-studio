@@ -3,6 +3,7 @@ import KoreanTextarea from '../../components/KoreanTextarea';
 import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../../components/utils';
 import { getBody } from '../../utils/textHelpers';
 import { S } from '../../styles';
+import { discFormDefault, svcFormDefault, visitFormDefault, pubFormDefault, gatherFormDefault } from '../../utils/formDefaults';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
@@ -52,18 +53,11 @@ const getOutlineTypeInfo = (code) => {
 export default function ManageGather({ fontSize, pageType, mode, pendingPub, clearPendingPub, onSaveReturn }) {
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
-  const defaultForm = { speaker: '', topic: '', date: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', keywords: '', scriptures: '', content: '', entry_type: 'speech_point', source: '봉사 모임', pub_code: '', pub_title: '', pub_type: '', reference: '', service_type: '', sub_source: '', situation: '', visit_target: '', rating: 0, rating_note: '', favorite: false };
-
-  const [addForm, setAddForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-addform')) || defaultForm; } catch(e) { return defaultForm; } });
-  // 탭별 독립 state
-  const _dfDisc = { sub_source: '', pub_code: '', topic: '', date: '', subtopic: '', keywords: '', scriptures: '', content: '' };
-  const _dfSvc = { service_type: '', date: '', scriptures: '', pub_code: '', keywords: '', content: '', rating: 0, favorite: false };
-  const _dfVisit = { visit_target: '', situation: '', date: '', keywords: '', scriptures: '', pub_code: '', content: '', rating: 0, favorite: false };
-  const _dfPub = { pub_code: '', reference: '', pub_title: '', pub_type: '', point_summary: '', keywords: '', scriptures: '', content: '', outline_title: '', outline_type: '', outline_num: '', outline_year: '', version: '', point_id: '', subtopic: '' };
-  const [discForm, setDiscForm] = useState(_dfDisc);
-  const [svcForm, setSvcForm] = useState(_dfSvc);
-  const [visitForm, setVisitForm] = useState(_dfVisit);
-  const [pubForm, setPubForm] = useState(_dfPub);
+  const [addForm, setAddForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-addform')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
+  const [discForm, setDiscForm] = useState(discFormDefault);
+  const [svcForm, setSvcForm] = useState(svcFormDefault);
+  const [visitForm, setVisitForm] = useState(visitFormDefault);
+  const [pubForm, setPubForm] = useState(pubFormDefault);
   const [pubRefOpen, setPubRefOpen] = useState(false);
   const [pubLookupHint, setPubLookupHint] = useState('');
   const [pubExactMatch, setPubExactMatch] = useState(null); // 완전 중복 항목
@@ -888,7 +882,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
     if (source === '출판물' && !form.pub_code?.trim()) { setSaveMsg('출판물 코드를 입력하세요'); return; }
     setSaving(true); setSaveMsg('');
     try {
-      const payload = { ...defaultForm, ...form, source, entry_type: source === '출판물' ? 'publication' : 'expression' };
+      const payload = { ...gatherFormDefault, ...form, source, entry_type: source === '출판물' ? 'publication' : 'expression' };
       const res = await dbAdd(payload);
       const actionLabel = source === '출판물' && res.action ? (
         res.action === 'created' ? ' — 새 출판물'
@@ -917,7 +911,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
   const tagColor = { speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)' };
   const tagLabel = { speech_points: '연설 요점', speech_expressions: '표현/예시', publications: '출판물' };
-  const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
+
 
 
 
@@ -2123,7 +2117,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               {prepMode === 'pub_input' && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: 'var(--c-danger)' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>
-                  <input value={pubForm.pub_code} onChange={e => setPubForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파10」 11/15 7면 2항" style={{ ...iS, width: '100%' }} />
+                  <input value={pubForm.pub_code} onChange={e => setPubForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파10」 11/15 7면 2항" style={{ ...S.inputField, width: '100%' }} />
                   {(pubLookupHint || pubForm.reference) && (
                     <div style={{ marginTop: 3, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
                       {pubLookupHint && <span style={{ color: 'var(--accent)' }}>{pubLookupHint}</span>}
@@ -2142,7 +2136,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물명 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>자동 생성됨, 수정 가능</span></div>
-                  <input value={pubForm.pub_title} onChange={e => setPubForm(p => ({ ...p, pub_title: e.target.value }))} placeholder={pubLookupHint || "출판물명 자동 생성"} style={{ ...iS, width: '100%' }} />
+                  <input value={pubForm.pub_title} onChange={e => setPubForm(p => ({ ...p, pub_title: e.target.value }))} placeholder={pubLookupHint || "출판물명 자동 생성"} style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
@@ -2158,21 +2152,21 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                  <input value={pubForm.outline_title} onChange={e => setPubForm(p => ({ ...p, outline_title: e.target.value }))} placeholder="골자 제목 또는 주제" style={{ ...iS, width: '100%' }} />
+                  <input value={pubForm.outline_title} onChange={e => setPubForm(p => ({ ...p, outline_title: e.target.value }))} placeholder="골자 제목 또는 주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점 (한줄) <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                    <input value={pubForm.point_summary} onChange={e => setPubForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="1.1.2 - 요점" style={{ ...iS, width: '100%' }} />
+                    <input value={pubForm.point_summary} onChange={e => setPubForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="1.1.2 - 요점" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                    <input value={pubForm.scriptures} onChange={e => setPubForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="마 5:3; 시 37:11" style={{ ...iS, width: '100%' }} />
+                    <input value={pubForm.scriptures} onChange={e => setPubForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="마 5:3; 시 37:11" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                  <input value={pubForm.keywords} onChange={e => setPubForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
+                  <input value={pubForm.keywords} onChange={e => setPubForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 {/* 참조 골자 정보 (접기 블록) */}
                 <div style={{ marginBottom: 8, borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-subtle)', overflow: 'hidden' }}>
@@ -2202,33 +2196,33 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>유형</div>
-                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(e.target.value) ? p.outline_year : '' }))} style={{ ...iS, width: '100%' }}>
+                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(e.target.value) ? p.outline_year : '' }))} style={{ ...S.inputField, width: '100%' }}>
                               {typeOpts.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
                             </select>
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>번호</div>
-                            <input value={pubForm.outline_num} onChange={e => setPubForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...iS, width: '100%' }} />
+                            <input value={pubForm.outline_num} onChange={e => setPubForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...S.inputField, width: '100%' }} />
                           </div>
                           {showYear && (
                             <div style={{ width: 60, flexShrink: 0 }}>
                               <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>년도</div>
-                              <input value={pubForm.outline_year} onChange={e => setPubForm(p => ({ ...p, outline_year: e.target.value }))} placeholder="26" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                              <input value={pubForm.outline_year} onChange={e => setPubForm(p => ({ ...p, outline_year: e.target.value }))} placeholder="26" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                             </div>
                           )}
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>버전</div>
-                            <input value={pubForm.version} onChange={e => setPubForm(p => ({ ...p, version: e.target.value }))} placeholder="10/24" style={{ ...iS, width: '100%' }} />
+                            <input value={pubForm.version} onChange={e => setPubForm(p => ({ ...p, version: e.target.value }))} placeholder="10/24" style={{ ...S.inputField, width: '100%' }} />
                           </div>
                         </div>
                         <div style={{ marginBottom: 8 }}>
                           <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>소주제</div>
-                          <input value={pubForm.subtopic} onChange={e => setPubForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제 제목" style={{ ...iS, width: '100%' }} />
+                          <input value={pubForm.subtopic} onChange={e => setPubForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제 제목" style={{ ...S.inputField, width: '100%' }} />
                         </div>
                         <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
                           <div style={{ width: 80, flexShrink: 0 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>요점 번호</div>
-                            <input value={pubForm.point_id} onChange={e => setPubForm(p => ({ ...p, point_id: e.target.value }))} placeholder="1.1.2" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                            <input value={pubForm.point_id} onChange={e => setPubForm(p => ({ ...p, point_id: e.target.value }))} placeholder="1.1.2" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                           </div>
                         </div>
                       </div>
@@ -2239,9 +2233,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                   <KoreanTextarea value={pubForm.content} onChange={v => setPubForm(p => ({ ...p, content: v }))}
                     placeholder="출판물 내용을 입력하세요" rows={8}
-                    style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
+                    style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
                 </div>
-                <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, _dfPub)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
+                <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
                   width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                 }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
@@ -2319,29 +2313,29 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>골자유형</div>
-                  <input value={addForm.outline_type} onChange={e => setAddForm(p => ({ ...p, outline_type: e.target.value }))} placeholder="공개강연" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.outline_type} onChange={e => setAddForm(p => ({ ...p, outline_type: e.target.value }))} placeholder="공개강연" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>골자번호</div>
-                  <input value={addForm.outline_num} onChange={e => setAddForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.outline_num} onChange={e => setAddForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ width: 55 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>버전</div>
-                  <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="9/15" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                  <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="9/15" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>연사</div>
-                  <input value={addForm.speaker} onChange={e => setAddForm(p => ({ ...p, speaker: e.target.value }))} placeholder="연사" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.speaker} onChange={e => setAddForm(p => ({ ...p, speaker: e.target.value }))} placeholder="연사" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>제목</div>
-                  <input value={addForm.outline_title} onChange={e => setAddForm(p => ({ ...p, outline_title: e.target.value, topic: e.target.value }))} placeholder="제목" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.outline_title} onChange={e => setAddForm(p => ({ ...p, outline_title: e.target.value, topic: e.target.value }))} placeholder="제목" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ width: 60 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                  <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                  <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                 </div>
               </div>
             </div>
@@ -2376,7 +2370,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성경 읽기 범위 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
               <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))}
-                placeholder="이사야 50-51장" style={{ ...iS, width: '100%' }} />
+                placeholder="이사야 50-51장" style={{ ...S.inputField, width: '100%' }} />
             </div>
           )}
 
@@ -2545,18 +2539,18 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>{addForm.source === '봉사 모임' ? '인도자' : '연사'}</div>
-                <input value={addForm.speaker} onChange={e => setAddForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...iS, width: '100%' }} />
+                <input value={addForm.speaker} onChange={e => setAddForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ width: 80 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
                 <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))}
                   placeholder={addForm.source === '봉사 모임' ? '260408' : '2604'}
-                  style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                  style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
               </div>
               {addForm.source === '연설' && (
                 <div style={{ width: 100 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
-                  <select value={addForm.entry_type} onChange={e => setAddForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...iS, width: '100%' }}>
+                  <select value={addForm.entry_type} onChange={e => setAddForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
                     <option value="speech_point">연설 요점</option>
                     <option value="expression">표현/예시</option>
                     <option value="publication">출판물</option>
@@ -2566,7 +2560,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               {!['연설', '토의', '봉사 모임', '메모', '원문'].includes(addForm.source) && (
                 <div style={{ width: 100 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
-                  <select value={addForm.entry_type} onChange={e => setAddForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...iS, width: '100%' }}>
+                  <select value={addForm.entry_type} onChange={e => setAddForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
                     <option value="speech_point">연설 요점</option>
                     <option value="expression">표현/예시</option>
                   </select>
@@ -2580,7 +2574,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 {addForm.entry_type === 'publication' && <span style={{ color: 'var(--c-danger)' }}>*</span>}</div>
               <input value={addForm.pub_code} onChange={e => setAddForm(p => ({ ...p, pub_code: e.target.value }))}
-                placeholder="파26 2월호 2-7면" style={{ ...iS, width: '100%' }} />
+                placeholder="파26 2월호 2-7면" style={{ ...S.inputField, width: '100%' }} />
             </div>
           )}
 
@@ -2604,7 +2598,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <input value={outlineQuery} onChange={e => { setOutlineQuery(e.target.value); setOutlineFocus(true); if (addForm.outline_num) { selectOutline(null); } }}
                       onFocus={() => setOutlineFocus(true)} onBlur={() => setTimeout(() => setOutlineFocus(false), 200)}
-                      placeholder="007, 기념식, 자비..." style={{ ...iS, flex: 1 }} />
+                      placeholder="007, 기념식, 자비..." style={{ ...S.inputField, flex: 1 }} />
                     {addForm.outline_num && <button onClick={() => { selectOutline(null); setOutlineQuery(''); }} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0 }}>초기화</button>}
                   </div>
                   {addForm.outline_num && <div style={{ marginTop: 4, fontSize: '0.786rem', color: 'var(--accent)', fontWeight: 600 }}>✅ {addForm.outline_type === '공개강연' || addForm.outline_type?.startsWith('S-34') ? 'S-34_' + addForm.outline_num.padStart(3, '0') : addForm.outline_type === '기념식' ? 'S-31_기념식' : addForm.outline_type?.startsWith('JWBC') ? addForm.outline_type + '_' + addForm.outline_num : addForm.outline_num} - {addForm.outline_title}</div>}
@@ -2623,14 +2617,14 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                    <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="주제를 입력하세요" style={{ ...iS, width: '100%' }} />
+                    <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="주제를 입력하세요" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                   {(src === '토의' || src === '방문') && (
                     <div style={{ width: 80 }}>
                       <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
                       <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))}
                         placeholder="260408"
-                        style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                        style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                     </div>
                   )}
                 </div>
@@ -2640,7 +2634,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 {Object.keys(subtopics).length > 0 ? (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>소주제</div>
-                    <select value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value, point_id: '', point_summary: '' }))} style={{ ...iS, width: '100%' }}>
+                    <select value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value, point_id: '', point_summary: '' }))} style={{ ...S.inputField, width: '100%' }}>
                       <option value="">선택</option>
                       {Object.keys(subtopics).map((st, si) => <option key={si} value={st}>{st}</option>)}
                     </select>
@@ -2648,7 +2642,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 ) : (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>소주제</div>
-                    <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="예수의 본을 따라..." style={{ ...iS, width: '100%' }} />
+                    <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="예수의 본을 따라..." style={{ ...S.inputField, width: '100%' }} />
                   </div>
                 )}
               </>)}
@@ -2656,15 +2650,15 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               {(showOutline || showSubtopic) && isPubType && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                  <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>소주제</div>
-                  <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점</div>
-                  <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </>)}
 
@@ -2676,7 +2670,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                       const v = e.target.value;
                       if (v) { const [id, ...rest] = v.split('|'); setAddForm(p => ({ ...p, point_id: id, point_summary: rest.join('|') })); }
                       else { setAddForm(p => ({ ...p, point_id: '', point_summary: '' })); }
-                    }} style={{ ...iS, width: '100%' }}>
+                    }} style={{ ...S.inputField, width: '100%' }}>
                       <option value="">직접 입력</option>
                       {subtopics[addForm.subtopic].map((pt, pi) => <option key={pi} value={pt.id + '|' + pt.content}>{pt.id} - {pt.content}</option>)}
                     </select>
@@ -2684,7 +2678,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 ) : (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점</div>
-                    <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="자비를 나타내려면 적극적 행동" style={{ ...iS, width: '100%' }} />
+                    <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="자비를 나타내려면 적극적 행동" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                 )}
               </>)}
@@ -2693,13 +2687,13 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>질문 (선택)</div>
-                    <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="성경에서 무엇을 배울 수 있습니까?" style={{ ...iS, width: '100%' }} />
+                    <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="성경에서 무엇을 배울 수 있습니까?" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                   {sub === '영적 보물' && (
                     <div style={{ width: 80 }}>
                       <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
                       <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))}
-                        placeholder="260408" style={{ ...iS, width: '100%', textAlign: 'center' }} />
+                        placeholder="260408" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                     </div>
                   )}
                 </div>
@@ -2708,11 +2702,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               {showFreePoint && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                  <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점</div>
-                  <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...iS, width: '100%' }} />
+                  <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </>)}
             </>);
@@ -2723,11 +2717,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드 (선택)</div>
-              <input value={addForm.keywords} onChange={e => setAddForm(p => ({ ...p, keywords: e.target.value }))} placeholder="자비, 용서" style={{ ...iS, width: '100%' }} />
+              <input value={addForm.keywords} onChange={e => setAddForm(p => ({ ...p, keywords: e.target.value }))} placeholder="자비, 용서" style={{ ...S.inputField, width: '100%' }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구 (선택)</div>
-              <input value={addForm.scriptures} onChange={e => setAddForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="눅 10:29-37" style={{ ...iS, width: '100%' }} />
+              <input value={addForm.scriptures} onChange={e => setAddForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="눅 10:29-37" style={{ ...S.inputField, width: '100%' }} />
             </div>
           </div>
           )}
@@ -2738,7 +2732,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
             <KoreanTextarea value={addForm.content} onChange={v => setAddForm(p => ({ ...p, content: v }))}
               placeholder="내용을 입력하세요" rows={8}
-              style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
+              style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
           </div>
 
           {/* 이동 중 표시 */}
@@ -2754,7 +2748,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
               fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
             }}>{saving ? '저장 중...' : movingMemo ? '이동 저장' : 'DB에 저장'}</button>
-            <button onClick={() => { setAddForm(p => ({...defaultForm, source: p.source, sub_source: p.sub_source})); setOutlineQuery(''); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
+            <button onClick={() => { setAddForm(p => ({...gatherFormDefault, source: p.source, sub_source: p.sub_source})); setOutlineQuery(''); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
               padding: '10px 16px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.929rem', cursor: 'pointer',
             }}>초기화</button>
           </div>

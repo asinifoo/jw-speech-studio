@@ -1,11 +1,7 @@
 import KoreanTextarea from '../../components/KoreanTextarea';
 import { S } from '../../styles';
 import { saveCategories, deleteServiceType } from '../../api';
-
-const _dfDisc = { sub_source: '', pub_code: '', topic: '', date: '', subtopic: '', keywords: '', scriptures: '', content: '' };
-const _dfSvc = { service_type: '', date: '', scriptures: '', pub_code: '', keywords: '', content: '', rating: 0, favorite: false };
-const _dfVisit = { visit_target: '', situation: '', date: '', keywords: '', scriptures: '', pub_code: '', content: '', rating: 0, favorite: false };
-const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
+import { discFormDefault, svcFormDefault, visitFormDefault } from '../../utils/formDefaults';
 
 export default function ManageStructureOther({
   inputMode,
@@ -33,38 +29,38 @@ export default function ManageStructureOther({
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드</div>
-                  <input value={discForm.pub_code} onChange={e => setDiscForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...iS, width: '100%' }} />
+                  <input value={discForm.pub_code} onChange={e => setDiscForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                  <input value={discForm.date} onChange={e => setDiscForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...iS, width: '100%' }} />
+                  <input value={discForm.date} onChange={e => setDiscForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                <input value={discForm.topic} onChange={e => setDiscForm(p => ({ ...p, topic: e.target.value }))} placeholder="주제를 입력하세요" style={{ ...iS, width: '100%' }} />
+                <input value={discForm.topic} onChange={e => setDiscForm(p => ({ ...p, topic: e.target.value }))} placeholder="주제를 입력하세요" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>질문 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                <input value={discForm.subtopic} onChange={e => setDiscForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="토의 질문" style={{ ...iS, width: '100%' }} />
+                <input value={discForm.subtopic} onChange={e => setDiscForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="토의 질문" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                  <input value={discForm.keywords} onChange={e => setDiscForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
+                  <input value={discForm.keywords} onChange={e => setDiscForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구 <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>선택</span></div>
-                  <input value={discForm.scriptures} onChange={e => setDiscForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="성구" style={{ ...iS, width: '100%' }} />
+                  <input value={discForm.scriptures} onChange={e => setDiscForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="성구" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                 <KoreanTextarea value={discForm.content} onChange={v => setDiscForm(p => ({ ...p, content: v }))}
                   placeholder="내용을 입력하세요" rows={8}
-                  style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
+                  style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
               </div>
-              <button onClick={() => saveTab(discForm, '토의', setDiscForm, _dfDisc)} disabled={saving || !discForm.content.trim()} style={{
+              <button onClick={() => saveTab(discForm, '토의', setDiscForm, discFormDefault)} disabled={saving || !discForm.content.trim()} style={{
                 width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                 fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
               }}>{saving ? '저장 중...' : '저장'}</button>
@@ -95,27 +91,27 @@ export default function ManageStructureOther({
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                <input value={svcForm.date} onChange={e => setSvcForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...iS, width: '100%' }} />
+                <input value={svcForm.date} onChange={e => setSvcForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구</div>
-                  <input value={svcForm.scriptures} onChange={e => setSvcForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="마 24:14; 행 5:42" style={{ ...iS, width: '100%' }} />
+                  <input value={svcForm.scriptures} onChange={e => setSvcForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="마 24:14; 행 5:42" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물</div>
-                  <input value={svcForm.pub_code} onChange={e => setSvcForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파26.2」" style={{ ...iS, width: '100%' }} />
+                  <input value={svcForm.pub_code} onChange={e => setSvcForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파26.2」" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드</div>
-                <input value={svcForm.keywords} onChange={e => setSvcForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
+                <input value={svcForm.keywords} onChange={e => setSvcForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                 <KoreanTextarea value={svcForm.content} onChange={v => setSvcForm(p => ({ ...p, content: v }))}
                   placeholder="대화 흐름을 기록하세요" rows={8}
-                  style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
+                  style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
               </div>
               {/* 선호도 */}
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, padding: '6px 0' }}>
@@ -136,7 +132,7 @@ export default function ManageStructureOther({
                   fontSize: '0.857rem', cursor: 'pointer', fontWeight: 700,
                 }}>{svcForm.favorite ? '★' : '☆'}</button>
               </div>
-              <button onClick={() => saveTab(svcForm, '봉사 모임', setSvcForm, _dfSvc)} disabled={saving || !svcForm.content.trim()} style={{
+              <button onClick={() => saveTab(svcForm, '봉사 모임', setSvcForm, svcFormDefault)} disabled={saving || !svcForm.content.trim()} style={{
                 width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                 fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
               }}>{saving ? '저장 중...' : '저장'}</button>
@@ -186,27 +182,27 @@ export default function ManageStructureOther({
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                <input value={visitForm.date} onChange={e => setVisitForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...iS, width: '100%' }} />
+                <input value={visitForm.date} onChange={e => setVisitForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드</div>
-                  <input value={visitForm.keywords} onChange={e => setVisitForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...iS, width: '100%' }} />
+                  <input value={visitForm.keywords} onChange={e => setVisitForm(p => ({ ...p, keywords: e.target.value }))} placeholder="키워드" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구</div>
-                  <input value={visitForm.scriptures} onChange={e => setVisitForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="성구" style={{ ...iS, width: '100%' }} />
+                  <input value={visitForm.scriptures} onChange={e => setVisitForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="성구" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물</div>
-                <input value={visitForm.pub_code} onChange={e => setVisitForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파26.2」" style={{ ...iS, width: '100%' }} />
+                <input value={visitForm.pub_code} onChange={e => setVisitForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파26.2」" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
                 <KoreanTextarea value={visitForm.content} onChange={v => setVisitForm(p => ({ ...p, content: v }))}
                   placeholder="대화 흐름을 기록하세요" rows={8}
-                  style={{ ...iS, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
+                  style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
               </div>
               {/* 선호도 */}
               <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8, padding: '6px 0' }}>
@@ -227,7 +223,7 @@ export default function ManageStructureOther({
                   fontSize: '0.857rem', cursor: 'pointer', fontWeight: 700,
                 }}>{visitForm.favorite ? '★' : '☆'}</button>
               </div>
-              <button onClick={() => saveTab(visitForm, '방문', setVisitForm, _dfVisit)} disabled={saving || !visitForm.content.trim()} style={{
+              <button onClick={() => saveTab(visitForm, '방문', setVisitForm, visitFormDefault)} disabled={saving || !visitForm.content.trim()} style={{
                 width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-orange)', color: '#fff',
                 fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
               }}>{saving ? '저장 중...' : '저장'}</button>

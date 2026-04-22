@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { S } from '../../styles';
 import { draftSave } from '../../api';
-
-const _qiDefault = { type: 'speech', speech_type: '생활과 봉사', speaker: '', date: '', topic: '', target: '', pub_code: '', pub_title: '', content: '' };
-const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
+import { quickFormDefault } from '../../utils/formDefaults';
 
 export default function ManageQuickInput() {
-  const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-qi-form')) || _qiDefault; } catch { return _qiDefault; } });
+  const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-qi-form')) || quickFormDefault; } catch { return quickFormDefault; } });
   useEffect(() => { try { localStorage.setItem('jw-qi-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
   const [qiSaving, setQiSaving] = useState(false);
   const [qiSaveMsg, setQiSaveMsg] = useState('');
@@ -36,7 +34,7 @@ export default function ManageQuickInput() {
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
             <select value={qiForm.speech_type} onChange={e => setQiForm(p => ({ ...p, speech_type: e.target.value }))}
-              style={{ ...iS, width: '100%', cursor: 'pointer', appearance: 'none' }}>
+              style={{ ...S.inputField, width: '100%', cursor: 'pointer', appearance: 'none' }}>
               <option>공개강연</option>
               <option>생활과 봉사</option>
               <option>JW방송</option>
@@ -47,11 +45,11 @@ export default function ManageQuickInput() {
           <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연사</div>
-              <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...iS, width: '100%' }} />
+              <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
-              <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605 (YYMM)" style={{ ...iS, width: '100%' }} />
+              <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605 (YYMM)" style={{ ...S.inputField, width: '100%' }} />
             </div>
           </div>
         </>
@@ -61,11 +59,11 @@ export default function ManageQuickInput() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>출판물 코드</div>
-            <input value={qiForm.pub_code} onChange={e => setQiForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...iS, width: '100%' }} />
+            <input value={qiForm.pub_code} onChange={e => setQiForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...S.inputField, width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
-            <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...iS, width: '100%' }} />
+            <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...S.inputField, width: '100%' }} />
           </div>
         </div>
       )}
@@ -73,7 +71,7 @@ export default function ManageQuickInput() {
       {qiForm.type === 'service' && (
         <div style={{ marginBottom: 8 }}>
           <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
-          <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...iS, width: '100%' }} />
+          <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...S.inputField, width: '100%' }} />
         </div>
       )}
 
@@ -81,11 +79,11 @@ export default function ManageQuickInput() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>대상</div>
-            <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수" style={{ ...iS, width: '100%' }} />
+            <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수" style={{ ...S.inputField, width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
-            <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...iS, width: '100%' }} />
+            <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...S.inputField, width: '100%' }} />
           </div>
         </div>
       )}
@@ -94,11 +92,11 @@ export default function ManageQuickInput() {
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>출판물 코드</div>
-            <input value={qiForm.pub_code} onChange={e => setQiForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...iS, width: '100%' }} />
+            <input value={qiForm.pub_code} onChange={e => setQiForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...S.inputField, width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>제목</div>
-            <input value={qiForm.pub_title} onChange={e => setQiForm(p => ({ ...p, pub_title: e.target.value }))} placeholder="출판물 제목" style={{ ...iS, width: '100%' }} />
+            <input value={qiForm.pub_title} onChange={e => setQiForm(p => ({ ...p, pub_title: e.target.value }))} placeholder="출판물 제목" style={{ ...S.inputField, width: '100%' }} />
           </div>
         </div>
       )}
@@ -107,7 +105,7 @@ export default function ManageQuickInput() {
       {qiForm.type !== 'service' && qiForm.type !== 'publication' && (
         <div style={{ marginBottom: 8 }}>
           <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>주제</div>
-          <input value={qiForm.topic} onChange={e => setQiForm(p => ({ ...p, topic: e.target.value }))} placeholder="주제" style={{ ...iS, width: '100%' }} />
+          <input value={qiForm.topic} onChange={e => setQiForm(p => ({ ...p, topic: e.target.value }))} placeholder="주제" style={{ ...S.inputField, width: '100%' }} />
         </div>
       )}
 
@@ -125,7 +123,7 @@ export default function ManageQuickInput() {
           <span style={{ fontSize: '0.714rem', color: 'var(--accent-orange)', fontWeight: 700 }}>📝 수정 중</span>
           <span style={{ fontSize: '0.714rem', color: 'var(--c-sub)', fontFamily: 'monospace' }}>QUICK_{qiEditingOutlineNum}</span>
           <div style={{ flex: 1 }} />
-          <button onClick={() => { setQiEditingOutlineNum(''); setQiForm(_qiDefault); setQiSaveMsg(''); }}
+          <button onClick={() => { setQiEditingOutlineNum(''); setQiForm(quickFormDefault); setQiSaveMsg(''); }}
             style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
             새로 만들기
           </button>
@@ -162,7 +160,7 @@ export default function ManageQuickInput() {
             setQiSaveMsg(wasEditing
               ? `✓ 수정 저장됨 (${savedId})`
               : `✓ 저장됨 — [전처리] > [임시저장]에서 확인 가능 (${savedId})`);
-            setQiForm(prev => ({ ..._qiDefault, type: prev.type }));
+            setQiForm(prev => ({ ...quickFormDefault, type: prev.type }));
             setQiEditingOutlineNum('');
             setTimeout(() => setQiSaveMsg(''), 4000);
           } catch (e) {
