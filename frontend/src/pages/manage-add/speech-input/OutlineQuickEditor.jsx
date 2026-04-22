@@ -1,5 +1,6 @@
 import KoreanTextarea from '../../../components/KoreanTextarea';
 import { cleanMd } from '../../../components/utils';
+import { parseScriptures } from './helpers';
 
 export default function OutlineQuickEditor({
   subtopics,
@@ -38,9 +39,7 @@ export default function OutlineQuickEditor({
               {points.map((pt, pi) => {
                 const qPtKey = `q_${(stKey || '0').split('.')[0]}_${pt.point_num}`;
                 const qSu = (details[qPtKey] || {}).scripture_usage || '';
-                const scr = cleanMd(pt.scriptures || '');
-                const hasPub = scr.includes('「') || scr.includes('」');
-                const hasScr = scr && !hasPub;
+                const { scr, hasPub, hasScr } = parseScriptures(pt.scriptures);
                 return (
                 <div key={pi} style={{ fontSize: '0.786rem', color: 'var(--c-faint)', padding: '3px 0', borderBottom: pi < points.length - 1 ? '1px solid var(--bd-light)' : 'none' }}>
                   <span style={{ fontWeight: 600, color: 'var(--c-text)' }}>{pt.point_num}</span> {cleanMd(pt.content)}

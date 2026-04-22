@@ -1,5 +1,6 @@
 import KoreanTextarea from '../../../components/KoreanTextarea';
 import { cleanMd } from '../../../components/utils';
+import { parseScriptures } from './helpers';
 
 export default function OutlineDetailEditor({
   subtopics,
@@ -39,7 +40,7 @@ export default function OutlineDetailEditor({
                   <div key={pt.point_num} style={{ marginBottom: 8, padding: '8px 0', borderBottom: '1px solid var(--bd-light)' }}>
                     <div style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--c-text-dark)', marginBottom: 4 }}>
                       {pt.point_num}. {cleanMd(pt.content)}
-                      {(() => { const scr = cleanMd(pt.scriptures || ''); const hasPub = scr.includes('「') || scr.includes('」'); const hasScr = scr && !hasPub; return (<>
+                      {(() => { const { scr, hasPub, hasScr } = parseScriptures(pt.scriptures); return (<>
                         {hasScr && (<>
                           <span onClick={() => onVerseToggle(ptKey, pt.scriptures)} style={{
                             display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
