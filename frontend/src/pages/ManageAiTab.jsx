@@ -94,6 +94,14 @@ export default function ManageAiTab() {
   const [promptData, setPromptData] = useState(null);
   const [promptEdits, setPromptEdits] = useState({});
   const [promptSaving, setPromptSaving] = useState('');
+  const [editingPrompts, setEditingPrompts] = useState(new Set());
+  const isEditing = (k) => editingPrompts.has(k);
+  const startEdit = (k) => setEditingPrompts(p => new Set(p).add(k));
+  const stopEdit = (k) => setEditingPrompts(p => { const n = new Set(p); n.delete(k); return n; });
+  const extractVars = (text) => {
+    const matches = (text || '').match(/\{[a-z_]+\}/g);
+    return matches ? [...new Set(matches)] : [];
+  };
   const [filterModel, setFilterModelState] = useState(null);
   const [filterModelSaving, setFilterModelSaving] = useState(false);
   const [deletingModel, setDeletingModel] = useState('');
@@ -654,6 +662,8 @@ export default function ManageAiTab() {
                 ].map(({ key, label, color }) => {
                   const isModified = promptEdits[key] !== promptData.defaults[key];
                   const hasCustomDefault = promptData.original_defaults && promptData.defaults[key] !== promptData.original_defaults[key];
+                  const editing = isEditing(key);
+                  const requiredVars = extractVars(promptData.prompts[key]);
                   return (
                   <div key={key} style={{ marginBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -662,38 +672,63 @@ export default function ManageAiTab() {
                         {hasCustomDefault && <span style={{ fontSize: '0.571rem', color: 'var(--accent-orange)' }}>★</span>}
                       </div>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        {isModified && (
-                          <button onClick={async () => {
-                            try {
-                              await resetPrompt(key);
-                              setPromptEdits(prev => ({ ...prev, [key]: promptData.defaults[key] }));
-                              setPromptData(prev => ({ ...prev, prompts: { ...prev.prompts, [key]: prev.defaults[key] } }));
-                            } catch (e) { alert(e.message); }
-                          }}
-                            style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer' }}>초기화</button>
+                        {!editing ? (
+                          <button onClick={() => startEdit(key)}
+                            style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
+                        ) : (
+                          <>
+                            {isModified && (
+                              <button onClick={async () => {
+                                try {
+                                  await resetPrompt(key);
+                                  setPromptEdits(prev => ({ ...prev, [key]: promptData.defaults[key] }));
+                                  setPromptData(prev => ({ ...prev, prompts: { ...prev.prompts, [key]: prev.defaults[key] } }));
+                                  stopEdit(key);
+                                } catch (e) { alert(e.message); }
+                              }}
+                                style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer' }}>초기화</button>
+                            )}
+                            <button onClick={async () => {
+                              try {
+                                await savePromptDefault(key, promptEdits[key]);
+                                setPromptData(prev => ({ ...prev, defaults: { ...prev.defaults, [key]: promptEdits[key] } }));
+                              } catch (e) { alert(e.message); }
+                            }} disabled={promptEdits[key] === promptData.defaults[key]}
+                              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'var(--bd)'), background: promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'transparent', color: promptEdits[key] !== promptData.defaults[key] ? '#fff' : 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>기본값 저장</button>
+                            <button onClick={async () => {
+                              setPromptSaving(key);
+                              try {
+                                await setPrompt(key, promptEdits[key]);
+                                setPromptData(prev => ({ ...prev, prompts: { ...prev.prompts, [key]: promptEdits[key] } }));
+                                stopEdit(key);
+                              } catch (e) { alert(e.message); }
+                              finally { setPromptSaving(''); }
+                            }} disabled={promptSaving === key || promptEdits[key] === promptData.prompts[key]}
+                              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent)', background: (promptEdits[key] !== promptData.prompts[key]) ? 'var(--accent)' : 'transparent', color: (promptEdits[key] !== promptData.prompts[key]) ? '#fff' : 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
+                              {promptSaving === key ? '...' : '저장'}
+                            </button>
+                            <button onClick={() => {
+                              setPromptEdits(prev => ({ ...prev, [key]: promptData.prompts[key] }));
+                              stopEdit(key);
+                            }}
+                              style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer' }}>취소</button>
+                          </>
                         )}
-                        <button onClick={async () => {
-                          try {
-                            await savePromptDefault(key, promptEdits[key]);
-                            setPromptData(prev => ({ ...prev, defaults: { ...prev.defaults, [key]: promptEdits[key] } }));
-                          } catch (e) { alert(e.message); }
-                        }} disabled={promptEdits[key] === promptData.defaults[key]}
-                          style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'var(--bd)'), background: promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'transparent', color: promptEdits[key] !== promptData.defaults[key] ? '#fff' : 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>기본값 저장</button>
-                        <button onClick={async () => {
-                          setPromptSaving(key);
-                          try {
-                            await setPrompt(key, promptEdits[key]);
-                            setPromptData(prev => ({ ...prev, prompts: { ...prev.prompts, [key]: promptEdits[key] } }));
-                          } catch (e) { alert(e.message); }
-                          finally { setPromptSaving(''); }
-                        }} disabled={promptSaving === key || promptEdits[key] === promptData.prompts[key]}
-                          style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent)', background: (promptEdits[key] !== promptData.prompts[key]) ? 'var(--accent)' : 'transparent', color: (promptEdits[key] !== promptData.prompts[key]) ? '#fff' : 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
-                          {promptSaving === key ? '...' : '저장'}
-                        </button>
                       </div>
                     </div>
-                    <textarea value={promptEdits[key] || ''} onChange={e => setPromptEdits(prev => ({ ...prev, [key]: e.target.value }))}
-                      rows={6} style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', borderRadius: 8, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }} />
+                    {editing && requiredVars.length > 0 && (
+                      <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 4 }}>
+                        ⚠️ 필수 변수: {requiredVars.join(', ')} — 제거 시 동작 깨짐
+                      </div>
+                    )}
+                    {editing ? (
+                      <textarea value={promptEdits[key] || ''} onChange={e => setPromptEdits(prev => ({ ...prev, [key]: e.target.value }))}
+                        rows={6} style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', borderRadius: 8, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', resize: 'vertical', outline: 'none' }} />
+                    ) : (
+                      <div style={{ display: '-webkit-box', width: '100%', padding: '10px 12px', boxSizing: 'border-box', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', whiteSpace: 'pre-wrap', wordBreak: 'break-word', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {promptEdits[key] || ''}
+                      </div>
+                    )}
                     {isModified && <div style={{ fontSize: '0.643rem', color, marginTop: 2 }}>수정됨 (기본값과 다름)</div>}
                   </div>
                   );
