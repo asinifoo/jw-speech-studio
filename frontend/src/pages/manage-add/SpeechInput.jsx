@@ -3,6 +3,7 @@ import KoreanTextarea from '../../components/KoreanTextarea';
 import { S } from '../../styles';
 import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../../api';
 import { cleanMd } from '../../components/utils';
+import OriginalBlock from './speech-input/OriginalBlock';
 
 // si* state 초기값 복원
 const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; } catch { return {}; } })();
@@ -218,65 +219,6 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     }).catch(() => setSiNoteInfo(null));
   }, [siOutline?.outline_num, siSpeaker, siDate]);
 
-  // ── renderOriginalBlock (부모에서 이사) ──
-  const renderOriginalBlock = () => {
-    if (!siSttOriginalText) return null;
-    const isQuick = siOriginType === 'quick';
-    const c = isQuick ? 'var(--accent-orange)' : 'var(--accent-blue)';
-    const cAlpha05 = isQuick ? 'rgba(216,90,48,0.05)' : 'rgba(55,138,221,0.05)';
-    const cAlpha10 = isQuick ? 'rgba(216,90,48,0.1)' : 'rgba(55,138,221,0.1)';
-    const cAlpha20 = isQuick ? 'rgba(216,90,48,0.2)' : 'rgba(55,138,221,0.2)';
-    const label = isQuick ? '빠른 입력 원본' : 'STT 원본';
-    return (
-      <div style={{ marginBottom: 12, border: `1px solid ${c}`, borderRadius: 8, background: cAlpha05, overflow: 'hidden' }}>
-        <div onClick={() => setSiSttOriginalCollapsed(v => !v)}
-          style={{ padding: '8px 10px', background: cAlpha10, borderBottom: siSttOriginalCollapsed ? 'none' : `1px solid ${cAlpha20}`, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-          <span style={{ fontSize: '0.714rem', fontWeight: 700, color: c }}>{label}</span>
-          <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flex: 1 }}>
-            {siSttOriginalCollapsed ? '클릭하여 펼치기' : '클릭하여 접기'}
-          </span>
-          {!siSttOriginalCollapsed && (
-            <button onClick={(e) => { e.stopPropagation(); setSiSttOriginalEditing(v => !v); }}
-              style={{
-                padding: '2px 8px', border: `1px solid ${c}`,
-                background: siSttOriginalEditing ? c : 'transparent',
-                color: siSttOriginalEditing ? '#fff' : c,
-                borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600,
-              }}>
-              {siSttOriginalEditing ? '편집 종료' : '편집'}
-            </button>
-          )}
-          <span style={{ fontSize: '0.786rem', color: c }}>{siSttOriginalCollapsed ? '▼' : '▲'}</span>
-        </div>
-        {!siSttOriginalCollapsed && (
-          <div style={{ padding: 10 }}>
-            {siSttOriginalEditing ? (
-              <textarea value={siSttOriginalText} onChange={e => setSiSttOriginalText(e.target.value)}
-                style={{
-                  width: '100%', minHeight: 150, maxHeight: 400, padding: 8,
-                  border: '1px solid var(--bd)', borderRadius: 6,
-                  fontSize: '0.857rem', lineHeight: 1.6, fontFamily: 'inherit',
-                  background: 'var(--bg-card)', color: 'var(--c-text-dark)',
-                  outline: 'none', resize: 'vertical', boxSizing: 'border-box',
-                }} />
-            ) : (
-              <div style={{
-                padding: 8, background: 'var(--bg-card)', borderRadius: 6,
-                maxHeight: 250, overflowY: 'auto',
-                fontSize: '0.857rem', lineHeight: 1.6,
-                color: 'var(--c-text-dark)', whiteSpace: 'pre-wrap', userSelect: 'text',
-              }}>{siSttOriginalText}</div>
-            )}
-            <div style={{ marginTop: 6, fontSize: '0.643rem', color: 'var(--c-dim)' }}>
-              원본을 참고하여 아래 구조화 영역에 분류해 사용하세요.
-              {siSttOriginalEditing && ' (편집 중)'}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   // ── JSX ──
   return (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, overflow: 'hidden' }}>
@@ -290,7 +232,15 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           )}
 
           {/* Build-5D-2 (hotfix1): STT 원본 텍스트 상단 고정 — 원본 존재만으로 표시 (링크 독립) */}
-          {renderOriginalBlock()}
+          <OriginalBlock
+            text={siSttOriginalText}
+            onTextChange={setSiSttOriginalText}
+            originType={siOriginType}
+            editing={siSttOriginalEditing}
+            onEditingChange={setSiSttOriginalEditing}
+            collapsed={siSttOriginalCollapsed}
+            onCollapsedChange={setSiSttOriginalCollapsed}
+          />
 
           {/* 1. 골자 선택 / 자유 입력 */}
           <div style={{ marginBottom: 10 }}>
