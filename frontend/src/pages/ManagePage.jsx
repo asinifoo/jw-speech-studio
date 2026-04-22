@@ -4,6 +4,7 @@ import ManagePreprocessTab from './ManagePreprocessTab';
 import ManageAiTab from './ManageAiTab';
 import ManageDbTab from './ManageDbTab';
 import ManageAddTab from './ManageAddTab';
+import ManageAddQuickInput from './ManageAddQuickInput';
 
 
 export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSaveReturn, pageType, onGoAdd }) {
@@ -33,7 +34,10 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
       )}
 
 
-      {mode === 'add' && <ManageAddTab fontSize={fontSize} pageType={pageType} mode={mode} pendingPub={pendingPub} clearPendingPub={clearPendingPub} onSaveReturn={onSaveReturn} />}
+      {mode === 'add' && (pageType === 'input'
+        ? <ManageAddQuickInput />
+        : <ManageAddTab fontSize={fontSize} pageType={pageType} mode={mode} pendingPub={pendingPub} clearPendingPub={clearPendingPub} onSaveReturn={onSaveReturn} />
+      )}
 
       {dbVisited && (
         <div style={{ display: mode === 'mydb' ? 'contents' : 'none' }}>
