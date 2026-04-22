@@ -1169,7 +1169,8 @@ textarea { resize: vertical; }
         </div>
       )}
       </Suspense>
-      {/* 플로팅 메모 버튼 */}
+      {/* 플로팅 메모 버튼 (AI 대화 화면 제외) */}
+      {!(page === 'search' && searchMode === 'chat') && (
       <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 50 }}>
         <button onClick={() => setMemoOpen(true)} style={{
           width: 48, height: 48, borderRadius: 24, border: 'none',
@@ -1179,6 +1180,7 @@ textarea { resize: vertical; }
           cursor: 'pointer', transition: 'transform 0.15s',
         }}>✎</button>
       </div>
+      )}
       {/* 메모 모달 */}
       {memoOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}>
