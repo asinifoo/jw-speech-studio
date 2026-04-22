@@ -544,7 +544,7 @@ export default function ManageDbTab({ mode }) {
                           outline_type: meta.outline_type || '', content: body,
                           memoId: r.id, memoCol: r.collection,
                         })); localStorage.setItem('jw-prep-subtab', 'structure'); localStorage.setItem('jw-structure-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
-                        if (onGoAdd) onGoAdd(); else { setAddTab('structure'); setInputMode('speech_input'); setMode('add'); }
+                        if (onGoAdd) onGoAdd(); else { setSubTab('structure'); setStructureMode('speech_input'); setMode('add'); }
                       }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>→상세</button>
                     )}
                     <button onClick={async () => {

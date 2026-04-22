@@ -8,7 +8,7 @@ import ManageQuickInput from './manage-add/QuickInput';
 
 
 export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSaveReturn, pageType, onGoAdd }) {
-  // Phase 5-3A: pageType='input' 도 'add' 모드로 분기 (ManagePage 내부는 addTab 렌더 경로 재사용)
+  // Phase 5-3A: pageType='input' 도 'add' 모드로 분기 (ManagePage 내부는 subTab 렌더 경로 재사용)
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const defaultMode = _isAddPage ? 'add' : 'mydb';
   const [mode, setMode] = useState(() => {

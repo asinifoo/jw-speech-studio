@@ -68,7 +68,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
   }, []);
   // 빠른메모 → 연설 입력 전달 처리
 
-  // ── useEffect 3: transfer 처리 (addTab/inputMode 조건 제거, siTransferTick만 의존) ──
+  // ── useEffect 3: transfer 처리 (subTab/structureMode 조건 제거, siTransferTick만 의존) ──
   useEffect(() => {
     let raw; try { raw = localStorage.getItem('jw-speech-transfer'); } catch { return; }
     if (!raw) return;

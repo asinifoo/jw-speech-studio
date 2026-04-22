@@ -4,7 +4,7 @@ import { saveCategories, deleteServiceType } from '../../api';
 import { discFormDefault, svcFormDefault, visitFormDefault } from '../../utils/formDefaults';
 
 export default function ManageStructureOther({
-  inputMode,
+  structureMode,
   discForm, setDiscForm,
   svcForm, setSvcForm,
   visitForm, setVisitForm,
@@ -14,7 +14,7 @@ export default function ManageStructureOther({
   catNewVal, setCatNewVal,
 }) {
   return (<>
-          {inputMode === 'discussion' && (<>
+          {structureMode === 'discussion' && (<>
 
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>토의 유형</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -68,7 +68,7 @@ export default function ManageStructureOther({
           </>)}
 
           {/* 봉사 모임 입력 */}
-          {inputMode === 'service' && (<>
+          {structureMode === 'service' && (<>
 
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 유형</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
@@ -140,7 +140,7 @@ export default function ManageStructureOther({
           </>)}
 
           {/* 방문 입력 */}
-          {inputMode === 'visit_input' && (<>
+          {structureMode === 'visit_input' && (<>
 
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>대상</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>

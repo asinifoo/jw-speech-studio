@@ -53,7 +53,7 @@ const getOutlineTypeInfo = (code) => {
 export default function ManageGather({ fontSize, pageType, mode, pendingPub, clearPendingPub, onSaveReturn }) {
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
-  const [addForm, setAddForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
+  const [gatherForm, setGatherForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
   const [discForm, setDiscForm] = useState(() => { try { const s = localStorage.getItem('jw-disc-form'); return s ? JSON.parse(s) : discFormDefault; } catch { return discFormDefault; } });
   const [svcForm, setSvcForm] = useState(() => { try { const s = localStorage.getItem('jw-svc-form'); return s ? JSON.parse(s) : svcFormDefault; } catch { return svcFormDefault; } });
   const [visitForm, setVisitForm] = useState(() => { try { const s = localStorage.getItem('jw-visit-form'); return s ? JSON.parse(s) : visitFormDefault; } catch { return visitFormDefault; } });
@@ -97,7 +97,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [catEditing, setCatEditing] = useState(null); // 'service_types' | 'visit_targets' | 'visit_situations'
   const [catNewVal, setCatNewVal] = useState('');
   useEffect(() => { getCategories().then(r => setCats(r)).catch(() => {}); }, []);
-  useEffect(() => { try { localStorage.setItem('jw-gather-form', JSON.stringify(addForm)); } catch(e) {} }, [addForm]);
+  useEffect(() => { try { localStorage.setItem('jw-gather-form', JSON.stringify(gatherForm)); } catch(e) {} }, [gatherForm]);
   useEffect(() => { try { localStorage.setItem('jw-disc-form', JSON.stringify(discForm)); } catch {} }, [discForm]);
   useEffect(() => { try { localStorage.setItem('jw-svc-form', JSON.stringify(svcForm)); } catch {} }, [svcForm]);
   useEffect(() => { try { localStorage.setItem('jw-visit-form', JSON.stringify(visitForm)); } catch {} }, [visitForm]);
@@ -111,8 +111,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [batchInfo, setBatchInfo] = useState('');
   const [batchLog, setBatchLog] = useState([]);
   // ── 전처리 state ──
-  const [prepMode, setPrepMode] = useState(() => { try { return localStorage.getItem('jw-gather-mode') || 'file'; } catch { return 'file'; } });
-  useEffect(() => { try { localStorage.setItem('jw-gather-mode', prepMode); } catch {} }, [prepMode]);
+  const [gatherMode, setGatherMode] = useState(() => { try { return localStorage.getItem('jw-gather-mode') || 'file'; } catch { return 'file'; } });
+  useEffect(() => { try { localStorage.setItem('jw-gather-mode', gatherMode); } catch {} }, [gatherMode]);
   // 파일 업로드 모드
   const [mdParsed, setMdParsed] = useState(null);
   const [mdParsing, setMdParsing] = useState(false);
@@ -153,18 +153,18 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [editingVSits, setEditingVSits] = useState(false);
   const defaultVSits = ['일반'];
   const [selSituations, setSelSituations] = useState(() => { try { const f = JSON.parse(localStorage.getItem('jw-gather-form')); return new Set((f?.service_type || '').split(',').filter(Boolean)); } catch(e) { return new Set(); } });
-  useEffect(() => { if (addForm.source === '방문') setAddForm(p => ({ ...p, service_type: [...selSituations].join(',') })); }, [selSituations]);
+  useEffect(() => { if (gatherForm.source === '방문') setGatherForm(p => ({ ...p, service_type: [...selSituations].join(',') })); }, [selSituations]);
   const [addingMType, setAddingMType] = useState(false);
   const [newMType, setNewMType] = useState('');
   const [editingMTypes, setEditingMTypes] = useState(false);
   const defaultMTypes = ['일반', '재방문', '기념식', '지역대회', '특별활동'];
   // ── 연설 입력 state ──
   // Phase 5-3A: pageType 별 초기값
-  //  - 'input'  → 빠른 입력 고정 (addTab='input', inputMode='quick_input')
+  //  - 'input'  → 빠른 입력 고정 (subTab='input', structureMode='quick_input')
   //  - 'add'    → [전처리] 진입 기본은 'preprocess' (localStorage 무시)
-  //  - 'manage' → 이 컴포넌트는 mydb/ai 렌더라 addTab state 사용 안 함
-  const [addTab, setAddTab] = useState(() => {
-    // Phase 5-3B-1: addTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
+  //  - 'manage' → 이 컴포넌트는 mydb/ai 렌더라 subTab state 사용 안 함
+  const [subTab, setSubTab] = useState(() => {
+    // Phase 5-3B-1: subTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
     if (pageType === 'input') return 'structure';
     try {
       const s = localStorage.getItem('jw-prep-subtab');
@@ -174,7 +174,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       return ['gather', 'structure', 'drafts'].includes(s) ? s : 'gather';
     } catch { return 'gather'; }
   });
-  const [inputMode, setInputMode] = useState(() => {
+  const [structureMode, setStructureMode] = useState(() => {
     try {
       const s = localStorage.getItem('jw-structure-mode');
       // Phase 5-3B-1: [구조화] 바에서 quick_input 제거 → pageType='add'는 speech_input 기본
@@ -182,13 +182,13 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       return s;
     } catch { return 'speech_input'; }
   });
-  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-prep-subtab', addTab); } catch {} }, [addTab, pageType]);
-  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-structure-mode', inputMode); } catch {} }, [inputMode, pageType]);
+  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-prep-subtab', subTab); } catch {} }, [subTab, pageType]);
+  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-structure-mode', structureMode); } catch {} }, [structureMode, pageType]);
   // 빠른메모 → 연설 입력 전달 처리
-  // transfer 데이터 처리 — addTab 변경 시 + 외부 트리거(si-transfer 이벤트) 시
+  // transfer 데이터 처리 — subTab 변경 시 + 외부 트리거(si-transfer 이벤트) 시
   const [siTransferTick, setSiTransferTick] = useState(0);
   useEffect(() => {
-    const handler = () => { setAddTab('structure'); setInputMode('speech_input'); setSiTransferTick(t => t + 1); };
+    const handler = () => { setSubTab('structure'); setStructureMode('speech_input'); setSiTransferTick(t => t + 1); };
     window.addEventListener('si-transfer', handler);
     return () => window.removeEventListener('si-transfer', handler);
   }, []);
@@ -223,11 +223,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
   // STT 탭 활성화 시 목록 로드 (새로고침/탭 전환 양쪽 대응)
   useEffect(() => {
-    if (addTab === 'gather' && prepMode === 'stt' && sttJobs.length === 0) {
+    if (subTab === 'gather' && gatherMode === 'stt' && sttJobs.length === 0) {
       sttLoadJobs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [addTab, prepMode]);
+  }, [subTab, gatherMode]);
 
   // 폴링: 진행 중 job만 2초마다 상세 조회 (ref 기반 — 인터벌 재생성 방지)
   useEffect(() => {
@@ -403,8 +403,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       }));
       localStorage.setItem('jw-prep-subtab', 'structure');
       localStorage.setItem('jw-structure-mode', 'speech_input');
-      setAddTab('structure');
-      setInputMode('speech_input');
+      setSubTab('structure');
+      setStructureMode('speech_input');
       window.dispatchEvent(new Event('si-transfer'));
     } catch (e) {
       alert('임시저장 로드 실패: ' + e.message);
@@ -436,7 +436,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           stt_original_text: full.stt_original_text || full.free_text || dr.stt_original_text || dr.free_text || '',
         }));
       } catch {}
-      setAddTab('structure'); setInputMode('speech_input');
+      setSubTab('structure'); setStructureMode('speech_input');
       setSiTransferTick(t => t + 1);
       return;
     }
@@ -463,7 +463,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           content,
         }));
 
-        setAddTab('structure'); setInputMode('discussion');
+        setSubTab('structure'); setStructureMode('discussion');
         return;
       }
       if (qtype === 'service') {
@@ -472,7 +472,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           date: full.date || '',
           content,
         }));
-        setAddTab('structure'); setInputMode('service');
+        setSubTab('structure'); setStructureMode('service');
         return;
       }
       if (qtype === 'visit') {
@@ -483,7 +483,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           keywords: full.outline_title || '',
           content,
         }));
-        setAddTab('structure'); setInputMode('visit_input');
+        setSubTab('structure'); setStructureMode('visit_input');
         return;
       }
       if (qtype === 'publication') {
@@ -495,7 +495,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           pub_title: full.pub_title || '',
           outline_title: full.outline_title || '',
         }));
-        setAddTab('gather'); setPrepMode('pub_input');
+        setSubTab('gather'); setGatherMode('pub_input');
         return;
       }
       // 'speech' 또는 'other' → localStorage transfer (Phase 4b-2)
@@ -513,7 +513,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           source_stt_job_id: '',
         }));
       } catch {}
-      setAddTab('structure'); setInputMode('speech_input');
+      setSubTab('structure'); setStructureMode('speech_input');
       setSiTransferTick(t => t + 1);
       return;
     }
@@ -542,7 +542,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         localStorage.setItem('jw-structure-mode', 'speech_input');
         window.dispatchEvent(new Event('si-transfer'));
       } catch {}
-      setAddTab('structure'); setInputMode('speech_input');
+      setSubTab('structure'); setStructureMode('speech_input');
       return;
     }
 
@@ -557,7 +557,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       localStorage.setItem('jw-structure-mode', 'speech_input');
       window.dispatchEvent(new Event('si-transfer'));
     } catch {}
-    setAddTab('structure'); setInputMode('speech_input');
+    setSubTab('structure'); setStructureMode('speech_input');
   };
 
   // Phase 4b-4: 메모 이동 모달 콜백 (Drafts에서 호출)
@@ -588,9 +588,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       setPubForm(p => ({ ...p, content: m.body, point_summary: m.topic }));
     }
     if (type === 'pub_input') {
-      setAddTab('gather'); setPrepMode('pub_input');
+      setSubTab('gather'); setGatherMode('pub_input');
     } else {
-      setAddTab('structure'); setInputMode(type);
+      setSubTab('structure'); setStructureMode(type);
     }
   };
 
@@ -831,8 +831,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   useEffect(() => {
     if (!pendingPub) return;
     // Phase 5-3B-2: pub_input → [가져오기]>[출판물]
-    setAddTab('gather');
-    setPrepMode('pub_input');
+    setSubTab('gather');
+    setGatherMode('pub_input');
     setFromPub(true);
     // pub_code 전체를 그대로 전달 (면/항 분리는 백엔드 lookup이 처리)
     setPubForm(p => ({
@@ -849,19 +849,19 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   }, [pendingPub]);
 
   const selectOutline = async (g) => {
-    if (!g) { setAddForm(p => ({ ...p, outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '' })); setSubtopics({}); return; }
-    setAddForm(p => ({ ...p, outline_num: g.num, outline_type: g.type, outline_title: g.title, topic: g.title, subtopic: '', point_id: '', point_summary: '' }));
+    if (!g) { setGatherForm(p => ({ ...p, outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '' })); setSubtopics({}); return; }
+    setGatherForm(p => ({ ...p, outline_num: g.num, outline_type: g.type, outline_title: g.title, topic: g.title, subtopic: '', point_id: '', point_summary: '' }));
     try { const r = await outlineDetail(g.num); setSubtopics(r.subtopics || {}); } catch(e) { setSubtopics({}); }
   };
 
   const handleSave = async () => {
-    if (!addForm.content.trim()) { setSaveMsg('내용을 입력하세요'); return; }
-    if (addForm.entry_type === 'publication' && !addForm.pub_code.trim() && addForm.sub_source !== '원문') { setSaveMsg('출판물 코드를 입력하세요'); return; }
+    if (!gatherForm.content.trim()) { setSaveMsg('내용을 입력하세요'); return; }
+    if (gatherForm.entry_type === 'publication' && !gatherForm.pub_code.trim() && gatherForm.sub_source !== '원문') { setSaveMsg('출판물 코드를 입력하세요'); return; }
     setSaving(true); setSaveMsg('');
     try {
-      const formData = addTab === 'memo'
-        ? { ...addForm, source: '메모' }
-        : addForm.sub_source === '원문' ? { ...addForm, source: '원문' } : addForm;
+      const formData = subTab === 'memo'
+        ? { ...gatherForm, source: '메모' }
+        : gatherForm.sub_source === '원문' ? { ...gatherForm, source: '원문' } : gatherForm;
       const res = await dbAdd(formData);
       if (movingMemo) {
         try { await dbDelete(movingMemo.collection, movingMemo.id); } catch(e) {}
@@ -871,7 +871,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       } else {
         setSaveMsg(`저장 완료 (${res.collection})`);
       }
-      setAddForm(p => ({ ...p, subtopic: '', point_id: '', point_summary: '', content: '', keywords: '', scriptures: '' }));
+      setGatherForm(p => ({ ...p, subtopic: '', point_id: '', point_summary: '', content: '', keywords: '', scriptures: '' }));
       if (fromPub && onSaveReturn) {
         setFromPub(false);
         setTimeout(() => onSaveReturn(), 800);
@@ -880,7 +880,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
     finally { setSaving(false); }
   };
 
-  const _saveTab = async (form, source, resetFn, dflt) => {
+  const saveStructureForm = async (form, source, resetFn, dflt) => {
     if (!form.content?.trim()) { setSaveMsg('내용을 입력하세요'); return; }
     if (source === '출판물' && !form.pub_code?.trim()) { setSaveMsg('출판물 코드를 입력하세요'); return; }
     setSaving(true); setSaveMsg('');
@@ -924,13 +924,13 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         {pageType !== 'input' && (
         <div style={{ ...S.pillContainer, marginBottom: 16 }}>
           {[['gather', '가져오기'], ['structure', '구조화'], ['drafts', '임시저장']].map(([k, l]) => (
-            <button key={k} onClick={() => { setAddTab(k); if (k === 'gather') setAddForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={S.pillL2(addTab === k)}>{l}</button>
+            <button key={k} onClick={() => { setSubTab(k); if (k === 'gather') setGatherForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={S.pillL2(subTab === k)}>{l}</button>
           ))}
         </div>
         )}
 
         {/* ═══ 구조화 탭 ═══ */}
-        {addTab === 'structure' && (
+        {subTab === 'structure' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
           {/* 입력 하위 — 카드 헤더 언더라인 (Phase 5-3A: [입력] 탑레벨에선 숨김) */}
           {pageType !== 'input' && (
@@ -940,9 +940,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               ? [['quick_input', '빠른 입력', 'var(--accent-orange)']]
               : [['speech_input', '연설', 'var(--accent)'], ['discussion', '토의', 'var(--accent-blue)'], ['service', '봉사 모임', 'var(--accent)'], ['visit_input', '방문', 'var(--accent-orange)']]
             ).map(([k, l, c]) => {
-              const active = inputMode === k;
+              const active = structureMode === k;
               return (
-                <button key={k} onClick={() => { setInputMode(k); setSaveMsg(''); }} style={S.underlineTab(active, c)}>
+                <button key={k} onClick={() => { setStructureMode(k); setSaveMsg(''); }} style={S.underlineTab(active, c)}>
                   <span style={S.underlineLabel(active, c)}>{l}</span>
                   <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                 </button>
@@ -954,13 +954,13 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
           {/* ─── 빠른 입력 (Phase 5-1) ─── */}
 
-          {['discussion', 'service', 'visit_input'].includes(inputMode) && (
+          {['discussion', 'service', 'visit_input'].includes(structureMode) && (
             <ManageStructureOther
-              inputMode={inputMode}
+              structureMode={structureMode}
               discForm={discForm} setDiscForm={setDiscForm}
               svcForm={svcForm} setSvcForm={setSvcForm}
               visitForm={visitForm} setVisitForm={setVisitForm}
-              saving={saving} saveMsg={saveMsg} saveTab={_saveTab}
+              saving={saving} saveMsg={saveMsg} saveTab={saveStructureForm}
               cats={cats} setCats={setCats}
               catEditing={catEditing} setCatEditing={setCatEditing}
               catNewVal={catNewVal} setCatNewVal={setCatNewVal}
@@ -973,14 +973,14 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         )}
 
         {/* ═══ 가져오기 탭 ═══ */}
-        {addTab === 'gather' && (
+        {subTab === 'gather' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden' }}>
           {/* 전처리 상위 탭 — 카드 헤더 언더라인 */}
             <div style={S.underlineContainer}>
               {[['file', '파일 업로드', 'var(--accent)'], ['text', '텍스트 입력', 'var(--accent)'], ['stt', 'STT 업로드', 'var(--accent)'], ['pub_input', '출판물', 'var(--accent-purple)']].map(([k, l, c]) => {
-                const active = prepMode === k;
+                const active = gatherMode === k;
                 return (
-                  <button key={k} onClick={() => setPrepMode(k)} style={S.underlineTab(active, c)}>
+                  <button key={k} onClick={() => setGatherMode(k)} style={S.underlineTab(active, c)}>
                     <span style={S.underlineLabel(active, c)}>{l}</span>
                     <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                   </button>
@@ -995,25 +995,25 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
           }}>
             {['연설', '토의', '봉사 모임', '방문', 'JW 방송'].map(s => (
-              <button key={s} onClick={() => setAddForm(p => ({ ...p, source: s, sub_source: s === '연설' ? '공개 강연' : s === '토의' ? '파수대' : '', entry_type: s === '토의' ? 'expression' : s === '봉사 모임' ? 'speech_point' : p.entry_type, service_type: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', pub_code: '', topic: '' }))} style={{
-                flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.source === s ? 700 : 500,
+              <button key={s} onClick={() => setGatherForm(p => ({ ...p, source: s, sub_source: s === '연설' ? '공개 강연' : s === '토의' ? '파수대' : '', entry_type: s === '토의' ? 'expression' : s === '봉사 모임' ? 'speech_point' : p.entry_type, service_type: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', pub_code: '', topic: '' }))} style={{
+                flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: gatherForm.source === s ? 700 : 500,
                 border: 'none',
-                background: addForm.source === s ? 'var(--bg-card, #fff)' : 'transparent',
-                color: addForm.source === s ? 'var(--c-text-dark)' : 'var(--c-muted)',
+                background: gatherForm.source === s ? 'var(--bg-card, #fff)' : 'transparent',
+                color: gatherForm.source === s ? 'var(--c-text-dark)' : 'var(--c-muted)',
                 cursor: 'pointer', fontFamily: 'inherit', textAlign: 'center',
                 transition: 'all 0.2s ease',
-                boxShadow: addForm.source === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                boxShadow: gatherForm.source === s ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
               }}>{s}</button>
             ))}
           </div>
           <div style={{ height: 1, background: 'var(--bd-medium)', margin: '10px 0' }} />
           </>)}
 
-          {addTab === 'gather' && (
+          {subTab === 'gather' && (
             <div style={{ marginBottom: 8 }}>
 
               {/* ═══ 1. 파일 업로드 모드 ═══ */}
-              {prepMode === 'file' && (
+              {gatherMode === 'file' && (
                 <div>
                   <input type="file" accept=".md,.txt" id="mdUpload" multiple style={{ display: 'none' }} onChange={async e => {
                     const files = Array.from(e.target.files || []);
@@ -1225,7 +1225,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
               {/* ═══ 2. txt 원본 모드 (플레이스홀더) ═══ */}
               {/* ═══ STT 업로드 모드 — 목록 뷰 (Phase 4 Build-4) ═══ */}
-              {prepMode === 'stt' && !sttReviewJob && (
+              {gatherMode === 'stt' && !sttReviewJob && (
                 <div>
                   {/* 업로드 영역 */}
                   <div
@@ -1395,7 +1395,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               )}
 
               {/* ═══ STT 검토 화면 (Phase 4 Build-5B) ═══ */}
-              {prepMode === 'stt' && sttReviewJob && (
+              {gatherMode === 'stt' && sttReviewJob && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
                   {/* 헤더 */}
@@ -1699,7 +1699,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               )}
 
               {/* ═══ 3. 텍스트 입력 모드 ═══ */}
-              {prepMode === 'text' && (
+              {gatherMode === 'text' && (
                 <div>
                   {/* DOCX에서 불러오기 */}
                   <div style={{ marginBottom: 8 }}>
@@ -2117,7 +2117,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               )}
 
               {/* 출판물 입력 (Phase 5-3B-2: [구조화]에서 [가져오기]로 이동) */}
-              {prepMode === 'pub_input' && (<>
+              {gatherMode === 'pub_input' && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: 'var(--c-danger)' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>
                   <input value={pubForm.pub_code} onChange={e => setPubForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="「파10」 11/15 7면 2항" style={{ ...S.inputField, width: '100%' }} />
@@ -2238,7 +2238,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                     placeholder="출판물 내용을 입력하세요" rows={8}
                     style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
                 </div>
-                <button onClick={() => _saveTab(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
+                <button onClick={() => saveStructureForm(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
                   width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                 }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
@@ -2255,18 +2255,18 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 연설 구분 */}
-          {addForm.source === '연설' && (
+          {gatherForm.source === '연설' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 2,
                 background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
               }}>
                 {['공개 강연', '기타 연설', '대회 연설', '원문'].map(s => (
-                  <button key={s} onClick={() => setAddForm(p => ({ ...p, sub_source: s, service_type: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', pub_code: '', topic: '' }))} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.sub_source === s ? 700 : 500,
+                  <button key={s} onClick={() => setGatherForm(p => ({ ...p, sub_source: s, service_type: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', pub_code: '', topic: '' }))} style={{
+                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: gatherForm.sub_source === s ? 700 : 500,
                     border: 'none', textAlign: 'center',
-                    background: addForm.sub_source === s ? (s === '원문' ? '#7F77DD15' : '#D85A3015') : 'transparent',
-                    color: addForm.sub_source === s ? (s === '원문' ? 'var(--accent-purple)' : 'var(--accent-orange)') : 'var(--c-muted)',
+                    background: gatherForm.sub_source === s ? (s === '원문' ? '#7F77DD15' : '#D85A3015') : 'transparent',
+                    color: gatherForm.sub_source === s ? (s === '원문' ? 'var(--accent-purple)' : 'var(--accent-orange)') : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{s}</button>
                 ))}
@@ -2275,22 +2275,22 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 기타 연설 종류 */}
-          {addForm.source === '연설' && addForm.sub_source === '기타 연설' && (
+          {gatherForm.source === '연설' && gatherForm.sub_source === '기타 연설' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>종류</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                 {speechSubTypes.map((t, ti) => (
-                  <button key={t} onClick={() => !editingSTypes && setAddForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? 'var(--accent-blue)' : editingSTypes && !defaultSTypes.includes(t) ? '#fcc' : 'var(--bd)'),
-                    background: addForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: addForm.service_type === t ? 'var(--accent-blue)' : 'var(--c-faint)',
-                    fontSize: '0.786rem', cursor: editingSTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
+                  <button key={t} onClick={() => !editingSTypes && setGatherForm(p => ({ ...p, service_type: t }))} style={{
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (gatherForm.service_type === t ? 'var(--accent-blue)' : editingSTypes && !defaultSTypes.includes(t) ? '#fcc' : 'var(--bd)'),
+                    background: gatherForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: gatherForm.service_type === t ? 'var(--accent-blue)' : 'var(--c-faint)',
+                    fontSize: '0.786rem', cursor: editingSTypes ? 'default' : 'pointer', fontWeight: gatherForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
                     {editingSTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti-1); setSpeechSubTypes(next); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
                     {t}
                     {editingSTypes && ti < speechSubTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti+1); setSpeechSubTypes(next); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingSTypes && !defaultSTypes.includes(t) && (
-                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}
+                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}
                         style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2301,8 +2301,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newSType} onChange={e => setNewSType(e.target.value)} placeholder="새 종류"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
-                      onKeyDown={e => { if (e.key === 'Enter' && newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}} />
-                    <button onClick={() => { if (newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                      onKeyDown={e => { if (e.key === 'Enter' && newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setGatherForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}} />
+                    <button onClick={() => { if (newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setGatherForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingSType(false); setNewSType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -2311,56 +2311,56 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 연설 > 원문 입력 */}
-          {addForm.source === '연설' && addForm.sub_source === '원문' && (
+          {gatherForm.source === '연설' && gatherForm.sub_source === '원문' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ display: 'flex', gap: 6 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>골자유형</div>
-                  <input value={addForm.outline_type} onChange={e => setAddForm(p => ({ ...p, outline_type: e.target.value }))} placeholder="공개강연" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.outline_type} onChange={e => setGatherForm(p => ({ ...p, outline_type: e.target.value }))} placeholder="공개강연" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>골자번호</div>
-                  <input value={addForm.outline_num} onChange={e => setAddForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.outline_num} onChange={e => setGatherForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ width: 55 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>버전</div>
-                  <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="9/15" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
+                  <input value={gatherForm.subtopic} onChange={e => setGatherForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="9/15" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>연사</div>
-                  <input value={addForm.speaker} onChange={e => setAddForm(p => ({ ...p, speaker: e.target.value }))} placeholder="연사" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.speaker} onChange={e => setGatherForm(p => ({ ...p, speaker: e.target.value }))} placeholder="연사" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>제목</div>
-                  <input value={addForm.outline_title} onChange={e => setAddForm(p => ({ ...p, outline_title: e.target.value, topic: e.target.value }))} placeholder="제목" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.outline_title} onChange={e => setGatherForm(p => ({ ...p, outline_title: e.target.value, topic: e.target.value }))} placeholder="제목" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ width: 60 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                  <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
+                  <input value={gatherForm.date} onChange={e => setGatherForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                 </div>
               </div>
             </div>
           )}
 
           {/* 토의 구분 */}
-          {addForm.source === '토의' && (
+          {gatherForm.source === '토의' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 2,
                 background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
               }}>
                 {['파수대', '성서 연구', '영적 보물', '기타'].map(s => (
-                  <button key={s} onClick={() => setAddForm(p => ({
+                  <button key={s} onClick={() => setGatherForm(p => ({
                     ...p, sub_source: s,
                     entry_type: (s === '파수대' || s === '성서 연구' || s === '영적 보물') ? 'expression' : p.entry_type,
                     service_type: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', pub_code: '', topic: '',
                   }))} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.sub_source === s ? 700 : 500,
+                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: gatherForm.sub_source === s ? 700 : 500,
                     border: 'none', textAlign: 'center',
-                    background: addForm.sub_source === s ? '#8D6E6315' : 'transparent',
-                    color: addForm.sub_source === s ? '#8D6E63' : 'var(--c-muted)',
+                    background: gatherForm.sub_source === s ? '#8D6E6315' : 'transparent',
+                    color: gatherForm.sub_source === s ? '#8D6E63' : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{s}</button>
                 ))}
@@ -2369,31 +2369,31 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 영적 보물 - 성경 읽기 범위 */}
-          {addForm.source === '토의' && addForm.sub_source === '영적 보물' && (
+          {gatherForm.source === '토의' && gatherForm.sub_source === '영적 보물' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성경 읽기 범위 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
-              <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))}
+              <input value={gatherForm.subtopic} onChange={e => setGatherForm(p => ({ ...p, subtopic: e.target.value }))}
                 placeholder="이사야 50-51장" style={{ ...S.inputField, width: '100%' }} />
             </div>
           )}
 
           {/* 토의 기타 종류 */}
-          {addForm.source === '토의' && addForm.sub_source === '기타' && (
+          {gatherForm.source === '토의' && gatherForm.sub_source === '기타' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>종류</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                 {discussionTypes.map((t, ti) => (
-                  <button key={t} onClick={() => !editingDTypes && setAddForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? 'var(--accent-blue)' : editingDTypes && !defaultDTypes.includes(t) ? '#fcc' : 'var(--bd)'),
-                    background: addForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: addForm.service_type === t ? 'var(--accent-blue)' : 'var(--c-faint)',
-                    fontSize: '0.786rem', cursor: editingDTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
+                  <button key={t} onClick={() => !editingDTypes && setGatherForm(p => ({ ...p, service_type: t }))} style={{
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (gatherForm.service_type === t ? 'var(--accent-blue)' : editingDTypes && !defaultDTypes.includes(t) ? '#fcc' : 'var(--bd)'),
+                    background: gatherForm.service_type === t ? 'var(--tint-blue-light)' : 'var(--bg-card)', color: gatherForm.service_type === t ? 'var(--accent-blue)' : 'var(--c-faint)',
+                    fontSize: '0.786rem', cursor: editingDTypes ? 'default' : 'pointer', fontWeight: gatherForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
                     {editingDTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti-1); setDiscussionTypes(next); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
                     {t}
                     {editingDTypes && ti < discussionTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti+1); setDiscussionTypes(next); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingDTypes && !defaultDTypes.includes(t) && (
-                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}
+                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}
                         style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2404,8 +2404,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newDType} onChange={e => setNewDType(e.target.value)} placeholder="새 종류"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
-                      onKeyDown={e => { if (e.key === 'Enter' && newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}} />
-                    <button onClick={() => { if (newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                      onKeyDown={e => { if (e.key === 'Enter' && newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setGatherForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}} />
+                    <button onClick={() => { if (newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setGatherForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingDType(false); setNewDType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -2414,7 +2414,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 봉사 모임 구분 */}
-          {addForm.source === '봉사 모임' && (
+          {gatherForm.source === '봉사 모임' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>구분</div>
               <div style={{
@@ -2422,11 +2422,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
               }}>
                 {[['speech_point', '전체 내용'], ['expression', '표현/예시']].map(([v, l]) => (
-                  <button key={v} onClick={() => setAddForm(p => ({ ...p, entry_type: v }))} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.entry_type === v ? 700 : 500,
+                  <button key={v} onClick={() => setGatherForm(p => ({ ...p, entry_type: v }))} style={{
+                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: gatherForm.entry_type === v ? 700 : 500,
                     border: 'none', textAlign: 'center',
-                    background: addForm.entry_type === v ? '#378ADD15' : 'transparent',
-                    color: addForm.entry_type === v ? 'var(--accent-blue)' : 'var(--c-muted)',
+                    background: gatherForm.entry_type === v ? '#378ADD15' : 'transparent',
+                    color: gatherForm.entry_type === v ? 'var(--accent-blue)' : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{l}</button>
                 ))}
@@ -2435,15 +2435,15 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 봉사 종류 */}
-          {addForm.source === '봉사 모임' && (
+          {gatherForm.source === '봉사 모임' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>봉사 종류</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
                 {manageServiceTypes.map((t, ti) => (
-                  <button key={t} onClick={() => !editingMTypes && setAddForm(p => ({ ...p, service_type: t }))} style={{
-                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (addForm.service_type === t ? 'var(--accent)' : editingMTypes && !defaultMTypes.includes(t) ? '#fcc' : 'var(--bd)'),
-                    background: addForm.service_type === t ? 'var(--tint-green)' : 'var(--bg-card)', color: addForm.service_type === t ? 'var(--accent)' : 'var(--c-faint)',
-                    fontSize: '0.786rem', cursor: editingMTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
+                  <button key={t} onClick={() => !editingMTypes && setGatherForm(p => ({ ...p, service_type: t }))} style={{
+                    padding: '4px 10px', borderRadius: 8, border: '1px solid ' + (gatherForm.service_type === t ? 'var(--accent)' : editingMTypes && !defaultMTypes.includes(t) ? '#fcc' : 'var(--bd)'),
+                    background: gatherForm.service_type === t ? 'var(--tint-green)' : 'var(--bg-card)', color: gatherForm.service_type === t ? 'var(--accent)' : 'var(--c-faint)',
+                    fontSize: '0.786rem', cursor: editingMTypes ? 'default' : 'pointer', fontWeight: gatherForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
                     {editingMTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(manageServiceTypes, ti, ti-1); setManageServiceTypes(next); try { localStorage.setItem('jw-cats-service', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
@@ -2458,7 +2458,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                         if (!confirm(msg)) return;
                         if (cnt > 0) await deleteServiceType(t);
                         setManageServiceTypes(p => p.filter(x => x !== t));
-                        if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' }));
+                        if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' }));
                       }} style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2468,8 +2468,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 {addingMType && (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newMType} onChange={e => setNewMType(e.target.value)} placeholder="새 종류" style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.857rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
-                      onKeyDown={e => { if (e.key === 'Enter' && newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setAddForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} />
-                    <button onClick={() => { if (newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setAddForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                      onKeyDown={e => { if (e.key === 'Enter' && newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setGatherForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} />
+                    <button onClick={() => { if (newMType.trim()) { setManageServiceTypes(p => [...p, newMType.trim()]); setGatherForm(p => ({ ...p, service_type: newMType.trim() })); setNewMType(''); setAddingMType(false); }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingMType(false); setNewMType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -2478,7 +2478,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 방문 - 연령대 */}
-          {addForm.source === '방문' && (
+          {gatherForm.source === '방문' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>연령대</div>
               <div style={{
@@ -2486,11 +2486,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 background: 'var(--bg-subtle, #EFEFF4)', borderRadius: 10, padding: 2,
               }}>
                 {['청소년', '청년', '중년', '장년'].map(s => (
-                  <button key={s} onClick={() => setAddForm(p => ({ ...p, sub_source: s }))} style={{
-                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: addForm.sub_source === s ? 700 : 500,
+                  <button key={s} onClick={() => setGatherForm(p => ({ ...p, sub_source: s }))} style={{
+                    flex: 1, padding: '5px 0', borderRadius: 8, fontSize: '0.786rem', fontWeight: gatherForm.sub_source === s ? 700 : 500,
                     border: 'none', textAlign: 'center',
-                    background: addForm.sub_source === s ? '#D85A3015' : 'transparent',
-                    color: addForm.sub_source === s ? 'var(--accent-orange)' : 'var(--c-muted)',
+                    background: gatherForm.sub_source === s ? '#D85A3015' : 'transparent',
+                    color: gatherForm.sub_source === s ? 'var(--accent-orange)' : 'var(--c-muted)',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s ease',
                   }}>{s}</button>
                 ))}
@@ -2499,7 +2499,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 방문 - 고려한 상황 */}
-          {addForm.source === '방문' && (
+          {gatherForm.source === '방문' && (
             <div style={{ marginBottom: 8 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>고려한 상황 (복수 선택)</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -2538,32 +2538,32 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 연사/인도자, 날짜, 유형 */}
-          {addForm.source !== '토의' && addForm.source !== '방문' && addForm.source !== '원문' && addForm.source !== '전처리' && addForm.sub_source !== '원문' && (
+          {gatherForm.source !== '토의' && gatherForm.source !== '방문' && gatherForm.source !== '원문' && gatherForm.source !== '전처리' && gatherForm.sub_source !== '원문' && (
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>{addForm.source === '봉사 모임' ? '인도자' : '연사'}</div>
-                <input value={addForm.speaker} onChange={e => setAddForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>{gatherForm.source === '봉사 모임' ? '인도자' : '연사'}</div>
+                <input value={gatherForm.speaker} onChange={e => setGatherForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ width: 80 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))}
-                  placeholder={addForm.source === '봉사 모임' ? '260408' : '2604'}
+                <input value={gatherForm.date} onChange={e => setGatherForm(p => ({ ...p, date: e.target.value }))}
+                  placeholder={gatherForm.source === '봉사 모임' ? '260408' : '2604'}
                   style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
               </div>
-              {addForm.source === '연설' && (
+              {gatherForm.source === '연설' && (
                 <div style={{ width: 100 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
-                  <select value={addForm.entry_type} onChange={e => setAddForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
+                  <select value={gatherForm.entry_type} onChange={e => setGatherForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
                     <option value="speech_point">연설 요점</option>
                     <option value="expression">표현/예시</option>
                     <option value="publication">출판물</option>
                   </select>
                 </div>
               )}
-              {!['연설', '토의', '봉사 모임', '메모', '원문'].includes(addForm.source) && (
+              {!['연설', '토의', '봉사 모임', '메모', '원문'].includes(gatherForm.source) && (
                 <div style={{ width: 100 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>유형</div>
-                  <select value={addForm.entry_type} onChange={e => setAddForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
+                  <select value={gatherForm.entry_type} onChange={e => setGatherForm(p => ({ ...p, entry_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
                     <option value="speech_point">연설 요점</option>
                     <option value="expression">표현/예시</option>
                   </select>
@@ -2573,18 +2573,18 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
 
           {/* 출판물 코드 */}
-          {(addForm.entry_type === 'publication' || (addForm.source === '토의' && (addForm.sub_source === '파수대' || addForm.sub_source === '성서 연구'))) && addForm.sub_source !== '원문' && (
+          {(gatherForm.entry_type === 'publication' || (gatherForm.source === '토의' && (gatherForm.sub_source === '파수대' || gatherForm.sub_source === '성서 연구'))) && gatherForm.sub_source !== '원문' && (
             <div style={{ marginBottom: 8 }}>
-              <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 {addForm.entry_type === 'publication' && <span style={{ color: 'var(--c-danger)' }}>*</span>}</div>
-              <input value={addForm.pub_code} onChange={e => setAddForm(p => ({ ...p, pub_code: e.target.value }))}
+              <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 {gatherForm.entry_type === 'publication' && <span style={{ color: 'var(--c-danger)' }}>*</span>}</div>
+              <input value={gatherForm.pub_code} onChange={e => setGatherForm(p => ({ ...p, pub_code: e.target.value }))}
                 placeholder="파26 2월호 2-7면" style={{ ...S.inputField, width: '100%' }} />
             </div>
           )}
 
           {/* 골자/주제/소주제/요점 */}
           {(() => {
-            const src = addForm.source;
-            const sub = addForm.sub_source;
+            const src = gatherForm.source;
+            const sub = gatherForm.sub_source;
             if (src === '봉사 모임' || src === '원문' || src === '전처리' || sub === '원문') return null;
 
             const showOutline = src === '연설' && sub === '공개 강연';
@@ -2592,20 +2592,20 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             const showPoint = showSubtopic;
             const isDiscussion = src === '토의';
             const showFreePoint = src === 'JW 방송' || (src === '연설' && sub === '기타 연설');
-            const isPubType = addForm.entry_type === 'publication';
+            const isPubType = gatherForm.entry_type === 'publication';
 
             return (<>
               {showOutline && !isPubType && (
                 <div style={{ marginBottom: 8, position: 'relative' }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>골자 (번호 또는 제목 검색)</div>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <input value={outlineQuery} onChange={e => { setOutlineQuery(e.target.value); setOutlineFocus(true); if (addForm.outline_num) { selectOutline(null); } }}
+                    <input value={outlineQuery} onChange={e => { setOutlineQuery(e.target.value); setOutlineFocus(true); if (gatherForm.outline_num) { selectOutline(null); } }}
                       onFocus={() => setOutlineFocus(true)} onBlur={() => setTimeout(() => setOutlineFocus(false), 200)}
                       placeholder="007, 기념식, 자비..." style={{ ...S.inputField, flex: 1 }} />
-                    {addForm.outline_num && <button onClick={() => { selectOutline(null); setOutlineQuery(''); }} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0 }}>초기화</button>}
+                    {gatherForm.outline_num && <button onClick={() => { selectOutline(null); setOutlineQuery(''); }} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0 }}>초기화</button>}
                   </div>
-                  {addForm.outline_num && <div style={{ marginTop: 4, fontSize: '0.786rem', color: 'var(--accent)', fontWeight: 600 }}>✅ {addForm.outline_type === '공개강연' || addForm.outline_type?.startsWith('S-34') ? 'S-34_' + addForm.outline_num.padStart(3, '0') : addForm.outline_type === '기념식' ? 'S-31_기념식' : addForm.outline_type?.startsWith('JWBC') ? addForm.outline_type + '_' + addForm.outline_num : addForm.outline_num} - {addForm.outline_title}</div>}
-                  {outlineFocus && outlineQuery && !addForm.outline_num && (() => {
+                  {gatherForm.outline_num && <div style={{ marginTop: 4, fontSize: '0.786rem', color: 'var(--accent)', fontWeight: 600 }}>✅ {gatherForm.outline_type === '공개강연' || gatherForm.outline_type?.startsWith('S-34') ? 'S-34_' + gatherForm.outline_num.padStart(3, '0') : gatherForm.outline_type === '기념식' ? 'S-31_기념식' : gatherForm.outline_type?.startsWith('JWBC') ? gatherForm.outline_type + '_' + gatherForm.outline_num : gatherForm.outline_num} - {gatherForm.outline_title}</div>}
+                  {outlineFocus && outlineQuery && !gatherForm.outline_num && (() => {
                     const q = outlineQuery.toLowerCase();
                     const filtered = outlines.filter(g => !g.type.startsWith('JWBC')).filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || g.prefix.toLowerCase().includes(q)).slice(0, 10);
                     if (filtered.length === 0) return <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 10, background: 'var(--bg-card)', border: '1px solid var(--bd)', borderRadius: 8, padding: 8, fontSize: '0.786rem', color: 'var(--c-muted)' }}>결과 없음</div>;
@@ -2616,16 +2616,16 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 </div>
               )}
 
-              {!addForm.outline_num && !(src === '토의' && sub === '영적 보물') && !showFreePoint && !(isPubType && (showOutline || showSubtopic)) && (
+              {!gatherForm.outline_num && !(src === '토의' && sub === '영적 보물') && !showFreePoint && !(isPubType && (showOutline || showSubtopic)) && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                    <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="주제를 입력하세요" style={{ ...S.inputField, width: '100%' }} />
+                    <input value={gatherForm.topic} onChange={e => setGatherForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="주제를 입력하세요" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                   {(src === '토의' || src === '방문') && (
                     <div style={{ width: 80 }}>
                       <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                      <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))}
+                      <input value={gatherForm.date} onChange={e => setGatherForm(p => ({ ...p, date: e.target.value }))}
                         placeholder="260408"
                         style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                     </div>
@@ -2637,7 +2637,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 {Object.keys(subtopics).length > 0 ? (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>소주제</div>
-                    <select value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value, point_id: '', point_summary: '' }))} style={{ ...S.inputField, width: '100%' }}>
+                    <select value={gatherForm.subtopic} onChange={e => setGatherForm(p => ({ ...p, subtopic: e.target.value, point_id: '', point_summary: '' }))} style={{ ...S.inputField, width: '100%' }}>
                       <option value="">선택</option>
                       {Object.keys(subtopics).map((st, si) => <option key={si} value={st}>{st}</option>)}
                     </select>
@@ -2645,7 +2645,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 ) : (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>소주제</div>
-                    <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="예수의 본을 따라..." style={{ ...S.inputField, width: '100%' }} />
+                    <input value={gatherForm.subtopic} onChange={e => setGatherForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="예수의 본을 따라..." style={{ ...S.inputField, width: '100%' }} />
                   </div>
                 )}
               </>)}
@@ -2653,35 +2653,35 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               {(showOutline || showSubtopic) && isPubType && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                  <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.topic} onChange={e => setGatherForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>소주제</div>
-                  <input value={addForm.subtopic} onChange={e => setAddForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.subtopic} onChange={e => setGatherForm(p => ({ ...p, subtopic: e.target.value }))} placeholder="소주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점</div>
-                  <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.point_summary} onChange={e => setGatherForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </>)}
 
               {showPoint && !isPubType && (<>
-                {addForm.subtopic && subtopics[addForm.subtopic]?.length > 0 ? (
+                {gatherForm.subtopic && subtopics[gatherForm.subtopic]?.length > 0 ? (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점 선택</div>
-                    <select value={addForm.point_id ? addForm.point_id + '|' + addForm.point_summary : ''} onChange={e => {
+                    <select value={gatherForm.point_id ? gatherForm.point_id + '|' + gatherForm.point_summary : ''} onChange={e => {
                       const v = e.target.value;
-                      if (v) { const [id, ...rest] = v.split('|'); setAddForm(p => ({ ...p, point_id: id, point_summary: rest.join('|') })); }
-                      else { setAddForm(p => ({ ...p, point_id: '', point_summary: '' })); }
+                      if (v) { const [id, ...rest] = v.split('|'); setGatherForm(p => ({ ...p, point_id: id, point_summary: rest.join('|') })); }
+                      else { setGatherForm(p => ({ ...p, point_id: '', point_summary: '' })); }
                     }} style={{ ...S.inputField, width: '100%' }}>
                       <option value="">직접 입력</option>
-                      {subtopics[addForm.subtopic].map((pt, pi) => <option key={pi} value={pt.id + '|' + pt.content}>{pt.id} - {pt.content}</option>)}
+                      {subtopics[gatherForm.subtopic].map((pt, pi) => <option key={pi} value={pt.id + '|' + pt.content}>{pt.id} - {pt.content}</option>)}
                     </select>
                   </div>
                 ) : (
                   <div style={{ marginBottom: 8 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점</div>
-                    <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="자비를 나타내려면 적극적 행동" style={{ ...S.inputField, width: '100%' }} />
+                    <input value={gatherForm.point_summary} onChange={e => setGatherForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="자비를 나타내려면 적극적 행동" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                 )}
               </>)}
@@ -2690,12 +2690,12 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>질문 (선택)</div>
-                    <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="성경에서 무엇을 배울 수 있습니까?" style={{ ...S.inputField, width: '100%' }} />
+                    <input value={gatherForm.point_summary} onChange={e => setGatherForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="성경에서 무엇을 배울 수 있습니까?" style={{ ...S.inputField, width: '100%' }} />
                   </div>
                   {sub === '영적 보물' && (
                     <div style={{ width: 80 }}>
                       <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
-                      <input value={addForm.date} onChange={e => setAddForm(p => ({ ...p, date: e.target.value }))}
+                      <input value={gatherForm.date} onChange={e => setGatherForm(p => ({ ...p, date: e.target.value }))}
                         placeholder="260408" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
                     </div>
                   )}
@@ -2705,35 +2705,35 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               {showFreePoint && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
-                  <input value={addForm.topic} onChange={e => setAddForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.topic} onChange={e => setGatherForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>요점</div>
-                  <input value={addForm.point_summary} onChange={e => setAddForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...S.inputField, width: '100%' }} />
+                  <input value={gatherForm.point_summary} onChange={e => setGatherForm(p => ({ ...p, point_summary: e.target.value }))} placeholder="핵심 요점을 입력하세요" style={{ ...S.inputField, width: '100%' }} />
                 </div>
               </>)}
             </>);
           })()}
 
           {/* 키워드, 성구 */}
-          {addForm.source !== '메모' && addForm.source !== '원문' && addForm.source !== '전처리' && addForm.sub_source !== '원문' && (
+          {gatherForm.source !== '메모' && gatherForm.source !== '원문' && gatherForm.source !== '전처리' && gatherForm.sub_source !== '원문' && (
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>키워드 (선택)</div>
-              <input value={addForm.keywords} onChange={e => setAddForm(p => ({ ...p, keywords: e.target.value }))} placeholder="자비, 용서" style={{ ...S.inputField, width: '100%' }} />
+              <input value={gatherForm.keywords} onChange={e => setGatherForm(p => ({ ...p, keywords: e.target.value }))} placeholder="자비, 용서" style={{ ...S.inputField, width: '100%' }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>성구 (선택)</div>
-              <input value={addForm.scriptures} onChange={e => setAddForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="눅 10:29-37" style={{ ...S.inputField, width: '100%' }} />
+              <input value={gatherForm.scriptures} onChange={e => setGatherForm(p => ({ ...p, scriptures: e.target.value }))} placeholder="눅 10:29-37" style={{ ...S.inputField, width: '100%' }} />
             </div>
           </div>
           )}
 
-          {addTab === 'memo' && (<>
+          {subTab === 'memo' && (<>
           {/* 내용 */}
           <div style={{ marginBottom: 8 }}>
             <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>내용 <span style={{ color: 'var(--c-danger)' }}>*</span></div>
-            <KoreanTextarea value={addForm.content} onChange={v => setAddForm(p => ({ ...p, content: v }))}
+            <KoreanTextarea value={gatherForm.content} onChange={v => setGatherForm(p => ({ ...p, content: v }))}
               placeholder="내용을 입력하세요" rows={8}
               style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
           </div>
@@ -2747,11 +2747,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
           {/* 저장/리셋 */}
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleSave} disabled={saving || !addForm.content.trim() || (addForm.entry_type === 'publication' && !addForm.pub_code.trim() && addForm.sub_source !== '원문')} style={{
+            <button onClick={handleSave} disabled={saving || !gatherForm.content.trim() || (gatherForm.entry_type === 'publication' && !gatherForm.pub_code.trim() && gatherForm.sub_source !== '원문')} style={{
               flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
               fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
             }}>{saving ? '저장 중...' : movingMemo ? '이동 저장' : 'DB에 저장'}</button>
-            <button onClick={() => { setAddForm(p => ({...gatherFormDefault, source: p.source, sub_source: p.sub_source})); setOutlineQuery(''); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
+            <button onClick={() => { setGatherForm(p => ({...gatherFormDefault, source: p.source, sub_source: p.sub_source})); setOutlineQuery(''); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
               padding: '10px 16px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.929rem', cursor: 'pointer',
             }}>초기화</button>
           </div>
@@ -2763,7 +2763,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       )}
 
       {/* ═══ 연설 입력 ═══ */}
-      {addTab === 'structure' && inputMode === 'speech_input' && (
+      {subTab === 'structure' && structureMode === 'speech_input' && (
         <ManageSpeechInput
           siTransferTick={siTransferTick}
           outlines={outlines}
@@ -2771,7 +2771,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         />
       )}
 
-      {addTab === 'drafts' && (
+      {subTab === 'drafts' && (
         <ManageDrafts
           dbDrafts={dbDrafts} setDbDrafts={setDbDrafts}
           memoEntries={memoEntries} setMemoEntries={setMemoEntries}
