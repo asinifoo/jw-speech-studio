@@ -53,7 +53,7 @@ const getOutlineTypeInfo = (code) => {
 export default function ManageGather({ fontSize, pageType, mode, pendingPub, clearPendingPub, onSaveReturn }) {
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
-  const [addForm, setAddForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-addform')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
+  const [addForm, setAddForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
   const [discForm, setDiscForm] = useState(discFormDefault);
   const [svcForm, setSvcForm] = useState(svcFormDefault);
   const [visitForm, setVisitForm] = useState(visitFormDefault);
@@ -97,7 +97,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [catEditing, setCatEditing] = useState(null); // 'service_types' | 'visit_targets' | 'visit_situations'
   const [catNewVal, setCatNewVal] = useState('');
   useEffect(() => { getCategories().then(r => setCats(r)).catch(() => {}); }, []);
-  useEffect(() => { try { localStorage.setItem('jw-addform', JSON.stringify(addForm)); } catch(e) {} }, [addForm]);
+  useEffect(() => { try { localStorage.setItem('jw-gather-form', JSON.stringify(addForm)); } catch(e) {} }, [addForm]);
   const [outlines, setOutlines] = useState([]);
   const [subtopics, setSubtopics] = useState({});
   const [saving, setSaving] = useState(false);
@@ -108,48 +108,48 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [batchInfo, setBatchInfo] = useState('');
   const [batchLog, setBatchLog] = useState([]);
   // ── 전처리 state ──
-  const [prepMode, setPrepMode] = useState(() => { try { return localStorage.getItem('jw-prep-mode') || 'file'; } catch { return 'file'; } });
-  useEffect(() => { try { localStorage.setItem('jw-prep-mode', prepMode); } catch {} }, [prepMode]);
+  const [prepMode, setPrepMode] = useState(() => { try { return localStorage.getItem('jw-gather-mode') || 'file'; } catch { return 'file'; } });
+  useEffect(() => { try { localStorage.setItem('jw-gather-mode', prepMode); } catch {} }, [prepMode]);
   // 파일 업로드 모드
   const [mdParsed, setMdParsed] = useState(null);
   const [mdParsing, setMdParsing] = useState(false);
   const [mdSaving, setMdSaving] = useState({});
   const [mdResult, setMdResult] = useState('');
   // 텍스트 입력 모드
-  const [txtMeta, setTxtMeta] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-txt-meta')) || { outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '' }; } catch { return { outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '' }; } });
-  const [txtContent, setTxtContent] = useState(() => { try { return localStorage.getItem('jw-txt-content') || ''; } catch { return ''; } });
-  const [txtParsed, setTxtParsed] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-txt-parsed')) || []; } catch { return []; } });
+  const [txtMeta, setTxtMeta] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-text-meta')) || { outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '' }; } catch { return { outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '' }; } });
+  const [txtContent, setTxtContent] = useState(() => { try { return localStorage.getItem('jw-text-content') || ''; } catch { return ''; } });
+  const [txtParsed, setTxtParsed] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-text-parsed')) || []; } catch { return []; } });
   const [txtSaving, setTxtSaving] = useState(false);
   const [txtResult, setTxtResult] = useState('');
   const [txtDocxLoading, setTxtDocxLoading] = useState(false);
-  useEffect(() => { try { localStorage.setItem('jw-txt-meta', JSON.stringify(txtMeta)); } catch {} }, [txtMeta]);
-  useEffect(() => { try { localStorage.setItem('jw-txt-content', txtContent); } catch {} }, [txtContent]);
-  useEffect(() => { try { localStorage.setItem('jw-txt-parsed', JSON.stringify(txtParsed.map(p => ({ ...p, _editing: undefined })))); } catch {} }, [txtParsed]);
+  useEffect(() => { try { localStorage.setItem('jw-text-meta', JSON.stringify(txtMeta)); } catch {} }, [txtMeta]);
+  useEffect(() => { try { localStorage.setItem('jw-text-content', txtContent); } catch {} }, [txtContent]);
+  useEffect(() => { try { localStorage.setItem('jw-text-parsed', JSON.stringify(txtParsed.map(p => ({ ...p, _editing: undefined })))); } catch {} }, [txtParsed]);
   const [fileStatus, setFileStatus] = useState({}); // { "outline_0": "saving"|"done"|"dup"|"error"|"skipped", "outline_0_msg": "..." }
   const [saveMsg, setSaveMsg] = useState('');
-  const [manageServiceTypes, setManageServiceTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-stypes')) || ['일반', '재방문', '기념식', '지역대회', '특별활동']; } catch(e) { return ['일반', '재방문', '기념식', '지역대회', '특별활동']; } });
-  const [discussionTypes, setDiscussionTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-dtypes')) || ['집회 교재']; } catch(e) { return ['집회 교재']; } });
+  const [manageServiceTypes, setManageServiceTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-service')) || ['일반', '재방문', '기념식', '지역대회', '특별활동']; } catch(e) { return ['일반', '재방문', '기념식', '지역대회', '특별활동']; } });
+  const [discussionTypes, setDiscussionTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-discussion')) || ['집회 교재']; } catch(e) { return ['집회 교재']; } });
   const _listMounted = useRef(false);
-  useEffect(() => { if (!_listMounted.current) { _listMounted.current = true; return; } try { localStorage.setItem('jw-stypes', JSON.stringify(manageServiceTypes)); } catch(e) {} }, [manageServiceTypes]);
-  useEffect(() => { if (!_listMounted.current) return; try { localStorage.setItem('jw-dtypes', JSON.stringify(discussionTypes)); } catch(e) {} }, [discussionTypes]);
+  useEffect(() => { if (!_listMounted.current) { _listMounted.current = true; return; } try { localStorage.setItem('jw-cats-service', JSON.stringify(manageServiceTypes)); } catch(e) {} }, [manageServiceTypes]);
+  useEffect(() => { if (!_listMounted.current) return; try { localStorage.setItem('jw-cats-discussion', JSON.stringify(discussionTypes)); } catch(e) {} }, [discussionTypes]);
   const [addingDType, setAddingDType] = useState(false);
   const [newDType, setNewDType] = useState('');
   const [editingDTypes, setEditingDTypes] = useState(false);
   const defaultDTypes = ['집회 교재'];
-  const [speechSubTypes, setSpeechSubTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-sstypes')) || ['성경에 담긴 보물', '회중의 필요']; } catch(e) { return ['성경에 담긴 보물', '회중의 필요']; } });
-  useEffect(() => { if (!_listMounted.current) return; try { localStorage.setItem('jw-sstypes', JSON.stringify(speechSubTypes)); } catch(e) {} }, [speechSubTypes]);
+  const [speechSubTypes, setSpeechSubTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-speech-sub')) || ['성경에 담긴 보물', '회중의 필요']; } catch(e) { return ['성경에 담긴 보물', '회중의 필요']; } });
+  useEffect(() => { if (!_listMounted.current) return; try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(speechSubTypes)); } catch(e) {} }, [speechSubTypes]);
   const [addingSType, setAddingSType] = useState(false);
   const [newSType, setNewSType] = useState('');
   const [editingSTypes, setEditingSTypes] = useState(false);
   const defaultSTypes = ['성경에 담긴 보물', '회중의 필요'];
   const swapArr = (arr, i, j) => { const n = [...arr]; [n[i], n[j]] = [n[j], n[i]]; return n; };
-  const [visitSituations, setVisitSituations] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-vsits')) || ['일반']; } catch(e) { return ['일반']; } });
-  useEffect(() => { if (!_listMounted.current) return; try { localStorage.setItem('jw-vsits', JSON.stringify(visitSituations)); } catch(e) {} }, [visitSituations]);
+  const [visitSituations, setVisitSituations] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-visit-sit')) || ['일반']; } catch(e) { return ['일반']; } });
+  useEffect(() => { if (!_listMounted.current) return; try { localStorage.setItem('jw-cats-visit-sit', JSON.stringify(visitSituations)); } catch(e) {} }, [visitSituations]);
   const [addingVSit, setAddingVSit] = useState(false);
   const [newVSit, setNewVSit] = useState('');
   const [editingVSits, setEditingVSits] = useState(false);
   const defaultVSits = ['일반'];
-  const [selSituations, setSelSituations] = useState(() => { try { const f = JSON.parse(localStorage.getItem('jw-addform')); return new Set((f?.service_type || '').split(',').filter(Boolean)); } catch(e) { return new Set(); } });
+  const [selSituations, setSelSituations] = useState(() => { try { const f = JSON.parse(localStorage.getItem('jw-gather-form')); return new Set((f?.service_type || '').split(',').filter(Boolean)); } catch(e) { return new Set(); } });
   useEffect(() => { if (addForm.source === '방문') setAddForm(p => ({ ...p, service_type: [...selSituations].join(',') })); }, [selSituations]);
   const [addingMType, setAddingMType] = useState(false);
   const [newMType, setNewMType] = useState('');
@@ -164,7 +164,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
     // Phase 5-3B-1: addTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
     if (pageType === 'input') return 'structure';
     try {
-      const s = localStorage.getItem('jw-add-tab');
+      const s = localStorage.getItem('jw-prep-subtab');
       // 기존 값 마이그레이션
       if (s === 'input') return 'structure';
       if (s === 'preprocess') return 'gather';
@@ -173,7 +173,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   });
   const [inputMode, setInputMode] = useState(() => {
     try {
-      const s = localStorage.getItem('jw-input-mode');
+      const s = localStorage.getItem('jw-structure-mode');
       // Phase 5-3B-1: [구조화] 바에서 quick_input 제거 → pageType='add'는 speech_input 기본
       if (!s || s === 'quick_input') return 'speech_input';
       return s;
@@ -385,7 +385,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
     try {
       const dr = await draftLoad({ outline_num: '', speaker: speaker || '', date: date || '', outline_type: 'ETC' });
       if (!dr.exists) { alert('임시저장을 찾을 수 없습니다.'); return; }
-      localStorage.setItem('jw-si-transfer', JSON.stringify({
+      localStorage.setItem('jw-speech-transfer', JSON.stringify({
         isSttDraft: true,
         outline_type: 'ETC',
         outline_num: '',
@@ -398,8 +398,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         source_stt_job_id: dr.source_stt_job_id || jobId || '',
         stt_original_text: dr.stt_original_text || dr.free_text || '',
       }));
-      localStorage.setItem('jw-add-tab', 'structure');
-      localStorage.setItem('jw-input-mode', 'speech_input');
+      localStorage.setItem('jw-prep-subtab', 'structure');
+      localStorage.setItem('jw-structure-mode', 'speech_input');
       setAddTab('structure');
       setInputMode('speech_input');
       window.dispatchEvent(new Event('si-transfer'));
@@ -421,7 +421,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         if (r && r.exists) full = r;
       } catch {}
       try {
-        localStorage.setItem('jw-si-transfer', JSON.stringify({
+        localStorage.setItem('jw-speech-transfer', JSON.stringify({
           isSttDraft: true, isDraft: true,
           speaker: full.speaker || dr.speaker || '',
           date: full.date || dr.date || '',
@@ -497,7 +497,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       }
       // 'speech' 또는 'other' → localStorage transfer (Phase 4b-2)
       try {
-        localStorage.setItem('jw-si-transfer', JSON.stringify({
+        localStorage.setItem('jw-speech-transfer', JSON.stringify({
           isFreeDraft: true, isDraft: true, no_outline: true,
           speaker: full.speaker || '',
           date: full.date || '',
@@ -523,7 +523,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         if (r.exists) full = r;
       } catch {}
       try {
-        localStorage.setItem('jw-si-transfer', JSON.stringify({
+        localStorage.setItem('jw-speech-transfer', JSON.stringify({
           speaker: dr.speaker, date: dr.date,
           outline_num: '', outline_title: '', outline_type: 'ETC',
           isFreeDraft: true, no_outline: true,
@@ -535,8 +535,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           stt_original_text: full.stt_original_text || '',
           source_stt_job_id: full.source_stt_job_id || '',
         }));
-        localStorage.setItem('jw-add-tab', 'structure');
-        localStorage.setItem('jw-input-mode', 'speech_input');
+        localStorage.setItem('jw-prep-subtab', 'structure');
+        localStorage.setItem('jw-structure-mode', 'speech_input');
         window.dispatchEvent(new Event('si-transfer'));
       } catch {}
       setAddTab('structure'); setInputMode('speech_input');
@@ -545,13 +545,13 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
     // 4) 골자 draft → [구조화]>[연설] 상세 모드 기본
     try {
-      localStorage.setItem('jw-si-transfer', JSON.stringify({
+      localStorage.setItem('jw-speech-transfer', JSON.stringify({
         speaker: dr.speaker, date: dr.date,
         outline_num: dr.outline_num, outline_title: dr.outline_title,
         outline_type: dr.outline_type, content: '', isDraft: true, forceMode: 'detail',
       }));
-      localStorage.setItem('jw-add-tab', 'structure');
-      localStorage.setItem('jw-input-mode', 'speech_input');
+      localStorage.setItem('jw-prep-subtab', 'structure');
+      localStorage.setItem('jw-structure-mode', 'speech_input');
       window.dispatchEvent(new Event('si-transfer'));
     } catch {}
     setAddTab('structure'); setInputMode('speech_input');
@@ -562,7 +562,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
     setMovingMemo({ id: m.id, collection: m.collection });
     if (type === 'speech_input') {
       try {
-        localStorage.setItem('jw-si-transfer', JSON.stringify({
+        localStorage.setItem('jw-speech-transfer', JSON.stringify({
           isFreeDraft: true, no_outline: true,
           speaker: '', date: '',
           free_topic: m.topic || '',
@@ -2283,11 +2283,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                     fontSize: '0.786rem', cursor: editingSTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
-                    {editingSTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti-1); setSpeechSubTypes(next); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
+                    {editingSTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti-1); setSpeechSubTypes(next); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
                     {t}
-                    {editingSTypes && ti < speechSubTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti+1); setSpeechSubTypes(next); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
+                    {editingSTypes && ti < speechSubTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti+1); setSpeechSubTypes(next); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingSTypes && !defaultSTypes.includes(t) && (
-                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}
+                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}
                         style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2298,8 +2298,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newSType} onChange={e => setNewSType(e.target.value)} placeholder="새 종류"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
-                      onKeyDown={e => { if (e.key === 'Enter' && newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}} />
-                    <button onClick={() => { if (newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-sstypes', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                      onKeyDown={e => { if (e.key === 'Enter' && newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}} />
+                    <button onClick={() => { if (newSType.trim()) { const next = [...speechSubTypes, newSType.trim()]; setSpeechSubTypes(next); setAddForm(p => ({ ...p, service_type: newSType.trim() })); setNewSType(''); setAddingSType(false); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingSType(false); setNewSType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -2386,11 +2386,11 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                     fontSize: '0.786rem', cursor: editingDTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
-                    {editingDTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti-1); setDiscussionTypes(next); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
+                    {editingDTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti-1); setDiscussionTypes(next); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
                     {t}
-                    {editingDTypes && ti < discussionTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti+1); setDiscussionTypes(next); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
+                    {editingDTypes && ti < discussionTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti+1); setDiscussionTypes(next); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingDTypes && !defaultDTypes.includes(t) && (
-                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}
+                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (addForm.service_type === t) setAddForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}
                         style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2401,8 +2401,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <input value={newDType} onChange={e => setNewDType(e.target.value)} placeholder="새 종류"
                       style={{ padding: '3px 8px', border: 'none', borderRadius: 8, fontSize: '0.786rem', width: 70, outline: 'none', background: 'var(--bg-subtle)' }}
-                      onKeyDown={e => { if (e.key === 'Enter' && newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}} />
-                    <button onClick={() => { if (newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-dtypes', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
+                      onKeyDown={e => { if (e.key === 'Enter' && newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}} />
+                    <button onClick={() => { if (newDType.trim()) { const next = [...discussionTypes, newDType.trim()]; setDiscussionTypes(next); setAddForm(p => ({ ...p, service_type: newDType.trim() })); setNewDType(''); setAddingDType(false); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}} style={{ padding: '3px 6px', borderRadius: 4, border: '1px solid var(--accent-blue)', background: 'var(--tint-blue-light)', color: 'var(--accent-blue)', fontSize: '0.786rem', cursor: 'pointer' }}>추가</button>
                     <button onClick={() => { setAddingDType(false); setNewDType(''); }} style={{ padding: '3px 5px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>×</button>
                   </div>
                 )}
@@ -2443,9 +2443,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                     fontSize: '0.786rem', cursor: editingMTypes ? 'default' : 'pointer', fontWeight: addForm.service_type === t ? 700 : 400, position: 'relative',
                     display: 'flex', alignItems: 'center', gap: 3,
                   }}>
-                    {editingMTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(manageServiceTypes, ti, ti-1); setManageServiceTypes(next); try { localStorage.setItem('jw-stypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
+                    {editingMTypes && ti > 0 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(manageServiceTypes, ti, ti-1); setManageServiceTypes(next); try { localStorage.setItem('jw-cats-service', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>◀</span>}
                     {t}
-                    {editingMTypes && ti < manageServiceTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(manageServiceTypes, ti, ti+1); setManageServiceTypes(next); try { localStorage.setItem('jw-stypes', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
+                    {editingMTypes && ti < manageServiceTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(manageServiceTypes, ti, ti+1); setManageServiceTypes(next); try { localStorage.setItem('jw-cats-service', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingMTypes && !defaultMTypes.includes(t) && (
                       <span onClick={async (e) => {
                         e.stopPropagation();

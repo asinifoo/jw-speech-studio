@@ -538,12 +538,12 @@ export default function ManageDbTab({ mode }) {
                     <div style={{ flex: 1 }} />
                     {viewSource === '연설' && meta.source === 'note' && (
                       <button onClick={() => {
-                        try { localStorage.setItem('jw-si-transfer', JSON.stringify({
+                        try { localStorage.setItem('jw-speech-transfer', JSON.stringify({
                           speaker: meta.speaker || '', date: meta.date || '',
                           outline_num: meta.outline_num || '', outline_title: meta.outline_title || meta.topic || '',
                           outline_type: meta.outline_type || '', content: body,
                           memoId: r.id, memoCol: r.collection,
-                        })); localStorage.setItem('jw-add-tab', 'structure'); localStorage.setItem('jw-input-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
+                        })); localStorage.setItem('jw-prep-subtab', 'structure'); localStorage.setItem('jw-structure-mode', 'speech_input'); window.dispatchEvent(new Event('si-transfer')); } catch {}
                         if (onGoAdd) onGoAdd(); else { setAddTab('structure'); setInputMode('speech_input'); setMode('add'); }
                       }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>→상세</button>
                     )}

@@ -64,7 +64,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
     } catch(e) {}
   }, [selTypes, scriptures, duration, notes, searchQuery, searchResults, selectedSearch, selectedPast, pastMeetings, autoScriptures, phase]);
 
-  const [serviceTypes, setServiceTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-stypes')) || ['일반', '재방문', '기념식', '지역대회', '특별활동']; } catch(e) { return ['일반', '재방문', '기념식', '지역대회', '특별활동']; } });
+  const [serviceTypes, setServiceTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-service')) || ['일반', '재방문', '기념식', '지역대회', '특별활동']; } catch(e) { return ['일반', '재방문', '기념식', '지역대회', '특별활동']; } });
   useEffect(() => { getServiceTypes().then(r => { const remote = r.service_types || []; if (remote.length) { setServiceTypes(prev => { const merged = [...prev]; remote.forEach(t => { if (!merged.includes(t)) merged.push(t); }); return merged; }); } }).catch(() => {}); }, []);
 
   const toggleType = (t) => setSelTypes(prev => { const next = new Set(prev); if (next.has(t)) next.delete(t); else next.add(t); return next; });

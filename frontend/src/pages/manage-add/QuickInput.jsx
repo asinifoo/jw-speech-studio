@@ -4,8 +4,8 @@ import { draftSave } from '../../api';
 import { quickFormDefault } from '../../utils/formDefaults';
 
 export default function ManageQuickInput() {
-  const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-qi-form')) || quickFormDefault; } catch { return quickFormDefault; } });
-  useEffect(() => { try { localStorage.setItem('jw-qi-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
+  const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-quick-form')) || quickFormDefault; } catch { return quickFormDefault; } });
+  useEffect(() => { try { localStorage.setItem('jw-quick-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
   const [qiSaving, setQiSaving] = useState(false);
   const [qiSaveMsg, setQiSaveMsg] = useState('');
   // Hotfix 9: 편집 모드 — 설정되면 저장 시 같은 outline_num 재사용 → draft 덮어쓰기

@@ -14,7 +14,7 @@ import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, s
 export default function VisitPage({ fontSize, ai }) {
   const _vs = (() => { try { return JSON.parse(localStorage.getItem('jw-visit-state')); } catch(e) { return null; } })();
   const [ageGroup, setAgeGroup] = useState(_vs?.ageGroup || '');
-  const [situations, setSituations] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-vsits')) || ['일반']; } catch(e) { return ['일반']; } });
+  const [situations, setSituations] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-visit-sit')) || ['일반']; } catch(e) { return ['일반']; } });
   const [selSits, setSelSits] = useState(() => new Set(_vs?.selSits || []));
   const [scriptures, setScriptures] = useState(_vs?.scriptures || '');
   const [duration, setDuration] = useState(_vs?.duration || '');

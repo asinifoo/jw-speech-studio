@@ -5,7 +5,7 @@ import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftChe
 import { cleanMd } from '../../components/utils';
 
 // si* state 초기값 복원
-const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-si-state')) || {}; } catch { return {}; } })();
+const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; } catch { return {}; } })();
 const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
 
 export default function ManageSpeechInput({ siTransferTick, outlines, subtopics }) {
@@ -47,8 +47,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
   const [siSaveMsg, setSiSaveMsg] = useState('');
   const [siTransferMemo, setSiTransferMemo] = useState(null); // { memoId, memoCol }
 
-  // ── useEffect 1: jw-si-state localStorage ──
-  useEffect(() => { try { localStorage.setItem('jw-si-state', JSON.stringify({
+  // ── useEffect 1: jw-speech-state localStorage ──
+  useEffect(() => { try { localStorage.setItem('jw-speech-state', JSON.stringify({
     outline: siOutline, query: siQuery, speaker: siSpeaker, date: siDate,
     mode: siMode, notes: siNotes, details: siDetails,
     noOutline: siNoOutline, freeText: siFreeText, freeTopic: siFreeTopic, freeSubtopics: siFreeSubtopics, freeMode: siFreeMode, freeType: siFreeType,
@@ -70,9 +70,9 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
 
   // ── useEffect 3: transfer 처리 (addTab/inputMode 조건 제거, siTransferTick만 의존) ──
   useEffect(() => {
-    let raw; try { raw = localStorage.getItem('jw-si-transfer'); } catch { return; }
+    let raw; try { raw = localStorage.getItem('jw-speech-transfer'); } catch { return; }
     if (!raw) return;
-    try { localStorage.removeItem('jw-si-transfer'); } catch {}
+    try { localStorage.removeItem('jw-speech-transfer'); } catch {}
     let t; try { t = JSON.parse(raw); } catch { return; }
     if (!t) return;
     // 기존 state 전부 리셋
@@ -1025,7 +1025,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
                   setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사'); siDraftLoadedRef.current = false;
                   setSiSourceSttJobId(''); setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
                   setSiVerseOpen({}); setSiVerseData({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
-                  try { localStorage.removeItem('jw-si-state'); } catch {}
+                  try { localStorage.removeItem('jw-speech-state'); } catch {}
                 }} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
               </div>
               {siSaveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: siSaveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>{siSaveMsg}</div>}

@@ -13,7 +13,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   const defaultMode = _isAddPage ? 'add' : 'mydb';
   const [mode, setMode] = useState(() => {
     if (_isAddPage) return 'add';
-    try { const saved = localStorage.getItem('jw-manage-mode'); return (saved && saved !== 'add' && saved !== 'memo') ? saved : 'mydb'; } catch(e) { return 'mydb'; }
+    try { const saved = localStorage.getItem('jw-manage-tab'); return (saved && saved !== 'add' && saved !== 'memo') ? saved : 'mydb'; } catch(e) { return 'mydb'; }
   });
   // 전처리 탭: 최초 진입 후 마운트 유지 (편집 중 state 보존)
   const [preprocVisited, setPreprocVisited] = useState(() => mode === 'preprocess');
@@ -22,7 +22,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
   useEffect(() => { if (mode === 'ai' && !aiVisited) setAiVisited(true); }, [mode, aiVisited]);
   const [dbVisited, setDbVisited] = useState(() => mode === 'mydb');
   useEffect(() => { if (mode === 'mydb' && !dbVisited) setDbVisited(true); }, [mode, dbVisited]);
-  useEffect(() => { if (!_isAddPage) { try { localStorage.setItem('jw-manage-mode', mode); } catch(e) {} } }, [mode, pageType]);
+  useEffect(() => { if (!_isAddPage) { try { localStorage.setItem('jw-manage-tab', mode); } catch(e) {} } }, [mode, pageType]);
   return (
     <div>
       {!_isAddPage && (
