@@ -950,12 +950,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
             saveMsg={siSaveMsg}
             draftInfo={siDraftInfo}
             noteInfo={siNoteInfo}
-            subtopics={siSubtopics}
             saving={siSaving}
             completing={siCompleting}
-            onSaveMsgChange={setSiSaveMsg}
-            onDraftInfoChange={setSiDraftInfo}
-            onNoteInfoChange={setSiNoteInfo}
             onSaveDraft={handleSaveDraft}
             onComplete={handleComplete}
             onReset={handleReset}
