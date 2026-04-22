@@ -5,6 +5,7 @@ import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftChe
 import { cleanMd } from '../../components/utils';
 import OriginalBlock from './speech-input/OriginalBlock';
 import SaveActions from './speech-input/SaveActions';
+import OutlineSelectorBar from './speech-input/OutlineSelectorBar';
 
 // si* state 초기값 복원
 const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; } catch { return {}; } })();
@@ -17,7 +18,6 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   const [siSubtopics, setSiSubtopics] = useState({});
   const [siSubLoading, setSiSubLoading] = useState(false);
   const [siQuery, setSiQuery] = useState(_siInit.query || '');
-  const [siQueryFocus, setSiQueryFocus] = useState(false);
   const [siSpeaker, setSiSpeaker] = useState(_siInit.speaker || '');
   const [siDate, setSiDate] = useState(_siInit.date || _siDateDefault);
   const [siMode, setSiMode] = useState(_siInit.mode || 'quick');
@@ -444,7 +444,6 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     setSiOutline(g);
     setSiSourceSttJobId(''); // 골자 선택 시 STT 링크 해제 (다른 draft 오염 방지)
     setSiQuery(`${g.outline_type_name || g.outline_type || ''} ${g.outline_num} - ${g.title}`);
-    setSiQueryFocus(false);
     setSiNotes({}); setSiDetails({}); setSiExpanded({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
     // 소주제 로드 (version 포함 — 같은 번호 다른 버전 섞임 방지)
     const oid = `${g.outline_type || 'S-34'}_${g.outline_num}`;
@@ -483,79 +482,20 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           />
 
           {/* 1. 골자 선택 / 자유 입력 */}
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ ...S.pillContainer, marginBottom: 8 }}>
-              {[['outline', '골자 선택'], ['free', '자유 입력']].map(([k, l]) => (
-                <button key={k} onClick={() => handleToggleMode(k === 'free')} style={{ ...S.pillL4(k === 'free' ? siNoOutline : !siNoOutline), padding: '6px 0' }}>{l}</button>
-              ))}
-            </div>
-
-            {!siNoOutline && (
-              <div style={{ position: 'relative' }}>
-                <input value={siQuery} onChange={e => setSiQuery(e.target.value)} onFocus={() => setSiQueryFocus(true)} onBlur={() => setTimeout(() => setSiQueryFocus(false), 200)}
-                  placeholder="골자 번호 또는 제목 검색..." style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' }} />
-                {siQueryFocus && siQuery.trim() && (() => {
-                  const q = siQuery.trim().toLowerCase();
-                  const matched = outlines.filter(g => (g.outline_num || '').toLowerCase().includes(q) || (g.title || '').toLowerCase().includes(q) || (g.outline_type_name || '').toLowerCase().includes(q));
-                  if (!matched.length) return null;
-                  return (
-                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} className="chat-input">
-                      {matched.map(g => (
-                        <div key={g.filename} onMouseDown={() => handleSelectOutline(g)} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{g.outline_num}</span>
-                          {g.outline_year && <span style={{
-                            display: 'inline-flex', alignItems: 'center',
-                            padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                            background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)',
-                            flexShrink: 0, lineHeight: 1.3,
-                          }}>{g.outline_year}년</span>}
-                          {g.version && <span style={{
-                            display: 'inline-flex', alignItems: 'center',
-                            padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                            background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
-                            flexShrink: 0, lineHeight: 1.3,
-                          }}>v{g.version}</span>}
-                          <span style={{ flex: 1, fontSize: '0.786rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
-                          <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.outline_type_name || g.outline_type}</span>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
-
-            {siOutline && !siNoOutline && (
-              <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 8, background: 'var(--tint-green)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{siOutline.outline_type_name || siOutline.outline_type}</span>
-                <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{siOutline.outline_num}</span>
-                <span style={{ fontSize: '0.786rem', color: 'var(--c-text)' }}>{siOutline.title}</span>
-                <div style={{ flex: 1 }} />
-                <button onClick={handleClearOutline} style={{ padding: '2px 6px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>✕</button>
-              </div>
-            )}
-
-            {siNoOutline && (
-              <div style={{ marginTop: 6 }}>
-                {/* 연설 유형 */}
-                <div style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
-                  <select value={siFreeType} onChange={e => setSiFreeType(e.target.value)}
-                    style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', outline: 'none', boxSizing: 'border-box', appearance: 'none', cursor: 'pointer' }}>
-                    {['생활과 봉사', 'JW방송', '대회', '기타'].map(v => (
-                      <option key={v} value={v}>{v}</option>
-                    ))}
-                  </select>
-                </div>
-                {/* 주제 */}
-                <div style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>주제</div>
-                  <input value={siFreeTopic} onChange={e => setSiFreeTopic(e.target.value)} placeholder="연설 주제 입력..."
-                    style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' }} />
-                </div>
-              </div>
-            )}
-          </div>
+          <OutlineSelectorBar
+            outline={siOutline}
+            noOutline={siNoOutline}
+            outlines={outlines}
+            query={siQuery}
+            freeTopic={siFreeTopic}
+            freeType={siFreeType}
+            onQueryChange={setSiQuery}
+            onFreeTopicChange={setSiFreeTopic}
+            onFreeTypeChange={setSiFreeType}
+            onToggleMode={handleToggleMode}
+            onSelectOutline={handleSelectOutline}
+            onClearOutline={handleClearOutline}
+          />
 
           {/* 2. 연사/날짜 */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
