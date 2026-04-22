@@ -465,7 +465,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           date: full.date || '',
           content,
         }));
-        // Phase 4b-2: si* renderOriginalBlock은 SpeechInput 이사됨. StructOther에서 {null} 처리.
+
         setAddTab('structure'); setInputMode('discussion');
         return;
       }

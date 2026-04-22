@@ -19,7 +19,7 @@ export default function ManageStructureOther({
 }) {
   return (<>
           {inputMode === 'discussion' && (<>
-              {null /* TODO: Phase 4b-5 대청소 시 renderOriginalBlock 재연결 여부 재검토 */}
+
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>토의 유형</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {['파수대', '성경연구', '영적보물', '기타'].map(t => (
@@ -73,7 +73,7 @@ export default function ManageStructureOther({
 
           {/* 봉사 모임 입력 */}
           {inputMode === 'service' && (<>
-              {null /* TODO: Phase 4b-5 대청소 시 renderOriginalBlock 재연결 여부 재검토 */}
+
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 유형</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.service_types || []).map(t => (
@@ -145,7 +145,7 @@ export default function ManageStructureOther({
 
           {/* 방문 입력 */}
           {inputMode === 'visit_input' && (<>
-              {null /* TODO: Phase 4b-5 대청소 시 renderOriginalBlock 재연결 여부 재검토 */}
+
               <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>대상</div>
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 10 }}>
                 {(cats.visit_targets || []).map(t => (
