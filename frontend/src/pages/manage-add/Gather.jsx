@@ -54,9 +54,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
   const [addForm, setAddForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
-  const [discForm, setDiscForm] = useState(discFormDefault);
-  const [svcForm, setSvcForm] = useState(svcFormDefault);
-  const [visitForm, setVisitForm] = useState(visitFormDefault);
+  const [discForm, setDiscForm] = useState(() => { try { const s = localStorage.getItem('jw-disc-form'); return s ? JSON.parse(s) : discFormDefault; } catch { return discFormDefault; } });
+  const [svcForm, setSvcForm] = useState(() => { try { const s = localStorage.getItem('jw-svc-form'); return s ? JSON.parse(s) : svcFormDefault; } catch { return svcFormDefault; } });
+  const [visitForm, setVisitForm] = useState(() => { try { const s = localStorage.getItem('jw-visit-form'); return s ? JSON.parse(s) : visitFormDefault; } catch { return visitFormDefault; } });
   const [pubForm, setPubForm] = useState(pubFormDefault);
   const [pubRefOpen, setPubRefOpen] = useState(false);
   const [pubLookupHint, setPubLookupHint] = useState('');
@@ -98,6 +98,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [catNewVal, setCatNewVal] = useState('');
   useEffect(() => { getCategories().then(r => setCats(r)).catch(() => {}); }, []);
   useEffect(() => { try { localStorage.setItem('jw-gather-form', JSON.stringify(addForm)); } catch(e) {} }, [addForm]);
+  useEffect(() => { try { localStorage.setItem('jw-disc-form', JSON.stringify(discForm)); } catch {} }, [discForm]);
+  useEffect(() => { try { localStorage.setItem('jw-svc-form', JSON.stringify(svcForm)); } catch {} }, [svcForm]);
+  useEffect(() => { try { localStorage.setItem('jw-visit-form', JSON.stringify(visitForm)); } catch {} }, [visitForm]);
   const [outlines, setOutlines] = useState([]);
   const [subtopics, setSubtopics] = useState({});
   const [saving, setSaving] = useState(false);
@@ -179,8 +182,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       return s;
     } catch { return 'speech_input'; }
   });
-  // Phase 5-3A: [입력] 탑레벨 ManagePage 인스턴스는 고정값이므로 localStorage 오염 방지
-  // Phase 5-1: 빠른 입력 state
+  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-prep-subtab', addTab); } catch {} }, [addTab, pageType]);
+  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-structure-mode', inputMode); } catch {} }, [inputMode, pageType]);
   // 빠른메모 → 연설 입력 전달 처리
   // transfer 데이터 처리 — addTab 변경 시 + 외부 트리거(si-transfer 이벤트) 시
   const [siTransferTick, setSiTransferTick] = useState(0);
