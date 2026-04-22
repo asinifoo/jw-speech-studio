@@ -1,6 +1,7 @@
 import KoreanTextarea from '../../../components/KoreanTextarea';
 import { cleanMd } from '../../../components/utils';
 import { parseScriptures } from './helpers';
+import PublicationBadge from './PublicationBadge';
 
 export default function OutlineQuickEditor({
   subtopics,
@@ -55,9 +56,7 @@ export default function OutlineQuickEditor({
                       transition: 'all 0.15s',
                     }}>낭독</span>
                   </>)}
-                  {hasPub && (
-                    <span style={{ display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', background: '#9C27B00A', color: '#9C27B0', fontWeight: 600, whiteSpace: 'nowrap' }}>📚 {scr}</span>
-                  )}
+                  {hasPub && <PublicationBadge text={scr} />}
                   {verseOpen[qPtKey] && hasScr && (
                     <div style={{ margin: '4px 0 2px 16px', padding: '4px 8px', borderRadius: 6, background: 'var(--bg-subtle, #EFEFF4)', border: '1px solid var(--bd-light)', fontSize: '0.786rem', lineHeight: 1.6, color: 'var(--c-text)' }}>
                       {verseLoading[qPtKey] && <div style={{ height: 14, borderRadius: 4, background: 'linear-gradient(90deg, var(--bd-light) 25%, var(--bd-medium) 50%, var(--bd-light) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />}

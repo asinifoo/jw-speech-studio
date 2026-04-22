@@ -1,6 +1,7 @@
 import KoreanTextarea from '../../../components/KoreanTextarea';
 import { cleanMd } from '../../../components/utils';
 import { parseScriptures } from './helpers';
+import PublicationBadge from './PublicationBadge';
 
 export default function OutlineDetailEditor({
   subtopics,
@@ -53,9 +54,7 @@ export default function OutlineDetailEditor({
                             transition: 'all 0.15s',
                           }}>낭독</span>
                         </>)}
-                        {hasPub && (
-                          <span style={{ display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', background: '#9C27B00A', color: '#9C27B0', fontWeight: 600, whiteSpace: 'nowrap' }}>📚 {scr}</span>
-                        )}
+                        {hasPub && <PublicationBadge text={scr} />}
                       </>); })()}
                     </div>
                     {verseOpen[ptKey] && cleanMd(pt.scriptures || '') && !cleanMd(pt.scriptures || '').includes('「') && (
