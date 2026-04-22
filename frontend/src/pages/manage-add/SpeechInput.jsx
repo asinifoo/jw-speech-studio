@@ -4,6 +4,7 @@ import { S } from '../../styles';
 import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../../api';
 import { cleanMd } from '../../components/utils';
 import OriginalBlock from './speech-input/OriginalBlock';
+import SaveActions from './speech-input/SaveActions';
 
 // si* state 초기값 복원
 const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; } catch { return {}; } })();
@@ -942,56 +943,26 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           )}
 
           {/* 7. 저장/완료 버튼 (2층 구조) */}
-          {(siOutline || siNoOutline) && (
-            <div style={{ marginTop: 10 }}>
-              {/* draft 불러오기 안내 */}
-              {siDraftInfo && (
-                <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--tint-blue-soft)', border: '1px solid var(--tint-blue-bd)', marginBottom: 8 }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--accent-blue)', fontWeight: 600, marginBottom: 6 }}>기존 임시저장 데이터 있음 ({siDraftInfo.filled}/{siDraftInfo.total} {siDraftInfo.mode === 'quick' ? '소주제 메모' : '요점'} 입력)</div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={handleLoadDraft} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
-                    <button onClick={handleDiscardDraft} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>새로 만들기</button>
-                  </div>
-                </div>
-              )}
-              {/* 간단 메모 불러오기 안내 (상세 입력 모드에서) */}
-              {siNoteInfo && siMode === 'detail' && (
-                <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: '0.786rem', color: 'var(--accent-orange)', fontWeight: 600 }}>간단 입력 데이터 있음</span>
-                  <div style={{ flex: 1 }} />
-                  <button onClick={handleLoadNote} style={{ padding: '3px 10px', borderRadius: 6, border: 'none', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
-                </div>
-              )}
-
-              {/* [저장] = draft만 저장 */}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={handleSaveDraft} disabled={siSaving || siCompleting} style={{
-                  flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid var(--bd)',
-                  background: siSaving ? 'var(--bd-medium)' : 'var(--bg-card)', color: 'var(--c-text-dark)',
-                  fontSize: '0.929rem', fontWeight: 600, cursor: siSaving ? 'default' : 'pointer',
-                }}>
-                  {siSaving ? '임시저장 중...' : '임시저장'}
-                </button>
-
-                {/* [완료] = DB 저장 + draft 삭제 (상세 입력 or 자유 입력) */}
-                {(siMode === 'detail' || siNoOutline) && <button onClick={handleComplete} disabled={siSaving || siCompleting} style={{
-                  flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
-                  background: siCompleting ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
-                  fontSize: '0.929rem', fontWeight: 700, cursor: siCompleting ? 'default' : 'pointer',
-                  position: 'relative', overflow: 'hidden',
-                }}>
-                  {siCompleting && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', borderRadius: 8, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
-                  <span style={{ position: 'relative', zIndex: 1 }}>{siCompleting ? '저장 중...' : '저장'}</span>
-                </button>}
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                <div style={{ flex: 1 }} />
-                <button onClick={handleReset} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
-              </div>
-              {siSaveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: siSaveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>{siSaveMsg}</div>}
-            </div>
-          )}
+          <SaveActions
+            outline={siOutline}
+            noOutline={siNoOutline}
+            mode={siMode}
+            saveMsg={siSaveMsg}
+            draftInfo={siDraftInfo}
+            noteInfo={siNoteInfo}
+            subtopics={siSubtopics}
+            saving={siSaving}
+            completing={siCompleting}
+            onSaveMsgChange={setSiSaveMsg}
+            onDraftInfoChange={setSiDraftInfo}
+            onNoteInfoChange={setSiNoteInfo}
+            onSaveDraft={handleSaveDraft}
+            onComplete={handleComplete}
+            onReset={handleReset}
+            onLoadDraft={handleLoadDraft}
+            onDiscardDraft={handleDiscardDraft}
+            onLoadNote={handleLoadNote}
+          />
 
         </div>
   );
