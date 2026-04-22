@@ -458,6 +458,18 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({});
   };
 
+  const handleVerseToggle = (ptKey, scriptures) => {
+    const open = !siVerseOpen[ptKey];
+    setSiVerseOpen(p => ({ ...p, [ptKey]: open }));
+    if (open && !siVerseData[ptKey]) {
+      setSiVerseLoading(p => ({ ...p, [ptKey]: true }));
+      bibleLookup(scriptures)
+        .then(r => setSiVerseData(p => ({ ...p, [ptKey]: r.verses || [] })))
+        .catch(() => setSiVerseData(p => ({ ...p, [ptKey]: [] })))
+        .finally(() => setSiVerseLoading(p => ({ ...p, [ptKey]: false })));
+    }
+  };
+
   // ── JSX ──
   return (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, overflow: 'hidden' }}>
@@ -736,14 +748,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                         <div key={pi} style={{ fontSize: '0.786rem', color: 'var(--c-faint)', padding: '3px 0', borderBottom: pi < points.length - 1 ? '1px solid var(--bd-light)' : 'none' }}>
                           <span style={{ fontWeight: 600, color: 'var(--c-text)' }}>{pt.point_num}</span> {cleanMd(pt.content)}
                           {hasScr && (<>
-                            <span onClick={(e) => { e.stopPropagation();
-                              const open = !siVerseOpen[qPtKey];
-                              setSiVerseOpen(p => ({ ...p, [qPtKey]: open }));
-                              if (open && !siVerseData[qPtKey]) {
-                                setSiVerseLoading(p => ({ ...p, [qPtKey]: true }));
-                                bibleLookup(pt.scriptures).then(r => setSiVerseData(p => ({ ...p, [qPtKey]: r.verses || [] }))).catch(() => setSiVerseData(p => ({ ...p, [qPtKey]: [] }))).finally(() => setSiVerseLoading(p => ({ ...p, [qPtKey]: false })));
-                              }
-                            }} style={{
+                            <span onClick={(e) => { e.stopPropagation(); handleVerseToggle(qPtKey, pt.scriptures); }} style={{
                               display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
                               background: siVerseOpen[qPtKey] ? 'var(--accent-purple)' : '#7F77DD0A', color: siVerseOpen[qPtKey] ? '#fff' : 'var(--accent-purple)', fontWeight: 600, whiteSpace: 'nowrap',
                               transition: 'all 0.15s',
@@ -809,14 +814,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                               {pt.point_num}. {cleanMd(pt.content)}
                               {(() => { const scr = cleanMd(pt.scriptures || ''); const hasPub = scr.includes('「') || scr.includes('」'); const hasScr = scr && !hasPub; return (<>
                                 {hasScr && (<>
-                                  <span onClick={() => {
-                                    const open = !siVerseOpen[ptKey];
-                                    setSiVerseOpen(p => ({ ...p, [ptKey]: open }));
-                                    if (open && !siVerseData[ptKey]) {
-                                      setSiVerseLoading(p => ({ ...p, [ptKey]: true }));
-                                      bibleLookup(pt.scriptures).then(r => setSiVerseData(p => ({ ...p, [ptKey]: r.verses || [] }))).catch(() => setSiVerseData(p => ({ ...p, [ptKey]: [] }))).finally(() => setSiVerseLoading(p => ({ ...p, [ptKey]: false })));
-                                    }
-                                  }} style={{
+                                  <span onClick={() => handleVerseToggle(ptKey, pt.scriptures)} style={{
                                     display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
                                     background: siVerseOpen[ptKey] ? 'var(--accent-purple)' : '#7F77DD0A', color: siVerseOpen[ptKey] ? '#fff' : 'var(--accent-purple)', fontWeight: 600, whiteSpace: 'nowrap',
                                     transition: 'all 0.15s',
