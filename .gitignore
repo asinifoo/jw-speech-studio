@@ -40,3 +40,8 @@ models/
 *.bin
 .claude/settings.local.json
 design_handoff/
+
+# Phase 작업 문서 (로컬 보관)
+Phase*_*.md
+UI구조_*.md
+SESSION_HANDOFF_*.md
