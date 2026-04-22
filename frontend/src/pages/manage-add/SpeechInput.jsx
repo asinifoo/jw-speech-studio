@@ -404,6 +404,61 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     try { localStorage.removeItem('jw-speech-state'); } catch {}
   };
 
+  const handleToggleMode = (isFree) => {
+    if (isFree === siNoOutline) return;
+    const hasOrigin = !!siSttOriginalText;
+    // 데이터 손실 경고 — 빈 상태면 confirm 생략
+    if (isFree) {
+      // 골자 → 자유: 골자 입력 내용 (골자 선택, 간단 메모, 상세 내용/태그) 삭제됨
+      const hasOutlineData = siOutline || Object.keys(siNotes || {}).length > 0 || Object.values(siDetails || {}).some(d => (d?.text || d?.tags || '').trim());
+      if (hasOutlineData) {
+        const msg = '자유 입력으로 전환하면 선택한 골자와 입력 내용(간단/상세)이 삭제됩니다.'
+          + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
+          + '\n계속하시겠습니까?';
+        if (!window.confirm(msg)) return;
+      }
+    } else {
+      // 자유 → 골자: 자유 구조 (주제/자유구조/소주제/요점) 삭제됨
+      const hasFreeData = (siFreeText || '').trim() || (siFreeTopic || '').trim() || (siFreeSubtopics || []).some(s =>
+        (s.title || '').trim() || (s.memo || '').trim() ||
+        (s.points || []).some(pt => (pt.title || pt.content || pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim())
+      );
+      if (hasFreeData) {
+        const msg = '골자 선택으로 전환하면 입력한 자유 구조(주제, 소주제, 요점)가 삭제됩니다.'
+          + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
+          + '\n계속하시겠습니까?';
+        if (!window.confirm(msg)) return;
+      }
+    }
+    setSiNoOutline(isFree);
+    setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({});
+    if (!isFree) {
+      // 자유 → 골자 전환: 자유 편집 state만 클리어.
+      // siSourceSttJobId/siSttOriginalText는 유지 → 골자 선택 전까지 원본 블록 노출 유지.
+      setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]);
+    }
+    setSiSaveMsg('');
+  };
+
+  const handleSelectOutline = (g) => {
+    setSiOutline(g);
+    setSiSourceSttJobId(''); // 골자 선택 시 STT 링크 해제 (다른 draft 오염 방지)
+    setSiQuery(`${g.outline_type_name || g.outline_type || ''} ${g.outline_num} - ${g.title}`);
+    setSiQueryFocus(false);
+    setSiNotes({}); setSiDetails({}); setSiExpanded({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
+    // 소주제 로드 (version 포함 — 같은 번호 다른 버전 섞임 방지)
+    const oid = `${g.outline_type || 'S-34'}_${g.outline_num}`;
+    setSiSubLoading(true);
+    outlineDetail(oid, g.outline_type_name || g.outline_type || '', g.version || '', g.outline_year || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => setSiSubtopics({})).finally(() => setSiSubLoading(false));
+    // draft/note 체크는 연사/날짜 변경 시 useEffect에서 처리
+    // 기본 날짜
+    if (!siDate) { const d = new Date(); setSiDate(String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0')); }
+  };
+
+  const handleClearOutline = () => {
+    setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({});
+  };
+
   // ── JSX ──
   return (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, overflow: 'hidden' }}>
@@ -431,42 +486,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           <div style={{ marginBottom: 10 }}>
             <div style={{ ...S.pillContainer, marginBottom: 8 }}>
               {[['outline', '골자 선택'], ['free', '자유 입력']].map(([k, l]) => (
-                <button key={k} onClick={() => {
-                  const isFree = k === 'free';
-                  if (isFree === siNoOutline) return;
-                  const hasOrigin = !!siSttOriginalText;
-                  // 데이터 손실 경고 — 빈 상태면 confirm 생략
-                  if (isFree) {
-                    // 골자 → 자유: 골자 입력 내용 (골자 선택, 간단 메모, 상세 내용/태그) 삭제됨
-                    const hasOutlineData = siOutline || Object.keys(siNotes || {}).length > 0 || Object.values(siDetails || {}).some(d => (d?.text || d?.tags || '').trim());
-                    if (hasOutlineData) {
-                      const msg = '자유 입력으로 전환하면 선택한 골자와 입력 내용(간단/상세)이 삭제됩니다.'
-                        + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
-                        + '\n계속하시겠습니까?';
-                      if (!window.confirm(msg)) return;
-                    }
-                  } else {
-                    // 자유 → 골자: 자유 구조 (주제/자유구조/소주제/요점) 삭제됨
-                    const hasFreeData = (siFreeText || '').trim() || (siFreeTopic || '').trim() || (siFreeSubtopics || []).some(s =>
-                      (s.title || '').trim() || (s.memo || '').trim() ||
-                      (s.points || []).some(pt => (pt.title || pt.content || pt.text || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim())
-                    );
-                    if (hasFreeData) {
-                      const msg = '골자 선택으로 전환하면 입력한 자유 구조(주제, 소주제, 요점)가 삭제됩니다.'
-                        + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
-                        + '\n계속하시겠습니까?';
-                      if (!window.confirm(msg)) return;
-                    }
-                  }
-                  setSiNoOutline(isFree);
-                  setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({});
-                  if (!isFree) {
-                    // 자유 → 골자 전환: 자유 편집 state만 클리어.
-                    // siSourceSttJobId/siSttOriginalText는 유지 → 골자 선택 전까지 원본 블록 노출 유지.
-                    setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]);
-                  }
-                  setSiSaveMsg('');
-                }} style={{ ...S.pillL4(k === 'free' ? siNoOutline : !siNoOutline), padding: '6px 0' }}>{l}</button>
+                <button key={k} onClick={() => handleToggleMode(k === 'free')} style={{ ...S.pillL4(k === 'free' ? siNoOutline : !siNoOutline), padding: '6px 0' }}>{l}</button>
               ))}
             </div>
 
@@ -481,20 +501,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                   return (
                     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} className="chat-input">
                       {matched.map(g => (
-                        <div key={g.filename} onMouseDown={() => {
-                          setSiOutline(g);
-                          setSiSourceSttJobId(''); // 골자 선택 시 STT 링크 해제 (다른 draft 오염 방지)
-                          setSiQuery(`${g.outline_type_name || g.outline_type || ''} ${g.outline_num} - ${g.title}`);
-                          setSiQueryFocus(false);
-                          setSiNotes({}); setSiDetails({}); setSiExpanded({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
-                          // 소주제 로드 (version 포함 — 같은 번호 다른 버전 섞임 방지)
-                          const oid = `${g.outline_type || 'S-34'}_${g.outline_num}`;
-                          setSiSubLoading(true);
-                          outlineDetail(oid, g.outline_type_name || g.outline_type || '', g.version || '', g.outline_year || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => setSiSubtopics({})).finally(() => setSiSubLoading(false));
-                          // draft/note 체크는 연사/날짜 변경 시 useEffect에서 처리
-                          // 기본 날짜
-                          if (!siDate) { const d = new Date(); setSiDate(String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0')); }
-                        }} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div key={g.filename} onMouseDown={() => handleSelectOutline(g)} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{g.outline_num}</span>
                           {g.outline_year && <span style={{
                             display: 'inline-flex', alignItems: 'center',
@@ -524,7 +531,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                 <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{siOutline.outline_num}</span>
                 <span style={{ fontSize: '0.786rem', color: 'var(--c-text)' }}>{siOutline.title}</span>
                 <div style={{ flex: 1 }} />
-                <button onClick={() => { setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({}); setSiExpanded({}); }} style={{ padding: '2px 6px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>✕</button>
+                <button onClick={handleClearOutline} style={{ padding: '2px 6px', borderRadius: 4, border: 'none', background: 'transparent', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>✕</button>
               </div>
             )}
 
