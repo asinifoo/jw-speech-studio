@@ -219,6 +219,190 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     }).catch(() => setSiNoteInfo(null));
   }, [siOutline?.outline_num, siSpeaker, siDate]);
 
+  // ── 핸들러 (JSX 인라인 추출) ──
+  const handleLoadDraft = async () => {
+    const r = await draftLoad({ outline_num: siOutline?.outline_num || '', speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline?.outline_type || '' });
+    if (r.exists) {
+      if (r.notes) setSiNotes(r.notes);
+      if (r.details) setSiDetails(r.details);
+      if (r.mode) setSiMode(r.mode);
+      const exp = {};
+      Object.entries(siSubtopics).forEach(([stKey, pts]) => {
+        if ((r.notes?.[stKey] || '').trim()) { exp[stKey] = true; return; }
+        if ((pts || []).some(pt => { const d = r.details?.[`${stKey.split('.')[0]}_${pt.point_num}`]; return d && ((d.text || '').trim() || (d.tags || '').trim()); })) exp[stKey] = true;
+      });
+      setSiExpanded(exp);
+      setSiDraftInfo(null);
+      setSiSaveMsg('✓ 임시저장 불러오기 완료');
+    }
+  };
+
+  const handleDiscardDraft = async () => {
+    if (!confirm('기존 데이터가 삭제됩니다. 새로 만드시겠습니까?')) return;
+    await draftDelete(siDraftInfo.draft_id);
+    setSiNotes({}); setSiDetails({}); setSiExpanded({});
+    setSiDraftInfo(null);
+    setSiSaveMsg('✓ 기존 임시저장 삭제, 새로 시작');
+  };
+
+  const handleLoadNote = () => {
+    const text = (siNoteInfo.text || '').replace(/\[.*?\].*\n?/g, '').trim();
+    if (text) {
+      const keys = Object.keys(siSubtopics);
+      if (keys.length) setSiNotes(p => ({ ...p, [keys[0]]: text }));
+    }
+    setSiNoteInfo(null);
+    setSiSaveMsg('✓ 간단 메모 불러오기 완료');
+  };
+
+  const handleSaveDraft = async () => {
+    setSiSaving(true); setSiSaveMsg('');
+    try {
+      await draftSave({
+        outline_type: siOutline?.outline_type || 'ETC',
+        outline_num: siOutline?.outline_num || '',
+        outline_title: siOutline?.title || siFreeTopic || '',
+        version: siOutline?.version || '',
+        speaker: siSpeaker.trim(), date: siDate.trim(),
+        mode: siMode, notes: siNotes, details: siDetails,
+        subtopics: siSubtopics,
+        no_outline: siNoOutline,
+        free_text: siFreeText,
+        free_topic: siFreeTopic,
+        free_subtopics: siFreeSubtopics,
+        free_mode: siFreeMode,
+        free_type: siFreeType,
+        // STT ID는 자유 입력 모드일 때만 전송
+        source_stt_job_id: siNoOutline ? siSourceSttJobId : '',
+        // STT 원본은 존재만으로 전송 (링크 독립, 골자 전환 후에도 참조 유지)
+        stt_original_text: siSttOriginalText || '',
+      });
+      setSiSaveMsg('✓ 임시저장 완료');
+    } catch (e) { setSiSaveMsg('오류: ' + e.message); }
+    finally { setSiSaving(false); }
+  };
+
+  const handleComplete = async () => {
+    // 공통 검증
+    if (!siSpeaker.trim()) { alert('연사를 입력해주세요'); return; }
+    if (!siDate.trim()) { alert('날짜를 입력해주세요'); return; }
+
+    setSiCompleting(true); setSiSaveMsg('');
+    try {
+      if (siNoOutline) {
+        // 자유 입력 모드: saveSpeech 직접 호출
+        const meaningfulSubs = (siFreeSubtopics || []).filter(s => {
+          const hasTitleOrMemo = (s.title || '').trim() || (s.memo || '').trim();
+          const hasPoints = (s.points || []).some(pt =>
+            (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
+          );
+          return hasTitleOrMemo || hasPoints;
+        });
+        if (!siFreeText.trim() && meaningfulSubs.length === 0) {
+          setSiSaveMsg('본문 또는 소주제를 입력해주세요');
+          setSiCompleting(false);
+          return;
+        }
+        const sourceKo = '연설';
+        // text = pt.title (point_content), speech_text = pt.content (document 본문)
+        let _globalPtNum = 0;
+        const subList = meaningfulSubs.length > 0
+          ? meaningfulSubs.map((st, si) => {
+              const validPoints = (st.points || []).filter(pt =>
+                (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
+              );
+              let points;
+              if (validPoints.length > 0) {
+                points = validPoints.map(pt => {
+                  _globalPtNum += 1;
+                  return {
+                    num: String(_globalPtNum),
+                    text: pt.title || '',
+                    level: 'L1',
+                    speech_text: pt.content || '',
+                    scriptures: pt.scriptures || '',
+                    scripture_usage: '',
+                    publications: pt.publications || '',
+                    keywords: pt.keywords || '',
+                    tags: pt.tags || '',
+                    usage: '사용',
+                  };
+                });
+              } else {
+                _globalPtNum += 1;
+                const memo = st.memo || '';
+                points = [{ num: String(_globalPtNum), text: memo, level: 'L1', speech_text: memo, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
+              }
+              return {
+                title: st.title || '',
+                num: si + 1,
+                points,
+              };
+            })
+          : [{
+              title: siFreeTopic || '',
+              num: 1,
+              points: [{ num: '1', text: siFreeText, level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
+            }];
+        const res = await saveSpeech({
+          files: [{
+            meta: {
+              outline_type: 'ETC',
+              outline_type_name: siFreeType || '생활과 봉사',
+              outline_num: '',
+              title: siFreeTopic || '',
+              version: '',
+              speaker: siSpeaker.trim(),
+              date: siDate.trim(),
+              source: sourceKo,
+            },
+            subtopics: subList,
+          }],
+          overwrite: true,
+        });
+        // draft 삭제 (draft_id 재계산, STT suffix는 자유 입력 모드 한정)
+        try {
+          const sttSuffix = (siNoOutline && siSourceSttJobId)
+            ? `_stt${(siSourceSttJobId.split('_').pop() || siSourceSttJobId).slice(0, 6)}`
+            : '';
+          const did = `ETC_${siSpeaker.trim()}_${siDate.trim()}${sttSuffix}`;
+          await draftDelete(did);
+        } catch {}
+        setSiSaveMsg(`✓ ${res.total_new || 0}건 저장 완료 (임시저장 삭제됨)`);
+        // ManageDbTab이 mode='mydb' 활성 시 체크하여 연설 탭 캐시 무효화.
+        localStorage.setItem('jw-db-stale-tab', '연설');
+      } else {
+        // 기존 골자 기반 complete
+        const res = await draftComplete({
+          outline_type: siOutline?.outline_type || 'ETC',
+          outline_num: siOutline?.outline_num || '',
+          outline_title: siOutline?.title || siFreeTopic || '',
+          version: siOutline?.version || '',
+          speaker: siSpeaker.trim(), date: siDate.trim(),
+          mode: siMode, notes: siNotes, details: siDetails,
+          subtopics: siSubtopics,
+        });
+        if (res.status === 'error') { setSiSaveMsg(res.message); setSiCompleting(false); return; }
+        if (siTransferMemo) { try { await dbDelete(siTransferMemo.col, siTransferMemo.id); } catch {} setSiTransferMemo(null); }
+        setSiSaveMsg(`✓ ${res.total}건 저장 완료 (임시저장 삭제됨)`);
+        setSiNotes({}); setSiDetails({});
+        // ManageDbTab이 mode='mydb' 활성 시 체크하여 연설 탭 캐시 무효화.
+        localStorage.setItem('jw-db-stale-tab', '연설');
+      }
+    } catch (e) { setSiSaveMsg('오류: ' + e.message); }
+    finally { setSiCompleting(false); }
+  };
+
+  const handleReset = () => {
+    if (!confirm('입력한 내용을 모두 초기화하시겠습니까?')) return;
+    setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiSpeaker(''); setSiDate(_siDateDefault);
+    setSiMode('quick'); setSiExpanded({}); setSiNotes({}); setSiDetails({});
+    setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사'); siDraftLoadedRef.current = false;
+    setSiSourceSttJobId(''); setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
+    setSiVerseOpen({}); setSiVerseData({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
+    try { localStorage.removeItem('jw-speech-state'); } catch {}
+  };
+
   // ── JSX ──
   return (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', padding: 14, overflow: 'hidden' }}>
@@ -765,29 +949,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                 <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--tint-blue-soft)', border: '1px solid var(--tint-blue-bd)', marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--accent-blue)', fontWeight: 600, marginBottom: 6 }}>기존 임시저장 데이터 있음 ({siDraftInfo.filled}/{siDraftInfo.total} {siDraftInfo.mode === 'quick' ? '소주제 메모' : '요점'} 입력)</div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={async () => {
-                      const r = await draftLoad({ outline_num: siOutline?.outline_num || '', speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline?.outline_type || '' });
-                      if (r.exists) {
-                        if (r.notes) setSiNotes(r.notes);
-                        if (r.details) setSiDetails(r.details);
-                        if (r.mode) setSiMode(r.mode);
-                        const exp = {};
-                        Object.entries(siSubtopics).forEach(([stKey, pts]) => {
-                          if ((r.notes?.[stKey] || '').trim()) { exp[stKey] = true; return; }
-                          if ((pts || []).some(pt => { const d = r.details?.[`${stKey.split('.')[0]}_${pt.point_num}`]; return d && ((d.text || '').trim() || (d.tags || '').trim()); })) exp[stKey] = true;
-                        });
-                        setSiExpanded(exp);
-                        setSiDraftInfo(null);
-                        setSiSaveMsg('✓ 임시저장 불러오기 완료');
-                      }
-                    }} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
-                    <button onClick={async () => {
-                      if (!confirm('기존 데이터가 삭제됩니다. 새로 만드시겠습니까?')) return;
-                      await draftDelete(siDraftInfo.draft_id);
-                      setSiNotes({}); setSiDetails({}); setSiExpanded({});
-                      setSiDraftInfo(null);
-                      setSiSaveMsg('✓ 기존 임시저장 삭제, 새로 시작');
-                    }} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>새로 만들기</button>
+                    <button onClick={handleLoadDraft} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: 'var(--accent-blue)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
+                    <button onClick={handleDiscardDraft} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>새로 만들기</button>
                   </div>
                 </div>
               )}
@@ -796,46 +959,13 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                 <div style={{ padding: '8px 10px', borderRadius: 8, background: 'var(--tint-orange-soft)', border: '1px solid #ffcc80', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: '0.786rem', color: 'var(--accent-orange)', fontWeight: 600 }}>간단 입력 데이터 있음</span>
                   <div style={{ flex: 1 }} />
-                  <button onClick={() => {
-                    const text = (siNoteInfo.text || '').replace(/\[.*?\].*\n?/g, '').trim();
-                    if (text) {
-                      const keys = Object.keys(siSubtopics);
-                      if (keys.length) setSiNotes(p => ({ ...p, [keys[0]]: text }));
-                    }
-                    setSiNoteInfo(null);
-                    setSiSaveMsg('✓ 간단 메모 불러오기 완료');
-                  }} style={{ padding: '3px 10px', borderRadius: 6, border: 'none', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
+                  <button onClick={handleLoadNote} style={{ padding: '3px 10px', borderRadius: 6, border: 'none', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>불러오기</button>
                 </div>
               )}
 
               {/* [저장] = draft만 저장 */}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={async () => {
-                  setSiSaving(true); setSiSaveMsg('');
-                  try {
-                    await draftSave({
-                      outline_type: siOutline?.outline_type || 'ETC',
-                      outline_num: siOutline?.outline_num || '',
-                      outline_title: siOutline?.title || siFreeTopic || '',
-                      version: siOutline?.version || '',
-                      speaker: siSpeaker.trim(), date: siDate.trim(),
-                      mode: siMode, notes: siNotes, details: siDetails,
-                      subtopics: siSubtopics,
-                      no_outline: siNoOutline,
-                      free_text: siFreeText,
-                      free_topic: siFreeTopic,
-                      free_subtopics: siFreeSubtopics,
-                      free_mode: siFreeMode,
-                      free_type: siFreeType,
-                      // STT ID는 자유 입력 모드일 때만 전송
-                      source_stt_job_id: siNoOutline ? siSourceSttJobId : '',
-                      // STT 원본은 존재만으로 전송 (링크 독립, 골자 전환 후에도 참조 유지)
-                      stt_original_text: siSttOriginalText || '',
-                    });
-                    setSiSaveMsg('✓ 임시저장 완료');
-                  } catch (e) { setSiSaveMsg('오류: ' + e.message); }
-                  finally { setSiSaving(false); }
-                }} disabled={siSaving || siCompleting} style={{
+                <button onClick={handleSaveDraft} disabled={siSaving || siCompleting} style={{
                   flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid var(--bd)',
                   background: siSaving ? 'var(--bd-medium)' : 'var(--bg-card)', color: 'var(--c-text-dark)',
                   fontSize: '0.929rem', fontWeight: 600, cursor: siSaving ? 'default' : 'pointer',
@@ -844,116 +974,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                 </button>
 
                 {/* [완료] = DB 저장 + draft 삭제 (상세 입력 or 자유 입력) */}
-                {(siMode === 'detail' || siNoOutline) && <button onClick={async () => {
-                  // 공통 검증
-                  if (!siSpeaker.trim()) { alert('연사를 입력해주세요'); return; }
-                  if (!siDate.trim()) { alert('날짜를 입력해주세요'); return; }
-
-                  setSiCompleting(true); setSiSaveMsg('');
-                  try {
-                    if (siNoOutline) {
-                      // 자유 입력 모드: saveSpeech 직접 호출
-                      const meaningfulSubs = (siFreeSubtopics || []).filter(s => {
-                        const hasTitleOrMemo = (s.title || '').trim() || (s.memo || '').trim();
-                        const hasPoints = (s.points || []).some(pt =>
-                          (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
-                        );
-                        return hasTitleOrMemo || hasPoints;
-                      });
-                      if (!siFreeText.trim() && meaningfulSubs.length === 0) {
-                        setSiSaveMsg('본문 또는 소주제를 입력해주세요');
-                        setSiCompleting(false);
-                        return;
-                      }
-                      const sourceKo = '연설';
-                      // text = pt.title (point_content), speech_text = pt.content (document 본문)
-                      let _globalPtNum = 0;
-                      const subList = meaningfulSubs.length > 0
-                        ? meaningfulSubs.map((st, si) => {
-                            const validPoints = (st.points || []).filter(pt =>
-                              (pt.title || pt.content || pt.scriptures || pt.publications || pt.keywords || pt.tags || '').trim()
-                            );
-                            let points;
-                            if (validPoints.length > 0) {
-                              points = validPoints.map(pt => {
-                                _globalPtNum += 1;
-                                return {
-                                  num: String(_globalPtNum),
-                                  text: pt.title || '',
-                                  level: 'L1',
-                                  speech_text: pt.content || '',
-                                  scriptures: pt.scriptures || '',
-                                  scripture_usage: '',
-                                  publications: pt.publications || '',
-                                  keywords: pt.keywords || '',
-                                  tags: pt.tags || '',
-                                  usage: '사용',
-                                };
-                              });
-                            } else {
-                              _globalPtNum += 1;
-                              const memo = st.memo || '';
-                              points = [{ num: String(_globalPtNum), text: memo, level: 'L1', speech_text: memo, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
-                            }
-                            return {
-                              title: st.title || '',
-                              num: si + 1,
-                              points,
-                            };
-                          })
-                        : [{
-                            title: siFreeTopic || '',
-                            num: 1,
-                            points: [{ num: '1', text: siFreeText, level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
-                          }];
-                      const res = await saveSpeech({
-                        files: [{
-                          meta: {
-                            outline_type: 'ETC',
-                            outline_type_name: siFreeType || '생활과 봉사',
-                            outline_num: '',
-                            title: siFreeTopic || '',
-                            version: '',
-                            speaker: siSpeaker.trim(),
-                            date: siDate.trim(),
-                            source: sourceKo,
-                          },
-                          subtopics: subList,
-                        }],
-                        overwrite: true,
-                      });
-                      // draft 삭제 (draft_id 재계산, STT suffix는 자유 입력 모드 한정)
-                      try {
-                        const sttSuffix = (siNoOutline && siSourceSttJobId)
-                          ? `_stt${(siSourceSttJobId.split('_').pop() || siSourceSttJobId).slice(0, 6)}`
-                          : '';
-                        const did = `ETC_${siSpeaker.trim()}_${siDate.trim()}${sttSuffix}`;
-                        await draftDelete(did);
-                      } catch {}
-                      setSiSaveMsg(`✓ ${res.total_new || 0}건 저장 완료 (임시저장 삭제됨)`);
-                      // ManageDbTab이 mode='mydb' 활성 시 체크하여 연설 탭 캐시 무효화.
-                      localStorage.setItem('jw-db-stale-tab', '연설');
-                    } else {
-                      // 기존 골자 기반 complete
-                      const res = await draftComplete({
-                        outline_type: siOutline?.outline_type || 'ETC',
-                        outline_num: siOutline?.outline_num || '',
-                        outline_title: siOutline?.title || siFreeTopic || '',
-                        version: siOutline?.version || '',
-                        speaker: siSpeaker.trim(), date: siDate.trim(),
-                        mode: siMode, notes: siNotes, details: siDetails,
-                        subtopics: siSubtopics,
-                      });
-                      if (res.status === 'error') { setSiSaveMsg(res.message); setSiCompleting(false); return; }
-                      if (siTransferMemo) { try { await dbDelete(siTransferMemo.col, siTransferMemo.id); } catch {} setSiTransferMemo(null); }
-                      setSiSaveMsg(`✓ ${res.total}건 저장 완료 (임시저장 삭제됨)`);
-                      setSiNotes({}); setSiDetails({});
-                      // ManageDbTab이 mode='mydb' 활성 시 체크하여 연설 탭 캐시 무효화.
-                      localStorage.setItem('jw-db-stale-tab', '연설');
-                    }
-                  } catch (e) { setSiSaveMsg('오류: ' + e.message); }
-                  finally { setSiCompleting(false); }
-                }} disabled={siSaving || siCompleting} style={{
+                {(siMode === 'detail' || siNoOutline) && <button onClick={handleComplete} disabled={siSaving || siCompleting} style={{
                   flex: 1, padding: '10px 0', borderRadius: 8, border: 'none',
                   background: siCompleting ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
                   fontSize: '0.929rem', fontWeight: 700, cursor: siCompleting ? 'default' : 'pointer',
@@ -966,15 +987,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
 
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <div style={{ flex: 1 }} />
-                <button onClick={() => {
-                  if (!confirm('입력한 내용을 모두 초기화하시겠습니까?')) return;
-                  setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiSpeaker(''); setSiDate(_siDateDefault);
-                  setSiMode('quick'); setSiExpanded({}); setSiNotes({}); setSiDetails({});
-                  setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사'); siDraftLoadedRef.current = false;
-                  setSiSourceSttJobId(''); setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
-                  setSiVerseOpen({}); setSiVerseData({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
-                  try { localStorage.removeItem('jw-speech-state'); } catch {}
-                }} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
+                <button onClick={handleReset} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
               </div>
               {siSaveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: siSaveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>{siSaveMsg}</div>}
             </div>
