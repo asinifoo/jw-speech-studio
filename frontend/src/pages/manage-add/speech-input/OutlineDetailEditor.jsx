@@ -4,6 +4,7 @@ import { parseScriptures } from './helpers';
 import PublicationBadge from './PublicationBadge';
 import VerseBadge from './VerseBadge';
 import ScriptureUsageToggle from './ScriptureUsageToggle';
+import VersePanel from './VersePanel';
 
 export default function OutlineDetailEditor({
   subtopics,
@@ -51,15 +52,7 @@ export default function OutlineDetailEditor({
                         {hasPub && <PublicationBadge text={scr} />}
                       </>); })()}
                     </div>
-                    {verseOpen[ptKey] && cleanMd(pt.scriptures || '') && !cleanMd(pt.scriptures || '').includes('「') && (
-                      <div style={{ margin: '0 0 4px', padding: '4px 8px', borderRadius: 6, background: 'var(--bg-subtle, #EFEFF4)', border: '1px solid var(--bd-light)', fontSize: '0.786rem', lineHeight: 1.6, color: 'var(--c-text)' }}>
-                        {verseLoading[ptKey] && <div style={{ height: 14, borderRadius: 4, background: 'linear-gradient(90deg, var(--bd-light) 25%, var(--bd-medium) 50%, var(--bd-light) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
-                        {!verseLoading[ptKey] && (verseData[ptKey] || []).length === 0 && <span style={{ color: 'var(--c-dim)' }}>본문을 찾을 수 없습니다.</span>}
-                        {!verseLoading[ptKey] && (verseData[ptKey] || []).map((v, vi) => (
-                          <div key={vi}><span style={{ fontWeight: 700, color: 'var(--accent-purple)', marginRight: 4 }}>{v.ref}</span>{v.text}</div>
-                        ))}
-                      </div>
-                    )}
+                    {verseOpen[ptKey] && cleanMd(pt.scriptures || '') && !cleanMd(pt.scriptures || '').includes('「') && <VersePanel loading={verseLoading[ptKey]} verses={verseData[ptKey]} />}
                     {/* 내용 */}
                     <KoreanTextarea value={d.text || ''} onChange={v => upd('text', v)} rows={2} placeholder="내용 입력..."
                       style={{ display: 'block', width: '100%', padding: '6px 10px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.6, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 4 }} />

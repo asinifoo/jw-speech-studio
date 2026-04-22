@@ -4,6 +4,7 @@ import { parseScriptures } from './helpers';
 import PublicationBadge from './PublicationBadge';
 import VerseBadge from './VerseBadge';
 import ScriptureUsageToggle from './ScriptureUsageToggle';
+import VersePanel from './VersePanel';
 
 export default function OutlineQuickEditor({
   subtopics,
@@ -51,15 +52,7 @@ export default function OutlineQuickEditor({
                     <ScriptureUsageToggle value={qSu} onClick={(e) => { e.stopPropagation(); const nv = qSu === '낭독' ? '' : '낭독'; onDetailsChange(p => ({ ...p, [qPtKey]: { ...p[qPtKey], scripture_usage: nv } })); }} />
                   </>)}
                   {hasPub && <PublicationBadge text={scr} />}
-                  {verseOpen[qPtKey] && hasScr && (
-                    <div style={{ margin: '4px 0 2px 16px', padding: '4px 8px', borderRadius: 6, background: 'var(--bg-subtle, #EFEFF4)', border: '1px solid var(--bd-light)', fontSize: '0.786rem', lineHeight: 1.6, color: 'var(--c-text)' }}>
-                      {verseLoading[qPtKey] && <div style={{ height: 14, borderRadius: 4, background: 'linear-gradient(90deg, var(--bd-light) 25%, var(--bd-medium) 50%, var(--bd-light) 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
-                      {!verseLoading[qPtKey] && (verseData[qPtKey] || []).length === 0 && <span style={{ color: 'var(--c-dim)' }}>본문을 찾을 수 없습니다.</span>}
-                      {!verseLoading[qPtKey] && (verseData[qPtKey] || []).map((v, vi) => (
-                        <div key={vi}><span style={{ fontWeight: 700, color: 'var(--accent-purple)', marginRight: 4 }}>{v.ref}</span>{v.text}</div>
-                      ))}
-                    </div>
-                  )}
+                  {verseOpen[qPtKey] && hasScr && <VersePanel loading={verseLoading[qPtKey]} verses={verseData[qPtKey]} indent />}
                 </div>
                 );
               })}
