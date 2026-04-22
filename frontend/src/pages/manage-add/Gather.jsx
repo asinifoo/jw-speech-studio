@@ -159,12 +159,8 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [editingMTypes, setEditingMTypes] = useState(false);
   const defaultMTypes = ['일반', '재방문', '기념식', '지역대회', '특별활동'];
   // ── 연설 입력 state ──
-  // Phase 5-3A: pageType 별 초기값
-  //  - 'input'  → 빠른 입력 고정 (subTab='input', structureMode='quick_input')
-  //  - 'add'    → [전처리] 진입 기본은 'preprocess' (localStorage 무시)
-  //  - 'manage' → 이 컴포넌트는 mydb/ai 렌더라 subTab state 사용 안 함
   const [subTab, setSubTab] = useState(() => {
-    // Phase 5-3B-1: subTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
+    // subTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
     if (pageType === 'input') return 'structure';
     try {
       const s = localStorage.getItem('jw-prep-subtab');
@@ -177,7 +173,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [structureMode, setStructureMode] = useState(() => {
     try {
       const s = localStorage.getItem('jw-structure-mode');
-      // Phase 5-3B-1: [구조화] 바에서 quick_input 제거 → pageType='add'는 speech_input 기본
+      // [구조화] 바에서 quick_input 제거 → pageType='add'는 speech_input 기본
       if (!s || s === 'quick_input') return 'speech_input';
       return s;
     } catch { return 'speech_input'; }
@@ -197,7 +193,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
   const [dbDrafts, setDbDrafts] = useState([]);
   const [expandedDbEntry, setExpandedDbEntry] = useState({});
 
-  // ── STT 업로드 탭 (Phase 4 Build-4) ──
+  // ── STT 업로드 탭 ──
   const [sttJobs, setSttJobs] = useState([]);
   const [sttUploadStatus, setSttUploadStatus] = useState('');
   const [sttUploading, setSttUploading] = useState(false);
@@ -411,7 +407,6 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
     }
   };
 
-  // Phase 5-2: 통합 [이동] 버튼 핸들러 — draft 타입별 목적지 라우팅
   const handleDraftMove = async (dr) => {
     const isStt = !!dr.source_stt_job_id;
     const isQuickInput = (dr.outline_type === 'QUICK') || /^(SP|DC|SV|VS|PB|ET)_/.test(dr.outline_num || '');
@@ -451,7 +446,6 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
       const codeMap = { SP: 'speech', DC: 'discussion', SV: 'service', VS: 'visit', PB: 'publication', ET: 'other' };
       const m = (dr.outline_num || '').match(/^([A-Z]{2})_/);
       const qtype = full.quick_type || (m ? (codeMap[m[1]] || 'speech') : 'speech');
-      // Phase 5-2 후속: content → 원본 블록, 메타만 form pre-fill
       const content = full.free_text || '';
 
       if (qtype === 'discussion') {
@@ -498,7 +492,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         setSubTab('gather'); setGatherMode('pub_input');
         return;
       }
-      // 'speech' 또는 'other' → localStorage transfer (Phase 4b-2)
+      // 'speech' 또는 'other' → localStorage transfer
       try {
         localStorage.setItem('jw-speech-transfer', JSON.stringify({
           isFreeDraft: true, isDraft: true, no_outline: true,
@@ -920,7 +914,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
 
   // ── JSX ──
   return (<>
-        {/* 추가 탭 상단 세그먼트 — Phase 5-3A: [입력] 탑레벨에선 숨김 (빠른 입력 고정) */}
+        {/* 추가 탭 상단 세그먼트 — [입력] 탑레벨에선 숨김 */}
         {pageType !== 'input' && (
         <div style={{ ...S.pillContainer, marginBottom: 16 }}>
           {[['gather', '가져오기'], ['structure', '구조화'], ['drafts', '임시저장']].map(([k, l]) => (
@@ -932,10 +926,9 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
         {/* ═══ 구조화 탭 ═══ */}
         {subTab === 'structure' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12 }}>
-          {/* 입력 하위 — 카드 헤더 언더라인 (Phase 5-3A: [입력] 탑레벨에선 숨김) */}
+          {/* 입력 하위 — 카드 헤더 언더라인 */}
           {pageType !== 'input' && (
           <div style={S.underlineContainer}>
-            {/* Phase 5-3B-1: quick_input 제거. 5-3B-2: pub_input 제거 (→ [가져오기]로 이동) */}
             {(pageType === 'input'
               ? [['quick_input', '빠른 입력', 'var(--accent-orange)']]
               : [['speech_input', '연설', 'var(--accent)'], ['discussion', '토의', 'var(--accent-blue)'], ['service', '봉사 모임', 'var(--accent)'], ['visit_input', '방문', 'var(--accent-orange)']]
@@ -952,7 +945,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
           )}
           <div style={{ padding: 14 }}>
 
-          {/* ─── 빠른 입력 (Phase 5-1) ─── */}
+          {/* ─── 빠른 입력 ─── */}
 
           {['discussion', 'service', 'visit_input'].includes(structureMode) && (
             <ManageStructureOther
@@ -967,7 +960,6 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
             />
           )}
 
-          {/* 출판물 입력 블록은 Phase 5-3B-2에서 [가져오기] 탭으로 이동됨 */}
           </div>
         </div>
         )}
@@ -1224,7 +1216,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
               )}
 
               {/* ═══ 2. txt 원본 모드 (플레이스홀더) ═══ */}
-              {/* ═══ STT 업로드 모드 — 목록 뷰 (Phase 4 Build-4) ═══ */}
+              {/* ═══ STT 업로드 모드 — 목록 뷰 ═══ */}
               {gatherMode === 'stt' && !sttReviewJob && (
                 <div>
                   {/* 업로드 영역 */}
@@ -1394,7 +1386,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 </div>
               )}
 
-              {/* ═══ STT 검토 화면 (Phase 4 Build-5B) ═══ */}
+              {/* ═══ STT 검토 화면 ═══ */}
               {gatherMode === 'stt' && sttReviewJob && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
@@ -2116,7 +2108,7 @@ export default function ManageGather({ fontSize, pageType, mode, pendingPub, cle
                 </div>
               )}
 
-              {/* 출판물 입력 (Phase 5-3B-2: [구조화]에서 [가져오기]로 이동) */}
+              {/* 출판물 입력 */}
               {gatherMode === 'pub_input' && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드 <span style={{ color: 'var(--c-danger)' }}>*</span> <span style={{ color: 'var(--c-dim)', fontSize: '0.643rem' }}>면/항 포함 가능</span></div>

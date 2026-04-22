@@ -90,7 +90,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
     // STT draft 이관: 자유 입력 모드로 바로 진입
     if (t.isSttDraft) {
       setSiNoOutline(true);
-      setSiFreeMode('subtopic');  // Phase 5-2 후속: bulk 제거 — 항상 subtopic
+      setSiFreeMode('subtopic');  // bulk 제거 — 항상 subtopic
       setSiFreeText('');
       setSiFreeTopic(t.free_topic || '');
       setSiFreeSubtopics(t.free_subtopics || []);
@@ -106,10 +106,10 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
     // Build-7 hotfix 1: 자유 입력 draft 이관 (STT 없는 no_outline)
     if (t.isFreeDraft) {
       setSiNoOutline(true);
-      setSiFreeMode('subtopic');  // Phase 5-2 후속: bulk 제거
-      setSiFreeText('');  // Phase 5-2 후속: bulk textarea 제거, 기존 free_text 는 원본 블록으로
+      setSiFreeMode('subtopic');
+      setSiFreeText('');
       setSiFreeTopic(t.free_topic || '');
-      setSiFreeType(t.free_type || '생활과 봉사');  // Hotfix 3: 연설 유형 복원
+      setSiFreeType(t.free_type || '생활과 봉사');
       // Hotfix 4: 구 draft 구조 마이그레이션 (pt.text → pt.title, _mode 추론)
       const rawSubs = t.free_subtopics || [];
       const migrated = rawSubs.map((st, si) => ({
@@ -128,7 +128,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
       }));
       setSiFreeSubtopics(migrated);
       setSiSourceSttJobId(t.source_stt_job_id || '');
-      // Phase 5-2 후속: 원본 텍스트 복원 + 타입 결정 (stt_original_text 우선, 없으면 legacy free_text)
+      // 원본 텍스트 복원 + 타입 결정 (stt_original_text 우선, 없으면 legacy free_text)
       const originText = t.stt_original_text || t.free_text || '';
       setSiSttOriginalText(originText);
       setSiOriginType(originText ? (t.source_stt_job_id ? 'stt' : 'quick') : '');
@@ -397,7 +397,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
 
             {siNoOutline && (
               <div style={{ marginTop: 6 }}>
-                {/* 연설 유형 (Hotfix 3) */}
+                {/* 연설 유형 */}
                 <div style={{ marginBottom: 6 }}>
                   <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
                   <select value={siFreeType} onChange={e => setSiFreeType(e.target.value)}
@@ -407,7 +407,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
                     ))}
                   </select>
                 </div>
-                {/* 주제 (Hotfix 3) */}
+                {/* 주제 */}
                 <div style={{ marginBottom: 6 }}>
                   <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>주제</div>
                   <input value={siFreeTopic} onChange={e => setSiFreeTopic(e.target.value)} placeholder="연설 주제 입력..."
@@ -478,7 +478,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
           {/* 6. 골자 없는 연설 — 자유 입력 */}
           {siNoOutline && (
             <div style={{ marginBottom: 10 }}>
-              {/* Phase 5-2 후속: bulk 모드 제거 — subtopic 단일 */}
+              {/* subtopic 단일 모드 */}
               {(<>
                 {siFreeSubtopics.map((st, si) => {
                   const isStandaloneTopLevel = st._mode === 'top';
@@ -573,7 +573,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
                         </div>
                         );
                       })}
-                      {/* Hotfix 7: 최상위 모드에선 최하단 [+ 최상위 요점 추가]와 중복이므로 숨김 */}
+                      {/* 최상위 모드에선 최하단 [+ 최상위 요점 추가]와 중복이므로 숨김 */}
                       {!isStandaloneTopLevel && (
                         <button onClick={() => setSiFreeSubtopics(p => p.map((x, j) =>
                           j === si ? { ...x, points: [...(x.points || []), { title: '', content: '', scriptures: '', publications: '', keywords: '', tags: '' }] } : x
@@ -586,7 +586,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
                   </div>
                   );
                 })}
-                {/* Hotfix 6: 버튼 완전 대칭 — 각 모드에서 해당 버튼만 노출, Q10 prompt 제거 */}
+                {/* 버튼 완전 대칭 — 각 모드에서 해당 버튼만 노출 */}
                 {(() => {
                   const isEmpty = siFreeSubtopics.length === 0;
                   const isTopMode = siFreeSubtopics.length === 1 && siFreeSubtopics[0]._mode === 'top';
@@ -918,7 +918,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines, subtopics 
                         return;
                       }
                       const sourceKo = _siInit.sourceType || '연설';
-                      // Hotfix 4: text = pt.title (point_content), speech_text = pt.content (document 본문)
+                      // text = pt.title (point_content), speech_text = pt.content (document 본문)
                       let _globalPtNum = 0;
                       const subList = meaningfulSubs.length > 0
                         ? meaningfulSubs.map((st, si) => {

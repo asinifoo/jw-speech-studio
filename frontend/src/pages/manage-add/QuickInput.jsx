@@ -13,7 +13,7 @@ export default function ManageQuickInput() {
 
   return (
     <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 12, padding: 14 }}>
-      {/* ─── 빠른 입력 (Phase 5-1) ─── */}
+      {/* ─── 빠른 입력 ─── */}
       {/* 타입 선택 — Level 2 pill */}
       <div style={{ ...S.pillContainer, marginBottom: 10 }}>
         {[
@@ -117,7 +117,7 @@ export default function ManageQuickInput() {
           style={{ display: 'block', width: '100%', padding: '10px 12px', boxSizing: 'border-box', border: '1px solid var(--bd-light)', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.929rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
       </div>
 
-      {/* Hotfix 9: 편집 모드 배너 */}
+      {/* 편집 모드 배너 */}
       {qiEditingOutlineNum && (
         <div style={{ marginBottom: 8, padding: '8px 10px', borderRadius: 8, background: '#D85A3010', border: '1px solid #D85A3040', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.714rem', color: 'var(--accent-orange)', fontWeight: 700 }}>📝 수정 중</span>

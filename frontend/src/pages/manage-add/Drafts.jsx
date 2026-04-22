@@ -72,7 +72,7 @@ export default function ManageDrafts({
                   }</span>
                   {dr.saved_at && <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)' }}>{dr.saved_at.split('T')[0]}</span>}
                   <div style={{ flex: 1 }} />
-                  {/* Phase 5-2: 통합 [이동] 버튼 — draft 타입별 라우팅은 handleDraftMove 내부 */}
+                  {/* [이동] 버튼 — draft 타입별 라우팅은 onDraftMove 내부 */}
                   <button onClick={() => onDraftMove(dr)}
                     style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
                     이동

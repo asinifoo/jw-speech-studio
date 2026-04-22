@@ -566,7 +566,7 @@ export default function ManageDbTab({ mode }) {
                   </div>
                 </div>
                 )}
-                {/* 출판물 referenced_by (Phase 3) */}
+                {/* 출판물 referenced_by */}
                 {isPub && (() => {
                   const refsRaw = Array.isArray(meta.referenced_by) ? meta.referenced_by : (() => { try { return JSON.parse(meta.referenced_by_json || '[]'); } catch { return []; } })();
                   const refs = refsRaw.filter(rf => (rf.outline_type || '').trim() || (rf.outline_num || '').trim() || (rf.point_num || '').trim() || (rf.outline_title || '').trim() || (rf.subtopic_title || '').trim() || (rf.point_text || '').trim());
