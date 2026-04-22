@@ -379,6 +379,43 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
 
+  // Phase 5b-2: STT 검토 화면 persist + mount 시 자동 복원
+  const sttReviewRestoredRef = useRef(false);
+  const sttReviewPersistMountedRef = useRef(false);
+  useEffect(() => {
+    if (sttReviewRestoredRef.current) return;
+    if (subTab !== 'gather' || gatherMode !== 'stt') return;
+    sttReviewRestoredRef.current = true;
+    const raw = (() => { try { return JSON.parse(localStorage.getItem('jw-stt-review') || 'null'); } catch { return null; } })();
+    if (!raw?.jobId) return;
+    sttJobDetail(raw.jobId).then(fresh => {
+      if (!fresh) { try { localStorage.removeItem('jw-stt-review'); } catch {} return; }
+      setSttReviewJob(fresh);
+      setSttReviewFinalText(raw.finalText ?? fresh.final_text ?? '');
+      setSttReviewMeta({
+        speaker: '', speech_date: _siDateDefault, source: 'speech',
+        outline_id: '', outline_num: '', outline_year: '', outline_version: '', topic: '',
+        ...(raw.meta || {}),
+      });
+      if (raw.tab) setSttReviewTab(raw.tab);
+    }).catch(() => { try { localStorage.removeItem('jw-stt-review'); } catch {} });
+  }, [subTab, gatherMode]);
+  useEffect(() => {
+    if (!sttReviewPersistMountedRef.current) { sttReviewPersistMountedRef.current = true; return; }
+    if (sttReviewJob?.job_id) {
+      try {
+        localStorage.setItem('jw-stt-review', JSON.stringify({
+          jobId: sttReviewJob.job_id,
+          finalText: sttReviewFinalText,
+          meta: sttReviewMeta,
+          tab: sttReviewTab,
+        }));
+      } catch {}
+    } else {
+      try { localStorage.removeItem('jw-stt-review'); } catch {}
+    }
+  }, [sttReviewJob, sttReviewFinalText, sttReviewMeta, sttReviewTab]);
+
   // STT draft → 연설 입력 탭 공통 이관 핸들러
   const handleStartSttDraftEdit = async (_draftId, speaker, date, jobId) => {
     try {
