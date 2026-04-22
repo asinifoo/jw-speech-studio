@@ -3,6 +3,7 @@ import { cleanMd } from '../../../components/utils';
 import { parseScriptures } from './helpers';
 import PublicationBadge from './PublicationBadge';
 import VerseBadge from './VerseBadge';
+import ScriptureUsageToggle from './ScriptureUsageToggle';
 
 export default function OutlineDetailEditor({
   subtopics,
@@ -45,11 +46,7 @@ export default function OutlineDetailEditor({
                       {(() => { const { scr, hasPub, hasScr } = parseScriptures(pt.scriptures); return (<>
                         {hasScr && (<>
                           <VerseBadge open={verseOpen[ptKey]} scr={scr} onClick={() => onVerseToggle(ptKey, pt.scriptures)} />
-                          <span onClick={() => { const nv = (d.scripture_usage || '') === '낭독' ? '' : '낭독'; upd('scripture_usage', nv); }} style={{
-                            display: 'inline-block', marginLeft: 2, padding: '1px 5px', borderRadius: 4, fontSize: '0.571rem', cursor: 'pointer',
-                            background: d.scripture_usage === '낭독' ? 'var(--accent-orange)' : 'var(--bg-subtle, #EFEFF4)', color: d.scripture_usage === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,
-                            transition: 'all 0.15s',
-                          }}>낭독</span>
+                          <ScriptureUsageToggle value={d.scripture_usage || ''} onClick={() => { const nv = (d.scripture_usage || '') === '낭독' ? '' : '낭독'; upd('scripture_usage', nv); }} />
                         </>)}
                         {hasPub && <PublicationBadge text={scr} />}
                       </>); })()}
