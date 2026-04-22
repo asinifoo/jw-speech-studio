@@ -50,7 +50,7 @@ const getOutlineTypeInfo = (code) => {
   return OUTLINE_TYPES[0];
 };
 
-export default function ManageGather({ fontSize, pageType, mode, pendingPub, clearPendingPub, onSaveReturn }) {
+export default function ManageGather({ fontSize, pageType, pendingPub, clearPendingPub, onSaveReturn }) {
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
   const [gatherForm, setGatherForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });

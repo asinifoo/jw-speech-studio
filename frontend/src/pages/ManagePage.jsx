@@ -36,7 +36,7 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
       {mode === 'add' && (pageType === 'input'
         ? <ManageQuickInput />
-        : <ManageGather fontSize={fontSize} pageType={pageType} mode={mode} pendingPub={pendingPub} clearPendingPub={clearPendingPub} onSaveReturn={onSaveReturn} />
+        : <ManageGather fontSize={fontSize} pageType={pageType} pendingPub={pendingPub} clearPendingPub={clearPendingPub} onSaveReturn={onSaveReturn} />
       )}
 
       {dbVisited && (
