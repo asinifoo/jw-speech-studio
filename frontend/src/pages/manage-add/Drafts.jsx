@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { S } from '../styles';
-import { draftList, draftDelete, listBySource, dbDelete } from '../api';
+import { S } from '../../styles';
+import { draftList, draftDelete, listBySource, dbDelete } from '../../api';
 
-export default function ManageAddDrafts({
+export default function ManageDrafts({
   dbDrafts, setDbDrafts,
   memoEntries, setMemoEntries,
   onDraftMove,

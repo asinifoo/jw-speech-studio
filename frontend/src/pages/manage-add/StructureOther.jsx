@@ -1,13 +1,13 @@
-import KoreanTextarea from '../components/KoreanTextarea';
-import { S } from '../styles';
-import { saveCategories, deleteServiceType } from '../api';
+import KoreanTextarea from '../../components/KoreanTextarea';
+import { S } from '../../styles';
+import { saveCategories, deleteServiceType } from '../../api';
 
 const _dfDisc = { sub_source: '', pub_code: '', topic: '', date: '', subtopic: '', keywords: '', scriptures: '', content: '' };
 const _dfSvc = { service_type: '', date: '', scriptures: '', pub_code: '', keywords: '', content: '', rating: 0, favorite: false };
 const _dfVisit = { visit_target: '', situation: '', date: '', keywords: '', scriptures: '', pub_code: '', content: '', rating: 0, favorite: false };
 const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
 
-export default function ManageAddStructureOther({
+export default function ManageStructureOther({
   inputMode,
   discForm, setDiscForm,
   svcForm, setSvcForm,

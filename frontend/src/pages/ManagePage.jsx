@@ -3,8 +3,8 @@ import { S } from '../styles';
 import ManagePreprocessTab from './ManagePreprocessTab';
 import ManageAiTab from './ManageAiTab';
 import ManageDbTab from './ManageDbTab';
-import ManageAddTab from './ManageAddTab';
-import ManageAddQuickInput from './ManageAddQuickInput';
+import ManageGather from './manage-add/Gather';
+import ManageQuickInput from './manage-add/QuickInput';
 
 
 export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSaveReturn, pageType, onGoAdd }) {
@@ -35,8 +35,8 @@ export default function ManagePage({ fontSize, pendingPub, clearPendingPub, onSa
 
 
       {mode === 'add' && (pageType === 'input'
-        ? <ManageAddQuickInput />
-        : <ManageAddTab fontSize={fontSize} pageType={pageType} mode={mode} pendingPub={pendingPub} clearPendingPub={clearPendingPub} onSaveReturn={onSaveReturn} />
+        ? <ManageQuickInput />
+        : <ManageGather fontSize={fontSize} pageType={pageType} mode={mode} pendingPub={pendingPub} clearPendingPub={clearPendingPub} onSaveReturn={onSaveReturn} />
       )}
 
       {dbVisited && (

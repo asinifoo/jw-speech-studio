@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { S } from '../styles';
-import { draftSave } from '../api';
+import { S } from '../../styles';
+import { draftSave } from '../../api';
 
 const _qiDefault = { type: 'speech', speech_type: '생활과 봉사', speaker: '', date: '', topic: '', target: '', pub_code: '', pub_title: '', content: '' };
 const iS = { padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none', color: 'var(--c-text-dark)', background: 'var(--bg-subtle)', boxSizing: 'border-box' };
 
-export default function ManageAddQuickInput() {
+export default function ManageQuickInput() {
   const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-qi-form')) || _qiDefault; } catch { return _qiDefault; } });
   useEffect(() => { try { localStorage.setItem('jw-qi-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
   const [qiSaving, setQiSaving] = useState(false);

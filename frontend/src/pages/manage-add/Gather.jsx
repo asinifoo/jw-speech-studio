@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
-import KoreanTextarea from '../components/KoreanTextarea';
-import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../components/utils';
-import { getBody } from '../utils/textHelpers';
-import { S } from '../styles';
-import ManageAddSpeechInput from './ManageAddSpeechInput';
-import ManageAddStructureOther from './ManageAddStructureOther';
-import ManageAddDrafts from './ManageAddDrafts';
-import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave } from '../api';
+import KoreanTextarea from '../../components/KoreanTextarea';
+import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../../components/utils';
+import { getBody } from '../../utils/textHelpers';
+import { S } from '../../styles';
+import ManageSpeechInput from './SpeechInput';
+import ManageStructureOther from './StructureOther';
+import ManageDrafts from './Drafts';
+import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave } from '../../api';
 
 function _splitCommaRefs(text) {
   const parts = [];
@@ -49,7 +49,7 @@ const getOutlineTypeInfo = (code) => {
   return OUTLINE_TYPES[0];
 };
 
-export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, clearPendingPub, onSaveReturn }) {
+export default function ManageGather({ fontSize, pageType, mode, pendingPub, clearPendingPub, onSaveReturn }) {
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
   const defaultForm = { speaker: '', topic: '', date: '', outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '', keywords: '', scriptures: '', content: '', entry_type: 'speech_point', source: '봉사 모임', pub_code: '', pub_title: '', pub_type: '', reference: '', service_type: '', sub_source: '', situation: '', visit_target: '', rating: 0, rating_note: '', favorite: false };
@@ -419,7 +419,7 @@ export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, cle
     const isStt = !!dr.source_stt_job_id;
     const isQuickInput = (dr.outline_type === 'QUICK') || /^(SP|DC|SV|VS|PB|ET)_/.test(dr.outline_num || '');
 
-    // 1) STT → localStorage transfer (Phase 4b-2: si* state를 ManageAddSpeechInput이 관리)
+    // 1) STT → localStorage transfer (Phase 4b-2: si* state를 SpeechInput이 관리)
     if (isStt) {
       let full = dr;
       try {
@@ -563,7 +563,7 @@ export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, cle
     setAddTab('structure'); setInputMode('speech_input');
   };
 
-  // Phase 4b-4: 메모 이동 모달 콜백 (ManageAddDrafts에서 호출)
+  // Phase 4b-4: 메모 이동 모달 콜백 (Drafts에서 호출)
   const onMemoMove = (type, m) => {
     setMovingMemo({ id: m.id, collection: m.collection });
     if (type === 'speech_input') {
@@ -958,7 +958,7 @@ export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, cle
           {/* ─── 빠른 입력 (Phase 5-1) ─── */}
 
           {['discussion', 'service', 'visit_input'].includes(inputMode) && (
-            <ManageAddStructureOther
+            <ManageStructureOther
               inputMode={inputMode}
               discForm={discForm} setDiscForm={setDiscForm}
               svcForm={svcForm} setSvcForm={setSvcForm}
@@ -2767,7 +2767,7 @@ export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, cle
 
       {/* ═══ 연설 입력 ═══ */}
       {addTab === 'structure' && inputMode === 'speech_input' && (
-        <ManageAddSpeechInput
+        <ManageSpeechInput
           siTransferTick={siTransferTick}
           outlines={outlines}
           subtopics={subtopics}
@@ -2775,7 +2775,7 @@ export default function ManageAddTab({ fontSize, pageType, mode, pendingPub, cle
       )}
 
       {addTab === 'drafts' && (
-        <ManageAddDrafts
+        <ManageDrafts
           dbDrafts={dbDrafts} setDbDrafts={setDbDrafts}
           memoEntries={memoEntries} setMemoEntries={setMemoEntries}
           onDraftMove={handleDraftMove} onMemoMove={onMemoMove}

@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import KoreanTextarea from '../components/KoreanTextarea';
-import { S } from '../styles';
-import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../api';
-import { cleanMd } from '../components/utils';
+import KoreanTextarea from '../../components/KoreanTextarea';
+import { S } from '../../styles';
+import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../../api';
+import { cleanMd } from '../../components/utils';
 
 // si* state 초기값 복원
 const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-si-state')) || {}; } catch { return {}; } })();
 const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
 
-export default function ManageAddSpeechInput({ siTransferTick, outlines, subtopics }) {
+export default function ManageSpeechInput({ siTransferTick, outlines, subtopics }) {
 
   // ── si* state (33개) ──
   const [siOutline, setSiOutline] = useState(_siInit.outline || null);
