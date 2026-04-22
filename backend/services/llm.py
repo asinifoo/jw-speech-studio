@@ -1,17 +1,17 @@
 """LLM 호출 (Ollama/Gemini/Claude/GPT 스트리밍)"""
 import json
 import requests
-from config import (ANTHROPIC_API_KEY, ANTHROPIC_API_VERSION, GEMINI_API_KEY, LLM_MODEL, OLLAMA_GEN_CTX, OLLAMA_GEN_NOTHINK, OLLAMA_URL, OPENAI_API_KEY, _abort_event)
+import config
 
 def query_ollama(prompt: str, system: str = "", model_name: str = "", no_think: bool = False, ctx: int = 0) -> str:
-    model = model_name or LLM_MODEL
-    num_ctx = ctx or OLLAMA_GEN_CTX
+    model = model_name or config.LLM_MODEL
+    num_ctx = ctx or config.OLLAMA_GEN_CTX
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
     try:
-        resp = requests.post(f"{OLLAMA_URL}/api/chat", json={
+        resp = requests.post(f"{config.OLLAMA_URL}/api/chat", json={
             "model": model, "messages": messages, "stream": False,
             "think": not no_think,
             "options": {"num_ctx": num_ctx},
@@ -21,7 +21,7 @@ def query_ollama(prompt: str, system: str = "", model_name: str = "", no_think: 
         resp.raise_for_status()
         return resp.json()["message"]["content"]
     except requests.exceptions.ConnectionError:
-        raise Exception(f"Ollama 서버에 연결할 수 없습니다 ({OLLAMA_URL}). Ollama가 실행 중인지 확인하세요.")
+        raise Exception(f"Ollama 서버에 연결할 수 없습니다 ({config.OLLAMA_URL}). Ollama가 실행 중인지 확인하세요.")
 
 def _friendly_api_error(provider: str, model: str, e) -> str:
     """API 오류를 사용자 친화적 메시지로 변환"""
@@ -45,11 +45,11 @@ def call_llm(prompt: str, model: str = "", no_think: bool = False) -> str:
 
     # ── Gemini 계열 ──
     if model.startswith("gemini-"):
-        if not GEMINI_API_KEY:
+        if not config.GEMINI_API_KEY:
             raise Exception("Gemini API 키가 설정되지 않았습니다. Manage → AI 관리에서 등록하세요.")
         try:
             import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
+            genai.configure(api_key=config.GEMINI_API_KEY)
             m = genai.GenerativeModel(model)
             response = m.generate_content(prompt)
             return response.text
@@ -58,11 +58,11 @@ def call_llm(prompt: str, model: str = "", no_think: bool = False) -> str:
 
     # ── Claude 계열 ──
     if model.startswith("claude-"):
-        if not ANTHROPIC_API_KEY:
+        if not config.ANTHROPIC_API_KEY:
             raise Exception("Claude API 키가 설정되지 않았습니다. Manage → AI 관리에서 등록하세요.")
         try:
             resp = requests.post("https://api.anthropic.com/v1/messages",
-                headers={"Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": ANTHROPIC_API_VERSION},
+                headers={"Content-Type": "application/json", "x-api-key": config.ANTHROPIC_API_KEY, "anthropic-version": config.ANTHROPIC_API_VERSION},
                 json={"model": model, "max_tokens": 8192, "messages": [{"role": "user", "content": prompt}]}, timeout=180)
             if not resp.ok:
                 err_detail = resp.json().get("error", {}).get("message", resp.text) if resp.headers.get("content-type", "").startswith("application/json") else resp.text
@@ -75,11 +75,11 @@ def call_llm(prompt: str, model: str = "", no_think: bool = False) -> str:
 
     # ── OpenAI (ChatGPT) 계열 ──
     if model.startswith("gpt-"):
-        if not OPENAI_API_KEY:
+        if not config.OPENAI_API_KEY:
             raise Exception("OpenAI API 키가 설정되지 않았습니다. Manage → AI 관리에서 등록하세요.")
         try:
             resp = requests.post("https://api.openai.com/v1/chat/completions",
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPENAI_API_KEY}"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {config.OPENAI_API_KEY}"},
                 json={"model": model, "max_tokens": 8192, "messages": [{"role": "user", "content": prompt}]}, timeout=180)
             resp.raise_for_status()
             return resp.json()["choices"][0]["message"]["content"]
@@ -88,22 +88,22 @@ def call_llm(prompt: str, model: str = "", no_think: bool = False) -> str:
 
     # ── Ollama 로컬 ──
     if model:
-        return query_ollama(prompt, model_name=model, no_think=OLLAMA_GEN_NOTHINK)
+        return query_ollama(prompt, model_name=model, no_think=config.OLLAMA_GEN_NOTHINK)
 
     # ── 기본: Gemini → Claude → Ollama 순서 폴백 ──
-    if GEMINI_API_KEY:
+    if config.GEMINI_API_KEY:
         try:
             import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
+            genai.configure(api_key=config.GEMINI_API_KEY)
             m = genai.GenerativeModel("gemini-2.5-flash")
             response = m.generate_content(prompt)
             return response.text
         except Exception as e:
             raise Exception(_friendly_api_error("Gemini", "gemini-2.5-flash", e))
-    elif ANTHROPIC_API_KEY:
+    elif config.ANTHROPIC_API_KEY:
         try:
             resp = requests.post("https://api.anthropic.com/v1/messages",
-                headers={"Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": ANTHROPIC_API_VERSION},
+                headers={"Content-Type": "application/json", "x-api-key": config.ANTHROPIC_API_KEY, "anthropic-version": config.ANTHROPIC_API_VERSION},
                 json={"model": "claude-sonnet-4-6", "max_tokens": 8192, "messages": [{"role": "user", "content": prompt}]}, timeout=180)
             if not resp.ok:
                 err_detail = resp.json().get("error", {}).get("message", resp.text) if resp.headers.get("content-type", "").startswith("application/json") else resp.text
@@ -114,7 +114,7 @@ def call_llm(prompt: str, model: str = "", no_think: bool = False) -> str:
                 raise
             raise Exception(_friendly_api_error("Claude", "claude-sonnet-4-6", e))
     else:
-        return query_ollama(prompt, no_think=OLLAMA_GEN_NOTHINK)
+        return query_ollama(prompt, no_think=config.OLLAMA_GEN_NOTHINK)
 
 
 def call_llm_stream(prompt: str, model: str = "", no_think: bool = False):
@@ -123,17 +123,17 @@ def call_llm_stream(prompt: str, model: str = "", no_think: bool = False):
 
     # ── Gemini 계열 ──
     if model.startswith("gemini-"):
-        if not GEMINI_API_KEY:
+        if not config.GEMINI_API_KEY:
             raise Exception("Gemini API 키가 설정되지 않았습니다. Manage → AI 관리에서 등록하세요.")
         try:
             import google.generativeai as genai
-            genai.configure(api_key=GEMINI_API_KEY)
+            genai.configure(api_key=config.GEMINI_API_KEY)
             m = genai.GenerativeModel(model)
             response = m.generate_content(prompt, stream=True)
         except Exception as e:
             raise Exception(_friendly_api_error("Gemini", model, e))
         for chunk in response:
-            if _abort_event.is_set():
+            if config._abort_event.is_set():
                 return
             if chunk.text:
                 yield chunk.text
@@ -141,11 +141,11 @@ def call_llm_stream(prompt: str, model: str = "", no_think: bool = False):
 
     # ── Claude 계열 ──
     if model.startswith("claude-"):
-        if not ANTHROPIC_API_KEY:
+        if not config.ANTHROPIC_API_KEY:
             raise Exception("Claude API 키가 설정되지 않았습니다. Manage → AI 관리에서 등록하세요.")
         try:
             resp = requests.post("https://api.anthropic.com/v1/messages",
-                headers={"Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": ANTHROPIC_API_VERSION},
+                headers={"Content-Type": "application/json", "x-api-key": config.ANTHROPIC_API_KEY, "anthropic-version": config.ANTHROPIC_API_VERSION},
                 json={"model": model, "max_tokens": 8192, "stream": True, "messages": [{"role": "user", "content": prompt}]},
                 timeout=300, stream=True)
             if not resp.ok:
@@ -156,7 +156,7 @@ def call_llm_stream(prompt: str, model: str = "", no_think: bool = False):
                 raise
             raise Exception(_friendly_api_error("Claude", model, e))
         for line in resp.iter_lines():
-            if _abort_event.is_set():
+            if config._abort_event.is_set():
                 resp.close()
                 return
             if not line:
@@ -175,18 +175,18 @@ def call_llm_stream(prompt: str, model: str = "", no_think: bool = False):
 
     # ── OpenAI (ChatGPT) 계열 ──
     if model.startswith("gpt-"):
-        if not OPENAI_API_KEY:
+        if not config.OPENAI_API_KEY:
             raise Exception("OpenAI API 키가 설정되지 않았습니다. Manage → AI 관리에서 등록하세요.")
         try:
             resp = requests.post("https://api.openai.com/v1/chat/completions",
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPENAI_API_KEY}"},
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {config.OPENAI_API_KEY}"},
                 json={"model": model, "max_tokens": 8192, "stream": True, "messages": [{"role": "user", "content": prompt}]},
                 timeout=300, stream=True)
             resp.raise_for_status()
         except Exception as e:
             raise Exception(_friendly_api_error("ChatGPT", model, e))
         for line in resp.iter_lines():
-            if _abort_event.is_set():
+            if config._abort_event.is_set():
                 resp.close()
                 return
             if not line:
@@ -203,20 +203,20 @@ def call_llm_stream(prompt: str, model: str = "", no_think: bool = False):
         return
 
     # ── Ollama 로컬 ──
-    ollama_model = model or LLM_MODEL
+    ollama_model = model or config.LLM_MODEL
     try:
-        resp = requests.post(f"{OLLAMA_URL}/api/chat",
+        resp = requests.post(f"{config.OLLAMA_URL}/api/chat",
             json={"model": ollama_model, "messages": [{"role": "user", "content": prompt}], "stream": True,
                   "think": not no_think,
-                  "options": {"num_ctx": OLLAMA_GEN_CTX}},
+                  "options": {"num_ctx": config.OLLAMA_GEN_CTX}},
             timeout=600, stream=True)
         if resp.status_code == 404:
             raise Exception(f"로컬 모델 '{ollama_model}'이(가) 설치되지 않았습니다. Manage → AI 관리에서 pull 버튼으로 설치하세요.")
         resp.raise_for_status()
     except requests.exceptions.ConnectionError:
-        raise Exception(f"Ollama 서버에 연결할 수 없습니다 ({OLLAMA_URL}). Ollama가 실행 중인지 확인하세요.")
+        raise Exception(f"Ollama 서버에 연결할 수 없습니다 ({config.OLLAMA_URL}). Ollama가 실행 중인지 확인하세요.")
     for line in resp.iter_lines():
-        if _abort_event.is_set():
+        if config._abort_event.is_set():
             resp.close()
             return
         if not line:

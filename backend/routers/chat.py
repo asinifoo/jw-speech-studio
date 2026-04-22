@@ -6,7 +6,6 @@ import json
 import time
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from config import (CHAT_MAX_TURNS, CHAT_SEARCH_TOP_K, LLM_MODEL, OLLAMA_CHAT_CTX, OLLAMA_CHAT_NOTHINK, OLLAMA_URL, PROMPT_TEMPLATES, _CHAT_SESSION_DIR, _abort_event)
 import config
 import hashlib
 from models import SearchRequest, FreeSearchRequest, ChatRequest, PastSearchRequest, SaveChatSessionRequest
@@ -271,7 +270,7 @@ def chat_stream(req: ChatRequest):
         raise HTTPException(status_code=400, detail="클라우드 모델은 비밀번호가 필요합니다")
 
     # 1. 검색 (search_mode: db | wol | db_wol | chat)
-    actual_top_k = req.top_k if req.top_k > 0 else CHAT_SEARCH_TOP_K
+    actual_top_k = req.top_k if req.top_k > 0 else config.CHAT_SEARCH_TOP_K
     search_mode = req.search_mode or "db"
     search_results = []
     wol_results = []
@@ -444,8 +443,8 @@ def chat_stream(req: ChatRequest):
 
     messages = [{"role": "system", "content": system_prompt}]
 
-    # 이전 대화 이력 (CHAT_MAX_TURNS 턴 = 질문+답변 쌍)
-    for h in req.history[-(CHAT_MAX_TURNS * 2):]:
+    # 이전 대화 이력 (config.CHAT_MAX_TURNS 턴 = 질문+답변 쌍)
+    for h in req.history[-(config.CHAT_MAX_TURNS * 2):]:
         messages.append({"role": h["role"], "content": h["content"]})
 
     # 현재 메시지 + 검색 컨텍스트 + 파일 컨텍스트
@@ -480,12 +479,12 @@ def chat_stream(req: ChatRequest):
     messages.append({"role": "user", "content": user_content})
 
     def event_stream():
-        _abort_event.clear()
+        config._abort_event.clear()
         # 검색 결과 전송
         yield f"data: {json.dumps({'stage': 'search', 'results': all_search, 'search_mode': search_mode}, ensure_ascii=False)}\n\n"
         yield f"data: {json.dumps({'stage': 'calling', 'message': 'AI 응답 생성 중...'})}\n\n"
 
-        model = req.model or LLM_MODEL
+        model = req.model or config.LLM_MODEL
         full_text = ""
 
         try:
@@ -493,17 +492,17 @@ def chat_stream(req: ChatRequest):
                 # 클라우드 모델
                 prompt = "\n\n".join([f"[{m['role']}] {m['content']}" for m in messages])
                 for chunk in call_llm_stream(prompt, model=model):
-                    if _abort_event.is_set():
+                    if config._abort_event.is_set():
                         return
                     full_text += chunk
                     yield f"data: {json.dumps({'stage': 'streaming', 'chunk': chunk})}\n\n"
             else:
                 # Ollama 로컬 모델 (chat API 직접 사용)
                 try:
-                    resp = requests.post(f"{OLLAMA_URL}/api/chat",
+                    resp = requests.post(f"{config.OLLAMA_URL}/api/chat",
                         json={"model": model, "messages": messages, "stream": True,
-                              "think": not OLLAMA_CHAT_NOTHINK,
-                              "options": {"num_ctx": OLLAMA_CHAT_CTX}},
+                              "think": not config.OLLAMA_CHAT_NOTHINK,
+                              "options": {"num_ctx": config.OLLAMA_CHAT_CTX}},
                         timeout=600, stream=True)
                     if resp.status_code == 404:
                         yield f"data: {json.dumps({'stage': 'error', 'message': f'모델 {model}이(가) 설치되지 않았습니다'})}\n\n"
@@ -514,7 +513,7 @@ def chat_stream(req: ChatRequest):
                     return
 
                 for line in resp.iter_lines():
-                    if _abort_event.is_set():
+                    if config._abort_event.is_set():
                         resp.close()
                         return
                     if not line:

@@ -4,7 +4,6 @@ import hashlib
 import re
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from config import (FILTER_MODEL, OLLAMA_CHAT_CTX, OLLAMA_CHAT_NOTHINK, OLLAMA_FILTER_CTX, OLLAMA_FILTER_NOTHINK, OLLAMA_GEN_CTX, OLLAMA_GEN_NOTHINK, PASSWORD_HASH, PROMPT_TEMPLATES, _abort_event)
 import config
 from models import GenerateRequest, FilterRequest, ServiceMeetingRequest, RefineRequest
 from services.llm import call_llm, call_llm_stream, query_ollama
@@ -36,8 +35,8 @@ def filter_results(req: FilterRequest):
             items_text += f"\n[{i}] (점수:{item['score']}) {speaker}: {item['text'][:200]}"
         prompt = f"""다음은 연설 요점과 검색된 자료입니다.\n\n**요점**: {point_title}\n\n**검색 결과**:\n{items_text}\n\n각 검색 결과가 이 요점에 관련이 있는지 판단하세요.\n관련 없는 항목의 번호만 쉼표로 나열하세요.\n모두 관련 있으면 "없음"이라고 답하세요.\n번호만 답하세요."""
         try:
-            print(f"[필터] model={FILTER_MODEL}, think={'ON' if not OLLAMA_FILTER_NOTHINK else 'OFF'} (OLLAMA_FILTER_NOTHINK={OLLAMA_FILTER_NOTHINK})")
-            llm_response = query_ollama(prompt, system="당신은 JW 연설 자료의 관련성을 판단하는 전문가입니다. 번호만 간결하게 답하세요.", model_name=FILTER_MODEL, ctx=OLLAMA_FILTER_CTX, no_think=OLLAMA_FILTER_NOTHINK)
+            print(f"[필터] model={config.FILTER_MODEL}, think={'ON' if not config.OLLAMA_FILTER_NOTHINK else 'OFF'} (config.OLLAMA_FILTER_NOTHINK={config.OLLAMA_FILTER_NOTHINK})")
+            llm_response = query_ollama(prompt, system="당신은 JW 연설 자료의 관련성을 판단하는 전문가입니다. 번호만 간결하게 답하세요.", model_name=config.FILTER_MODEL, ctx=config.OLLAMA_FILTER_CTX, no_think=config.OLLAMA_FILTER_NOTHINK)
             exclude_ids = set()
             if "없음" not in llm_response:
                 numbers = re.findall(r"\d+", llm_response)
@@ -136,7 +135,7 @@ def _build_generate_prompt(req: GenerateRequest) -> str:
 {extra}
 
 ## 지침:
-{PROMPT_TEMPLATES['speech']}
+{config.PROMPT_TEMPLATES['speech']}
 """
 
 
@@ -152,7 +151,7 @@ def generate_speech(req: GenerateRequest):
     _verify_password(req.password)
     prompt = _build_generate_prompt(req)
     try:
-        result = call_llm(prompt, model=req.model, no_think=OLLAMA_GEN_NOTHINK)
+        result = call_llm(prompt, model=req.model, no_think=config.OLLAMA_GEN_NOTHINK)
         return {"speech": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM API 오류: {str(e)}")
@@ -165,16 +164,16 @@ def generate_speech_stream(req: GenerateRequest):
     prompt = _build_generate_prompt(req)
 
     def event_stream():
-        _abort_event.clear()
+        config._abort_event.clear()
         model_label = req.model or "기본"
-        think_label = "ON" if not OLLAMA_GEN_NOTHINK else "OFF"
-        print(f"[연설 생성] model={model_label}, think={think_label} (OLLAMA_GEN_NOTHINK={OLLAMA_GEN_NOTHINK})")
+        think_label = "ON" if not config.OLLAMA_GEN_NOTHINK else "OFF"
+        print(f"[연설 생성] model={model_label}, think={think_label} (config.OLLAMA_GEN_NOTHINK={config.OLLAMA_GEN_NOTHINK})")
         yield f"data: {json.dumps({'stage': 'preparing', 'progress': 10, 'message': '자료 정리 완료'})}\n\n"
         yield f"data: {json.dumps({'stage': 'calling', 'progress': 15, 'message': 'AI 호출 중 (' + model_label + ', 🧠' + think_label + ')'})}\n\n"
         full_text = ""
         char_count = 0
         try:
-            for chunk in call_llm_stream(prompt, model=req.model, no_think=OLLAMA_GEN_NOTHINK):
+            for chunk in call_llm_stream(prompt, model=req.model, no_think=config.OLLAMA_GEN_NOTHINK):
                 full_text += chunk
                 char_count += len(chunk)
                 progress = min(95, 20 + int(char_count / 50))
@@ -193,7 +192,7 @@ def generate_service_meeting(req: ServiceMeetingRequest):
     _verify_password(req.password)
     prompt = _build_service_meeting_prompt(req)
     try:
-        result = call_llm(prompt, model=req.model, no_think=OLLAMA_GEN_NOTHINK)
+        result = call_llm(prompt, model=req.model, no_think=config.OLLAMA_GEN_NOTHINK)
         return {"script": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -206,15 +205,15 @@ def generate_service_meeting_stream(req: ServiceMeetingRequest):
     prompt = _build_service_meeting_prompt(req)
 
     def event_stream():
-        _abort_event.clear()
+        config._abort_event.clear()
         model_label = req.model or "기본"
-        think_label = "ON" if not OLLAMA_GEN_NOTHINK else "OFF"
-        print(f"[생성] model={model_label}, think={think_label} (OLLAMA_GEN_NOTHINK={OLLAMA_GEN_NOTHINK})")
+        think_label = "ON" if not config.OLLAMA_GEN_NOTHINK else "OFF"
+        print(f"[생성] model={model_label}, think={think_label} (config.OLLAMA_GEN_NOTHINK={config.OLLAMA_GEN_NOTHINK})")
         yield f"data: {json.dumps({'stage': 'calling', 'progress': 15, 'message': 'AI 호출 중 (' + model_label + ', 🧠' + think_label + ')'})}\n\n"
         full_text = ""
         char_count = 0
         try:
-            for chunk in call_llm_stream(prompt, model=req.model, no_think=OLLAMA_GEN_NOTHINK):
+            for chunk in call_llm_stream(prompt, model=req.model, no_think=config.OLLAMA_GEN_NOTHINK):
                 full_text += chunk
                 char_count += len(chunk)
                 progress = min(95, 20 + int(char_count / 50))
@@ -261,7 +260,7 @@ def _build_service_meeting_prompt(req: ServiceMeetingRequest) -> str:
 {materials}
 
 ## 작성 지침:
-{PROMPT_TEMPLATES['visit']}
+{config.PROMPT_TEMPLATES['visit']}
 """
     else:
         return f"""당신은 여호와의 증인 회중의 봉사 모임 사회자입니다.
@@ -270,7 +269,7 @@ def _build_service_meeting_prompt(req: ServiceMeetingRequest) -> str:
 {materials}
 
 ## 작성 지침:
-{PROMPT_TEMPLATES['service_meeting']}
+{config.PROMPT_TEMPLATES['service_meeting']}
 """
 
 
@@ -282,7 +281,7 @@ def refine_speech(req: RefineRequest):
     instructions = req.instructions.strip() if req.instructions else "자연스럽게 다듬어 주세요"
     prompt = _build_refine_prompt(req.speech, instructions)
     try:
-        result = call_llm(prompt, model=req.model, no_think=OLLAMA_GEN_NOTHINK)
+        result = call_llm(prompt, model=req.model, no_think=config.OLLAMA_GEN_NOTHINK)
         return {"speech": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"API 오류: {str(e)}")
@@ -296,13 +295,13 @@ def refine_speech_stream(req: RefineRequest):
     prompt = _build_refine_prompt(req.speech, instructions)
 
     def event_stream():
-        _abort_event.clear()
+        config._abort_event.clear()
         model_label = req.model or "기본"
         yield f"data: {json.dumps({'stage': 'calling', 'progress': 15, 'message': '다듬기 중... (' + model_label + ')'})}\n\n"
         full_text = ""
         char_count = 0
         try:
-            for chunk in call_llm_stream(prompt, model=req.model, no_think=OLLAMA_GEN_NOTHINK):
+            for chunk in call_llm_stream(prompt, model=req.model, no_think=config.OLLAMA_GEN_NOTHINK):
                 full_text += chunk
                 char_count += len(chunk)
                 progress = min(95, 20 + int(char_count / 50))
@@ -325,5 +324,5 @@ def _build_refine_prompt(speech: str, instructions: str) -> str:
 {instructions}
 
 ## 주의:
-{PROMPT_TEMPLATES['refine']}
+{config.PROMPT_TEMPLATES['refine']}
 """

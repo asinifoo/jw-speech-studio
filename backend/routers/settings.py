@@ -6,7 +6,6 @@ import hashlib
 import requests
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from config import (ANTHROPIC_API_KEY, ANTHROPIC_API_VERSION, CHAT_MAX_TURNS, CHAT_SEARCH_TOP_K, DB_PATH, EMBED_MODEL, FILTER_MODEL, GEMINI_API_KEY, LLM_MODEL, OLLAMA_CHAT_CTX, OLLAMA_CHAT_NOTHINK, OLLAMA_FILTER_CTX, OLLAMA_FILTER_NOTHINK, OLLAMA_GEN_CTX, OLLAMA_GEN_NOTHINK, OLLAMA_URL, OPENAI_API_KEY, PASSWORD_HASH, PROMPT_TEMPLATES, _CATEGORIES_PATH, _CONFIG_PATH, _DEFAULT_PROMPTS, _config_keys, _load_config_keys, _save_config_keys)
 import config
 from models import (OllamaPullRequest, OllamaDeleteRequest, SaveKeysRequest, ChangePasswordRequest,
     ApiVersionsRequest, SetFilterModelRequest, SetOllamaCtxRequest, SetChatTurnsRequest,
@@ -20,14 +19,14 @@ _wol_filters = _load_wol_filters()
 
 @router.get("/api/health")
 def health():
-    return {"status": "ok", "db_path": DB_PATH, "llm_model": LLM_MODEL, "filter_model": FILTER_MODEL, "filter_ctx": OLLAMA_FILTER_CTX, "gen_ctx": OLLAMA_GEN_CTX, "chat_ctx": OLLAMA_CHAT_CTX, "filter_no_think": OLLAMA_FILTER_NOTHINK, "gen_no_think": OLLAMA_GEN_NOTHINK, "chat_no_think": OLLAMA_CHAT_NOTHINK, "chat_max_turns": CHAT_MAX_TURNS, "chat_search_top_k": CHAT_SEARCH_TOP_K, "search": "hybrid (semantic + BM25 + RRF)"}
+    return {"status": "ok", "db_path": config.DB_PATH, "llm_model": config.LLM_MODEL, "filter_model": config.FILTER_MODEL, "filter_ctx": config.OLLAMA_FILTER_CTX, "gen_ctx": config.OLLAMA_GEN_CTX, "chat_ctx": config.OLLAMA_CHAT_CTX, "filter_no_think": config.OLLAMA_FILTER_NOTHINK, "gen_no_think": config.OLLAMA_GEN_NOTHINK, "chat_no_think": config.OLLAMA_CHAT_NOTHINK, "chat_max_turns": config.CHAT_MAX_TURNS, "chat_search_top_k": config.CHAT_SEARCH_TOP_K, "search": "hybrid (semantic + BM25 + RRF)"}
 
 
 @router.get("/api/ollama/models")
 def ollama_models():
     """Ollama에 설치된 모델 목록"""
     try:
-        resp = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        resp = requests.get(f"{config.OLLAMA_URL}/api/tags", timeout=5)
         resp.raise_for_status()
         models = resp.json().get("models", [])
         return {"models": [{"name": m["name"], "size": m.get("size", 0)} for m in models]}
@@ -41,7 +40,7 @@ def ollama_pull(req: OllamaPullRequest):
     """Ollama 모델 pull (SSE 스트리밍)"""
     def event_stream():
         try:
-            resp = requests.post(f"{OLLAMA_URL}/api/pull",
+            resp = requests.post(f"{config.OLLAMA_URL}/api/pull",
                 json={"name": req.model, "stream": True},
                 timeout=600, stream=True)
             resp.raise_for_status()
@@ -70,12 +69,12 @@ def ollama_pull(req: OllamaPullRequest):
 @router.post("/api/ollama/delete")
 def ollama_delete(req: OllamaDeleteRequest):
     """Ollama 모델 삭제"""
-    if req.model == EMBED_MODEL:
-        raise HTTPException(status_code=400, detail=f"임베딩 모델 '{EMBED_MODEL}'은(는) 삭제할 수 없습니다")
-    if req.model == FILTER_MODEL:
-        raise HTTPException(status_code=400, detail=f"현재 LLM 필터 모델 '{FILTER_MODEL}'은(는) 사용 중이므로 삭제할 수 없습니다. 먼저 다른 모델로 변경하세요.")
+    if req.model == config.EMBED_MODEL:
+        raise HTTPException(status_code=400, detail=f"임베딩 모델 '{config.EMBED_MODEL}'은(는) 삭제할 수 없습니다")
+    if req.model == config.FILTER_MODEL:
+        raise HTTPException(status_code=400, detail=f"현재 LLM 필터 모델 '{config.FILTER_MODEL}'은(는) 사용 중이므로 삭제할 수 없습니다. 먼저 다른 모델로 변경하세요.")
     try:
-        resp = requests.delete(f"{OLLAMA_URL}/api/delete", json={"name": req.model}, timeout=30)
+        resp = requests.delete(f"{config.OLLAMA_URL}/api/delete", json={"name": req.model}, timeout=30)
         if resp.status_code == 404:
             raise HTTPException(status_code=404, detail=f"모델 '{req.model}'을(를) 찾을 수 없습니다")
         resp.raise_for_status()
@@ -93,9 +92,9 @@ def get_api_keys():
             return "***"
         return key[:4] + "..." + key[-4:]
     return {
-        "GEMINI_API_KEY": mask(GEMINI_API_KEY),
-        "ANTHROPIC_API_KEY": mask(ANTHROPIC_API_KEY),
-        "OPENAI_API_KEY": mask(OPENAI_API_KEY),
+        "GEMINI_API_KEY": mask(config.GEMINI_API_KEY),
+        "ANTHROPIC_API_KEY": mask(config.ANTHROPIC_API_KEY),
+        "OPENAI_API_KEY": mask(config.OPENAI_API_KEY),
     }
 
 
@@ -103,10 +102,9 @@ def get_api_keys():
 @router.post("/api/settings/keys")
 def save_api_keys(req: SaveKeysRequest):
     """API 키 저장 (비밀번호 필요)"""
-    global GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY
     _verify_password(req.password)
 
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     for k in ["GEMINI_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"]:
         if k in req.keys and req.keys[k] is not None:
             val = req.keys[k].strip()
@@ -114,12 +112,12 @@ def save_api_keys(req: SaveKeysRequest):
                 existing[k] = val
             else:
                 existing.pop(k, None)
-    _save_config_keys(existing)
+    config._save_config_keys(existing)
 
     # 런타임에도 즉시 반영
-    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "") or existing.get("GEMINI_API_KEY", "")
-    ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "") or existing.get("ANTHROPIC_API_KEY", "")
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "") or existing.get("OPENAI_API_KEY", "")
+    config.GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "") or existing.get("GEMINI_API_KEY", "")
+    config.ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "") or existing.get("ANTHROPIC_API_KEY", "")
+    config.OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "") or existing.get("OPENAI_API_KEY", "")
 
     return {"status": "저장 완료"}
 
@@ -128,13 +126,11 @@ def save_api_keys(req: SaveKeysRequest):
 @router.post("/api/settings/password")
 def change_password(req: ChangePasswordRequest):
     """비밀번호 변경"""
-    global PASSWORD_HASH
-
     # 비밀번호가 이미 설정된 경우 현재 비밀번호 확인
-    if PASSWORD_HASH:
+    if config.PASSWORD_HASH:
         if not req.current_password:
             raise HTTPException(status_code=400, detail="현재 비밀번호를 입력하세요")
-        if hashlib.sha256(req.current_password.encode()).hexdigest() != PASSWORD_HASH:
+        if hashlib.sha256(req.current_password.encode()).hexdigest() != config.PASSWORD_HASH:
             raise HTTPException(status_code=403, detail="현재 비밀번호가 올바르지 않습니다")
 
     if not req.new_password or len(req.new_password) < 4:
@@ -143,198 +139,193 @@ def change_password(req: ChangePasswordRequest):
     new_hash = hashlib.sha256(req.new_password.encode()).hexdigest()
 
     # config 파일에 저장
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     existing["PASSWORD_HASH"] = new_hash
-    _save_config_keys(existing)
+    config._save_config_keys(existing)
 
     # 런타임 반영
-    PASSWORD_HASH = new_hash
+    config.PASSWORD_HASH = new_hash
     return {"status": "비밀번호가 변경되었습니다"}
 
 
 @router.get("/api/settings/password-status")
 def password_status():
     """비밀번호 설정 상태"""
-    return {"has_password": bool(PASSWORD_HASH)}
+    return {"has_password": bool(config.PASSWORD_HASH)}
 
 @router.get("/api/settings/api-versions")
 def get_api_versions():
     """API 버전 조회"""
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     return {"anthropic": existing.get("ANTHROPIC_API_VERSION", "2023-06-01")}
 
 
 @router.post("/api/settings/api-versions")
 def save_api_versions(req: ApiVersionsRequest):
     """API 버전 저장"""
-    global ANTHROPIC_API_VERSION
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     if req.anthropic:
         existing["ANTHROPIC_API_VERSION"] = req.anthropic
-        ANTHROPIC_API_VERSION = req.anthropic
-    _save_config_keys(existing)
+        config.ANTHROPIC_API_VERSION = req.anthropic
+    config._save_config_keys(existing)
     return {"status": "저장 완료"}
 
 
 @router.get("/api/settings/filter-model")
 def get_filter_model():
     """LLM 필터 모델 조회"""
-    return {"filter_model": FILTER_MODEL}
+    return {"filter_model": config.FILTER_MODEL}
 
 
 
 @router.post("/api/settings/filter-model")
 def set_filter_model(req: SetFilterModelRequest):
     """LLM 필터 모델 변경"""
-    global FILTER_MODEL
-    FILTER_MODEL = req.model.strip() or LLM_MODEL
-    existing = _load_config_keys()
-    existing["FILTER_MODEL"] = FILTER_MODEL
-    _save_config_keys(existing)
-    return {"status": "변경 완료", "filter_model": FILTER_MODEL}
+    config.FILTER_MODEL = req.model.strip() or config.LLM_MODEL
+    existing = config._load_config_keys()
+    existing["FILTER_MODEL"] = config.FILTER_MODEL
+    config._save_config_keys(existing)
+    return {"status": "변경 완료", "filter_model": config.FILTER_MODEL}
 
 
 @router.get("/api/settings/ollama-ctx")
 def get_ollama_ctx():
-    return {"filter_ctx": OLLAMA_FILTER_CTX, "gen_ctx": OLLAMA_GEN_CTX, "chat_ctx": OLLAMA_CHAT_CTX}
+    return {"filter_ctx": config.OLLAMA_FILTER_CTX, "gen_ctx": config.OLLAMA_GEN_CTX, "chat_ctx": config.OLLAMA_CHAT_CTX}
 
 
 
 @router.post("/api/settings/ollama-ctx")
 def set_ollama_ctx(req: SetOllamaCtxRequest):
-    global OLLAMA_FILTER_CTX, OLLAMA_GEN_CTX, OLLAMA_CHAT_CTX
     if req.ctx < 2048:
         raise HTTPException(status_code=400, detail="최소 2048 이상이어야 합니다")
     if req.ctx > 262144:
         raise HTTPException(status_code=400, detail="최대 262144 이하여야 합니다")
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     if req.target == "gen":
-        OLLAMA_GEN_CTX = req.ctx
-        existing["OLLAMA_GEN_CTX"] = OLLAMA_GEN_CTX
+        config.OLLAMA_GEN_CTX = req.ctx
+        existing["OLLAMA_GEN_CTX"] = config.OLLAMA_GEN_CTX
     elif req.target == "chat":
-        OLLAMA_CHAT_CTX = req.ctx
-        existing["OLLAMA_CHAT_CTX"] = OLLAMA_CHAT_CTX
+        config.OLLAMA_CHAT_CTX = req.ctx
+        existing["OLLAMA_CHAT_CTX"] = config.OLLAMA_CHAT_CTX
     else:
-        OLLAMA_FILTER_CTX = req.ctx
-        existing["OLLAMA_FILTER_CTX"] = OLLAMA_FILTER_CTX
-    _save_config_keys(existing)
-    return {"status": "변경 완료", "filter_ctx": OLLAMA_FILTER_CTX, "gen_ctx": OLLAMA_GEN_CTX, "chat_ctx": OLLAMA_CHAT_CTX}
+        config.OLLAMA_FILTER_CTX = req.ctx
+        existing["OLLAMA_FILTER_CTX"] = config.OLLAMA_FILTER_CTX
+    config._save_config_keys(existing)
+    return {"status": "변경 완료", "filter_ctx": config.OLLAMA_FILTER_CTX, "gen_ctx": config.OLLAMA_GEN_CTX, "chat_ctx": config.OLLAMA_CHAT_CTX}
 
 
 @router.get("/api/settings/chat-turns")
 def get_chat_turns():
-    return {"chat_max_turns": CHAT_MAX_TURNS, "chat_search_top_k": CHAT_SEARCH_TOP_K}
+    return {"chat_max_turns": config.CHAT_MAX_TURNS, "chat_search_top_k": config.CHAT_SEARCH_TOP_K}
 
 
 @router.post("/api/settings/chat-turns")
 def set_chat_turns(req: SetChatTurnsRequest):
-    global CHAT_MAX_TURNS, CHAT_SEARCH_TOP_K
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     if req.turns > 0:
         if req.turns < 2:
             raise HTTPException(status_code=400, detail="최소 2턴 이상이어야 합니다")
         if req.turns > 50:
             raise HTTPException(status_code=400, detail="최대 50턴 이하여야 합니다")
-        CHAT_MAX_TURNS = req.turns
+        config.CHAT_MAX_TURNS = req.turns
         existing["CHAT_MAX_TURNS"] = req.turns
     if req.top_k > 0:
         if req.top_k < 3:
             raise HTTPException(status_code=400, detail="최소 3건 이상이어야 합니다")
         if req.top_k > 30:
             raise HTTPException(status_code=400, detail="최대 30건 이하여야 합니다")
-        CHAT_SEARCH_TOP_K = req.top_k
+        config.CHAT_SEARCH_TOP_K = req.top_k
         existing["CHAT_SEARCH_TOP_K"] = req.top_k
-    _save_config_keys(existing)
-    return {"status": "변경 완료", "chat_max_turns": CHAT_MAX_TURNS, "chat_search_top_k": CHAT_SEARCH_TOP_K}
+    config._save_config_keys(existing)
+    return {"status": "변경 완료", "chat_max_turns": config.CHAT_MAX_TURNS, "chat_search_top_k": config.CHAT_SEARCH_TOP_K}
 
 
 @router.get("/api/settings/ollama-think")
 def get_ollama_think():
-    return {"filter_no_think": OLLAMA_FILTER_NOTHINK, "gen_no_think": OLLAMA_GEN_NOTHINK, "chat_no_think": OLLAMA_CHAT_NOTHINK}
+    return {"filter_no_think": config.OLLAMA_FILTER_NOTHINK, "gen_no_think": config.OLLAMA_GEN_NOTHINK, "chat_no_think": config.OLLAMA_CHAT_NOTHINK}
 
 
 
 @router.post("/api/settings/ollama-think")
 def set_ollama_think(req: SetOllamaThinkRequest):
-    global OLLAMA_FILTER_NOTHINK, OLLAMA_GEN_NOTHINK, OLLAMA_CHAT_NOTHINK
-    print(f"[Think 변경] target={req.target}, no_think={req.no_think} (변경 전: filter={OLLAMA_FILTER_NOTHINK}, gen={OLLAMA_GEN_NOTHINK}, chat={OLLAMA_CHAT_NOTHINK})")
-    existing = _load_config_keys()
+    print(f"[Think 변경] target={req.target}, no_think={req.no_think} (변경 전: filter={config.OLLAMA_FILTER_NOTHINK}, gen={config.OLLAMA_GEN_NOTHINK}, chat={config.OLLAMA_CHAT_NOTHINK})")
+    existing = config._load_config_keys()
     if req.target == "gen":
-        OLLAMA_GEN_NOTHINK = req.no_think
+        config.OLLAMA_GEN_NOTHINK = req.no_think
         existing["OLLAMA_GEN_NOTHINK"] = req.no_think
     elif req.target == "chat":
-        OLLAMA_CHAT_NOTHINK = req.no_think
+        config.OLLAMA_CHAT_NOTHINK = req.no_think
         existing["OLLAMA_CHAT_NOTHINK"] = req.no_think
     else:
-        OLLAMA_FILTER_NOTHINK = req.no_think
+        config.OLLAMA_FILTER_NOTHINK = req.no_think
         existing["OLLAMA_FILTER_NOTHINK"] = req.no_think
-    _save_config_keys(existing)
-    print(f"[Think 변경 완료] filter={OLLAMA_FILTER_NOTHINK}, gen={OLLAMA_GEN_NOTHINK}, chat={OLLAMA_CHAT_NOTHINK}")
-    return {"status": "변경 완료", "filter_no_think": OLLAMA_FILTER_NOTHINK, "gen_no_think": OLLAMA_GEN_NOTHINK, "chat_no_think": OLLAMA_CHAT_NOTHINK}
+    config._save_config_keys(existing)
+    print(f"[Think 변경 완료] filter={config.OLLAMA_FILTER_NOTHINK}, gen={config.OLLAMA_GEN_NOTHINK}, chat={config.OLLAMA_CHAT_NOTHINK}")
+    return {"status": "변경 완료", "filter_no_think": config.OLLAMA_FILTER_NOTHINK, "gen_no_think": config.OLLAMA_GEN_NOTHINK, "chat_no_think": config.OLLAMA_CHAT_NOTHINK}
 
 
 @router.get("/api/settings/ai-models")
 def get_ai_models():
     """AI 모델 목록 + 기본 모델 조회"""
-    config = _load_config_keys()
+    existing = config._load_config_keys()
     return {
-        "models": config.get("AI_MODELS", None),
-        "default": config.get("AI_DEFAULT", None),
-        "chat_default": config.get("AI_CHAT_DEFAULT", None),
+        "models": existing.get("AI_MODELS", None),
+        "default": existing.get("AI_DEFAULT", None),
+        "chat_default": existing.get("AI_CHAT_DEFAULT", None),
     }
 
 
 @router.post("/api/settings/ai-models")
 def save_ai_models(req: SaveAiModelsRequest):
     """AI 모델 목록 + 기본 모델 저장"""
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     if req.models is not None:
         existing["AI_MODELS"] = req.models
     if req.default is not None:
         existing["AI_DEFAULT"] = req.default
     if req.chat_default is not None:
         existing["AI_CHAT_DEFAULT"] = req.chat_default
-    _save_config_keys(existing)
+    config._save_config_keys(existing)
     return {"status": "저장 완료"}
 
 
 @router.get("/api/settings/prompts")
 def get_prompts():
-    config = _load_config_keys()
-    saved_defaults = {k: config.get(f"PROMPT_SAVED_{k.upper()}", v) for k, v in _DEFAULT_PROMPTS.items()}
-    return {"prompts": PROMPT_TEMPLATES, "defaults": saved_defaults, "original_defaults": _DEFAULT_PROMPTS}
+    existing = config._load_config_keys()
+    saved_defaults = {k: existing.get(f"PROMPT_SAVED_{k.upper()}", v) for k, v in config._DEFAULT_PROMPTS.items()}
+    return {"prompts": config.PROMPT_TEMPLATES, "defaults": saved_defaults, "original_defaults": config._DEFAULT_PROMPTS}
 
 
 
 @router.post("/api/settings/prompts")
 def set_prompt(req: SetPromptRequest):
-    if req.key not in _DEFAULT_PROMPTS:
+    if req.key not in config._DEFAULT_PROMPTS:
         raise HTTPException(status_code=400, detail=f"잘못된 키: {req.key}")
-    PROMPT_TEMPLATES[req.key] = req.prompt
-    existing = _load_config_keys()
+    config.PROMPT_TEMPLATES[req.key] = req.prompt
+    existing = config._load_config_keys()
     existing[f"PROMPT_{req.key.upper()}"] = req.prompt
-    _save_config_keys(existing)
+    config._save_config_keys(existing)
     return {"status": "저장 완료", "key": req.key}
 
 @router.post("/api/settings/prompts/reset")
 def reset_prompt(req: SetPromptRequest):
-    if req.key not in _DEFAULT_PROMPTS:
+    if req.key not in config._DEFAULT_PROMPTS:
         raise HTTPException(status_code=400, detail=f"잘못된 키: {req.key}")
-    config = _load_config_keys()
-    saved = config.get(f"PROMPT_SAVED_{req.key.upper()}", _DEFAULT_PROMPTS[req.key])
-    PROMPT_TEMPLATES[req.key] = saved
-    config.pop(f"PROMPT_{req.key.upper()}", None)
-    _save_config_keys(config)
+    existing = config._load_config_keys()
+    saved = existing.get(f"PROMPT_SAVED_{req.key.upper()}", config._DEFAULT_PROMPTS[req.key])
+    config.PROMPT_TEMPLATES[req.key] = saved
+    existing.pop(f"PROMPT_{req.key.upper()}", None)
+    config._save_config_keys(existing)
     return {"status": "초기화 완료", "key": req.key}
 
 @router.post("/api/settings/prompts/save-default")
 def save_prompt_default(req: SetPromptRequest):
     """현재 프롬프트를 커스텀 기본값으로 저장 (초기화 시 이 값으로 복원)"""
-    if req.key not in _DEFAULT_PROMPTS:
+    if req.key not in config._DEFAULT_PROMPTS:
         raise HTTPException(status_code=400, detail=f"잘못된 키: {req.key}")
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     existing[f"PROMPT_SAVED_{req.key.upper()}"] = req.prompt
-    _save_config_keys(existing)
+    config._save_config_keys(existing)
     return {"status": "기본값 저장 완료", "key": req.key}
 
 
@@ -342,7 +333,7 @@ def save_prompt_default(req: SetPromptRequest):
 @router.get("/api/settings/presets/{key}")
 def get_presets(key: str):
     """프리셋 목록 + 체크 상태 조회"""
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     presets_key = f"PRESETS_{key.upper()}"
     checked_key = f"PRESETS_{key.upper()}_CHECKED"
     return {
@@ -354,12 +345,12 @@ def get_presets(key: str):
 @router.post("/api/settings/presets/{key}")
 def save_presets(key: str, req: PresetsRequest):
     """프리셋 목록 + 체크 상태 저장"""
-    existing = _load_config_keys()
+    existing = config._load_config_keys()
     presets_key = f"PRESETS_{key.upper()}"
     checked_key = f"PRESETS_{key.upper()}_CHECKED"
     existing[presets_key] = req.presets
     existing[checked_key] = req.checked
-    _save_config_keys(existing)
+    config._save_config_keys(existing)
     return {"status": "저장 완료"}
 
 @router.get("/api/wol/filters")
@@ -433,9 +424,9 @@ def get_categories():
         "visit_targets": ["청소년", "청년", "중년", "장년"],
         "visit_situations": ["일반", "건강", "낙담", "바쁨"],
     }
-    if os.path.exists(_CATEGORIES_PATH):
+    if os.path.exists(config._CATEGORIES_PATH):
         try:
-            with open(_CATEGORIES_PATH, "r", encoding="utf-8") as f:
+            with open(config._CATEGORIES_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             pass
@@ -445,7 +436,7 @@ def get_categories():
 @router.post("/api/categories")
 def save_categories(req: dict):
     """카테고리 수정"""
-    with open(_CATEGORIES_PATH, "w", encoding="utf-8") as f:
+    with open(config._CATEGORIES_PATH, "w", encoding="utf-8") as f:
         json.dump(req, f, ensure_ascii=False, indent=2)
     return {"status": "ok"}
 
