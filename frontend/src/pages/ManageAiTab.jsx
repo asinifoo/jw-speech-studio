@@ -649,6 +649,8 @@ export default function ManageAiTab() {
                   { key: 'visit', label: '방문', color: 'var(--accent-purple)' },
                   { key: 'refine', label: '다듬기', color: 'var(--c-sub)' },
                   { key: 'style_both', label: '스타일 지시', color: 'var(--accent-purple)' },
+                  { key: 'stt_local_cleanup', label: 'STT 로컬 LLM 교정', color: 'var(--accent-brown)' },
+                  { key: 'stt_correction', label: 'STT 클라우드 LLM 교정', color: 'var(--accent-blue)' },
                 ].map(({ key, label, color }) => {
                   const isModified = promptEdits[key] !== promptData.defaults[key];
                   const hasCustomDefault = promptData.original_defaults && promptData.defaults[key] !== promptData.original_defaults[key];
