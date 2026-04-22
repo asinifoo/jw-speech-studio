@@ -2,6 +2,7 @@ import KoreanTextarea from '../../../components/KoreanTextarea';
 import { cleanMd } from '../../../components/utils';
 import { parseScriptures } from './helpers';
 import PublicationBadge from './PublicationBadge';
+import VerseBadge from './VerseBadge';
 
 export default function OutlineQuickEditor({
   subtopics,
@@ -45,11 +46,7 @@ export default function OutlineQuickEditor({
                 <div key={pi} style={{ fontSize: '0.786rem', color: 'var(--c-faint)', padding: '3px 0', borderBottom: pi < points.length - 1 ? '1px solid var(--bd-light)' : 'none' }}>
                   <span style={{ fontWeight: 600, color: 'var(--c-text)' }}>{pt.point_num}</span> {cleanMd(pt.content)}
                   {hasScr && (<>
-                    <span onClick={(e) => { e.stopPropagation(); onVerseToggle(qPtKey, pt.scriptures); }} style={{
-                      display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
-                      background: verseOpen[qPtKey] ? 'var(--accent-purple)' : '#7F77DD0A', color: verseOpen[qPtKey] ? '#fff' : 'var(--accent-purple)', fontWeight: 600, whiteSpace: 'nowrap',
-                      transition: 'all 0.15s',
-                    }}>📖 {scr}</span>
+                    <VerseBadge open={verseOpen[qPtKey]} scr={scr} onClick={(e) => { e.stopPropagation(); onVerseToggle(qPtKey, pt.scriptures); }} />
                     <span onClick={(e) => { e.stopPropagation(); const nv = qSu === '낭독' ? '' : '낭독'; onDetailsChange(p => ({ ...p, [qPtKey]: { ...p[qPtKey], scripture_usage: nv } })); }} style={{
                       display: 'inline-block', marginLeft: 2, padding: '1px 5px', borderRadius: 4, fontSize: '0.571rem', cursor: 'pointer',
                       background: qSu === '낭독' ? 'var(--accent-orange)' : 'var(--bg-subtle, #EFEFF4)', color: qSu === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,

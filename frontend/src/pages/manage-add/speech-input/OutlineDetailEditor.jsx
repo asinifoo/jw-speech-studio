@@ -2,6 +2,7 @@ import KoreanTextarea from '../../../components/KoreanTextarea';
 import { cleanMd } from '../../../components/utils';
 import { parseScriptures } from './helpers';
 import PublicationBadge from './PublicationBadge';
+import VerseBadge from './VerseBadge';
 
 export default function OutlineDetailEditor({
   subtopics,
@@ -43,11 +44,7 @@ export default function OutlineDetailEditor({
                       {pt.point_num}. {cleanMd(pt.content)}
                       {(() => { const { scr, hasPub, hasScr } = parseScriptures(pt.scriptures); return (<>
                         {hasScr && (<>
-                          <span onClick={() => onVerseToggle(ptKey, pt.scriptures)} style={{
-                            display: 'inline-block', marginLeft: 4, padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', cursor: 'pointer',
-                            background: verseOpen[ptKey] ? 'var(--accent-purple)' : '#7F77DD0A', color: verseOpen[ptKey] ? '#fff' : 'var(--accent-purple)', fontWeight: 600, whiteSpace: 'nowrap',
-                            transition: 'all 0.15s',
-                          }}>📖 {scr}</span>
+                          <VerseBadge open={verseOpen[ptKey]} scr={scr} onClick={() => onVerseToggle(ptKey, pt.scriptures)} />
                           <span onClick={() => { const nv = (d.scripture_usage || '') === '낭독' ? '' : '낭독'; upd('scripture_usage', nv); }} style={{
                             display: 'inline-block', marginLeft: 2, padding: '1px 5px', borderRadius: 4, fontSize: '0.571rem', cursor: 'pointer',
                             background: d.scripture_usage === '낭독' ? 'var(--accent-orange)' : 'var(--bg-subtle, #EFEFF4)', color: d.scripture_usage === '낭독' ? '#fff' : 'var(--c-dim)', fontWeight: 600,
