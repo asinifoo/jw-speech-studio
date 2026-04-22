@@ -2759,7 +2759,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         <ManageSpeechInput
           siTransferTick={siTransferTick}
           outlines={outlines}
-          subtopics={subtopics}
         />
       )}
 
