@@ -3,8 +3,10 @@ import { S } from '../../styles';
 import { draftSave } from '../../api';
 import { quickFormDefault } from '../../utils/formDefaults';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
+import { useConfirm } from '../../providers/ConfirmProvider';
 
 export default function ManageQuickInput() {
+  const showConfirm = useConfirm();
   const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-quick-form')) || quickFormDefault; } catch { return quickFormDefault; } });
   useEffect(() => { try { localStorage.setItem('jw-quick-form', JSON.stringify(qiForm)); } catch {} }, [qiForm]);
   const [qiSaving, setQiSaving] = useState(false);
@@ -143,8 +145,8 @@ export default function ManageQuickInput() {
 
       {/* [초기화] + 저장 버튼 */}
       <div style={{ display: 'flex', gap: 6 }}>
-        <button onClick={() => {
-          if (!confirm(RESET_CONFIRM_MSG)) return;
+        <button onClick={async () => {
+          if (!await showConfirm(RESET_CONFIRM_MSG)) return;
           setQiForm(quickFormDefault);
           setQiEditingOutlineNum('');
           setQiSaveMsg('');

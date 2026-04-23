@@ -172,9 +172,9 @@ export default function ManagePreprocessTab() {
   };
 
   // ── 되돌리기 ──
-  const revertPreproc = () => {
+  const revertPreproc = async () => {
     if (!preprocOriginal) return;
-    if (!window.confirm('변경 사항을 모두 취소하고 마지막 저장 상태로 되돌리시겠습니까?')) return;
+    if (!await showConfirm('변경 사항을 모두 취소하고 마지막 저장 상태로 되돌리시겠습니까?', { confirmVariant: 'danger' })) return;
     setPreprocData(JSON.parse(JSON.stringify(preprocOriginal)));
     setPreprocDirty(false);
     setPreprocSelected({});

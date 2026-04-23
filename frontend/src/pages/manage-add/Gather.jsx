@@ -679,9 +679,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     setSttReviewStatus('');
   };
 
-  const exitSttReview = () => {
+  const exitSttReview = async () => {
     if (sttReviewCorrecting) {
-      if (!window.confirm('교정이 진행 중입니다. 정말 나가시겠습니까?')) return;
+      if (!await showConfirm('교정이 진행 중입니다. 정말 나가시겠습니까?', { confirmVariant: 'danger' })) return;
     }
     setSttReviewJob(null);
     setSttReviewStatus('');
@@ -1742,7 +1742,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       const f = e.target.files && e.target.files[0];
                       e.target.value = '';
                       if (!f) return;
-                      if (txtContent && txtContent.trim() && !window.confirm('기존 입력 내용을 DOCX 내용으로 덮어씁니다. 계속하시겠습니까?')) return;
+                      if (txtContent && txtContent.trim() && !await showConfirm('기존 입력 내용을 DOCX 내용으로 덮어씁니다. 계속하시겠습니까?')) return;
                       setTxtDocxLoading(true); setTxtResult('');
                       try {
                         const { text, meta } = await docxToText(f);
@@ -1965,8 +1965,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       flex: 1, padding: '8px 0', borderRadius: 8, border: 'none',
                       background: 'var(--accent)', color: '#fff', fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
                     }}>파싱</button>
-                    <button onClick={() => {
-                      if (!confirm(RESET_CONFIRM_MSG)) return;
+                    <button onClick={async () => {
+                      if (!await showConfirm(RESET_CONFIRM_MSG)) return;
                       setTxtContent('');
                       setTxtParsed([]);
                       setTxtResult('');
@@ -2140,7 +2140,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           };
                           const dupCheck = await checkDuplicates({ files: [{ ...payload.files[0], file_format: 'outline' }] });
                           if (dupCheck.has_duplicates) {
-                            if (!window.confirm(dupCheck.duplicates.map(d => d.message).join('\n'))) { setTxtSaving(false); return; }
+                            if (!await showConfirm(dupCheck.duplicates.map(d => d.message).join('\n'), { confirmVariant: 'danger' })) { setTxtSaving(false); return; }
                             payload.overwrite = true;
                           }
                           const res = await saveOutline(payload);
@@ -2285,8 +2285,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => {
-                    if (!confirm(RESET_CONFIRM_MSG)) return;
+                  <button onClick={async () => {
+                    if (!await showConfirm(RESET_CONFIRM_MSG)) return;
                     setPubForm(pubFormDefault);
                   }} style={{
                     padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',

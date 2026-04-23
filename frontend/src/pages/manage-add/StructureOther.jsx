@@ -3,6 +3,7 @@ import { S } from '../../styles';
 import { saveCategories, deleteServiceType } from '../../api';
 import { discFormDefault, svcFormDefault, visitFormDefault } from '../../utils/formDefaults';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
+import { useConfirm } from '../../providers/ConfirmProvider';
 
 const RESET_BTN_STYLE = {
   padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',
@@ -20,9 +21,10 @@ export default function ManageStructureOther({
   catEditing, setCatEditing,
   catNewVal, setCatNewVal,
 }) {
-  const handleDiscReset = () => { if (!confirm(RESET_CONFIRM_MSG)) return; setDiscForm(discFormDefault); };
-  const handleSvcReset = () => { if (!confirm(RESET_CONFIRM_MSG)) return; setSvcForm(svcFormDefault); };
-  const handleVisitReset = () => { if (!confirm(RESET_CONFIRM_MSG)) return; setVisitForm(visitFormDefault); };
+  const showConfirm = useConfirm();
+  const handleDiscReset = async () => { if (!await showConfirm(RESET_CONFIRM_MSG)) return; setDiscForm(discFormDefault); };
+  const handleSvcReset = async () => { if (!await showConfirm(RESET_CONFIRM_MSG)) return; setSvcForm(svcFormDefault); };
+  const handleVisitReset = async () => { if (!await showConfirm(RESET_CONFIRM_MSG)) return; setVisitForm(visitFormDefault); };
 
   return (<>
           {structureMode === 'discussion' && (<>

@@ -4,6 +4,7 @@ import { S } from '../../styles';
 import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../../api';
 import { cleanMd } from '../../components/utils';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
+import { useConfirm } from '../../providers/ConfirmProvider';
 import OriginalBlock from './speech-input/OriginalBlock';
 import SaveActions from './speech-input/SaveActions';
 import OutlineSelectorBar from './speech-input/OutlineSelectorBar';
@@ -16,6 +17,7 @@ const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech
 const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
 
 export default function ManageSpeechInput({ siTransferTick, outlines }) {
+  const showConfirm = useConfirm();
 
   // ── si* state (33개) ──
   const [siOutline, setSiOutline] = useState(_siInit.outline || null);
@@ -243,7 +245,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   };
 
   const handleDiscardDraft = async () => {
-    if (!confirm('기존 데이터가 삭제됩니다. 새로 만드시겠습니까?')) return;
+    if (!await showConfirm('기존 데이터가 삭제됩니다. 새로 만드시겠습니까?', { confirmVariant: 'danger' })) return;
     await draftDelete(siDraftInfo.draft_id);
     setSiNotes({}); setSiDetails({}); setSiExpanded({});
     setSiDraftInfo(null);
@@ -398,8 +400,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     finally { setSiCompleting(false); }
   };
 
-  const handleReset = () => {
-    if (!confirm(RESET_CONFIRM_MSG)) return;
+  const handleReset = async () => {
+    if (!await showConfirm(RESET_CONFIRM_MSG)) return;
     setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiSpeaker(''); setSiDate(_siDateDefault);
     setSiMode('quick'); setSiExpanded({}); setSiNotes({}); setSiDetails({});
     setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사'); siDraftLoadedRef.current = false;
@@ -408,7 +410,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     try { localStorage.removeItem('jw-speech-state'); } catch {}
   };
 
-  const handleToggleMode = (isFree) => {
+  const handleToggleMode = async (isFree) => {
     if (isFree === siNoOutline) return;
     const hasOrigin = !!siSttOriginalText;
     // 데이터 손실 경고 — 빈 상태면 confirm 생략
@@ -419,7 +421,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
         const msg = '자유 입력으로 전환하면 선택한 골자와 입력 내용(간단/상세)이 삭제됩니다.'
           + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
           + '\n계속하시겠습니까?';
-        if (!window.confirm(msg)) return;
+        if (!await showConfirm(msg, { confirmVariant: 'danger' })) return;
       }
     } else {
       // 자유 → 골자: 자유 구조 (주제/자유구조/소주제/요점) 삭제됨
@@ -431,7 +433,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
         const msg = '골자 선택으로 전환하면 입력한 자유 구조(주제, 소주제, 요점)가 삭제됩니다.'
           + (hasOrigin ? '\n원본 텍스트는 유지됩니다.' : '')
           + '\n계속하시겠습니까?';
-        if (!window.confirm(msg)) return;
+        if (!await showConfirm(msg, { confirmVariant: 'danger' })) return;
       }
     }
     setSiNoOutline(isFree);
