@@ -122,6 +122,16 @@ export default function SttCorrectionDiff({
 
   return (
     <div style={{ padding: 16 }}>
+      {preprocDirty && (
+        <div style={{
+          padding: 12, marginBottom: 12, borderRadius: 6,
+          background: 'var(--tint-orange)',
+          border: '1px solid var(--accent-orange)',
+          color: 'var(--c-text)', fontSize: '0.786rem', lineHeight: 1.5,
+        }}>
+          ⚠️ [관리] &gt; [전처리] 에 저장 안 한 변경이 있습니다. 사전 추가 전에 먼저 저장하세요.
+        </div>
+      )}
       <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 12 }}>
         총 <b>{stats.total}</b>건
         {variantIndex && (
@@ -197,16 +207,18 @@ export default function SttCorrectionDiff({
                   {canAdd && (
                     <button
                       onClick={() => setExpanded(e => ({ ...e, [pairKey]: !isExpanded }))}
-                      disabled={isAdding}
-                      style={btnStyle('accent', isAdding)}>
+                      disabled={isAdding || preprocDirty}
+                      title={preprocDirty ? '[관리] > [전처리] 에 저장 안 한 변경이 있습니다.' : undefined}
+                      style={btnStyle('accent', isAdding || preprocDirty)}>
                       {isExpanded ? '접기' : '+ 사전 추가'}
                     </button>
                   )}
                   {canAdd && (
                     <button
                       onClick={() => handleAddSkipWord(pair, pairKey)}
-                      disabled={isAdding}
-                      style={btnStyle('danger', isAdding)}>
+                      disabled={isAdding || preprocDirty}
+                      title={preprocDirty ? '[관리] > [전처리] 에 저장 안 한 변경이 있습니다.' : undefined}
+                      style={btnStyle('danger', isAdding || preprocDirty)}>
                       영구 거부
                     </button>
                   )}
@@ -267,8 +279,9 @@ export default function SttCorrectionDiff({
                     </button>
                     <button
                       onClick={() => handleAddVariant(pair, pairKey, curSection, curTarget)}
-                      disabled={isAdding}
-                      style={btnStyle('accent', isAdding)}>
+                      disabled={isAdding || preprocDirty}
+                      title={preprocDirty ? '[관리] > [전처리] 에 저장 안 한 변경이 있습니다.' : undefined}
+                      style={btnStyle('accent', isAdding || preprocDirty)}>
                       {isAdding ? '추가 중…' : '확인'}
                     </button>
                   </div>

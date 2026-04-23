@@ -416,6 +416,20 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     if (!sttReviewJob?.parsed_text || !sttReviewJob?.cloud_text) return 0;
     return computeDiffPairs(sttReviewJob.parsed_text, sttReviewJob.cloud_text).length;
   }, [sttReviewJob?.parsed_text, sttReviewJob?.cloud_text]);
+  // ── preprocDirty 폴링 (Level 1.5 Phase 4) ──
+  const [preprocDirtyFlag, setPreprocDirtyFlag] = useState(() => {
+    try { return localStorage.getItem('jw-preproc-dirty') === '1'; } catch { return false; }
+  });
+  useEffect(() => {
+    if (!sttReviewJob) return;
+    const check = () => {
+      try { setPreprocDirtyFlag(localStorage.getItem('jw-preproc-dirty') === '1'); } catch {}
+    };
+    check();
+    const id = setInterval(check, 2000);
+    window.addEventListener('storage', check);
+    return () => { clearInterval(id); window.removeEventListener('storage', check); };
+  }, [sttReviewJob]);
   useEffect(() => {
     if (!sttReviewPersistMountedRef.current) { sttReviewPersistMountedRef.current = true; return; }
     if (sttReviewJob?.job_id) {
@@ -1607,7 +1621,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                             cloudText={sttReviewJob.cloud_text || ''}
                             corrections={sttCorrectionsData}
                             jobId={sttReviewJob.job_id || ''}
-                            preprocDirty={false}
+                            preprocDirty={preprocDirtyFlag}
                             onVariantAdded={() => sttCorrectionsGet().then(r => setSttCorrectionsData(r.data || null)).catch(() => {})}
                             showAlert={showAlert}
                             showConfirm={showConfirm}
