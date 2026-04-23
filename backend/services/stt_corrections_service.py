@@ -407,7 +407,9 @@ def add_variants(
             group = g
             break
     if not group:
-        raise ValueError(f"target not found in section {section_id}: {target}")
+        # 신규 target 그룹 자동 생성 (Level 1.5 실사용 — 신규 target 비율 높음)
+        group = {"target": target, "errors": []}
+        section.setdefault("groups", []).append(group)
 
     existing_texts = {e.get("text") for e in group.get("errors", []) or []}
 
