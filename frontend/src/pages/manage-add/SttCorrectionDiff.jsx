@@ -21,17 +21,41 @@ export default function SttCorrectionDiff({
   showAlert, showConfirm,
 }) {
   const pairs = useMemo(() => computeDiffPairs(parsedText, cloudText), [parsedText, cloudText]);
+  const variantIndex = useMemo(() => buildVariantIndex(corrections), [corrections]);
+
+  const classified = useMemo(
+    () => pairs.map(p => classifyPair(p, variantIndex)),
+    [pairs, variantIndex]
+  );
+
+  const stats = useMemo(() => ({
+    total: classified.length,
+    candidate: classified.filter(p => p.status === 'candidate').length,
+    existing: classified.filter(p => p.status === 'existing').length,
+    protected: classified.filter(p => p.status === 'protected').length,
+    conflict: classified.filter(p => p.status === 'conflict').length,
+    reorganize: classified.filter(p => p.status === 'reorganize').length,
+  }), [classified]);
 
   return (
     <div style={{ padding: 16 }}>
       <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 12 }}>
-        총 {pairs.length}건 · 파서 결과와 클라우드 LLM 교정 결과 비교
+        총 <b>{stats.total}</b>건
+        {variantIndex && (
+          <>
+            {' '}(신규 <b style={{ color: 'var(--accent)' }}>{stats.candidate}</b>
+            {' · '}등록됨 <b style={{ color: 'var(--accent-blue)' }}>{stats.existing}</b>
+            {' · '}보호됨 <b style={{ color: 'var(--c-dim)' }}>{stats.protected}</b>
+            {' · '}충돌 <b style={{ color: 'var(--accent-orange)' }}>{stats.conflict}</b>
+            {' · '}재구성 <b style={{ color: 'var(--c-faint)' }}>{stats.reorganize}</b>)
+          </>
+        )}
       </div>
       <div style={{
         color: 'var(--c-muted)', padding: 24, textAlign: 'center',
         fontSize: '0.786rem', background: 'var(--bg-subtle)', borderRadius: 8,
       }}>
-        (Phase 3 구현 예정 — 사전 추가/영구 거부 UI)
+        (Phase 3 커밋 8 에서 카드 UI 완성 예정)
       </div>
     </div>
   );
@@ -85,4 +109,92 @@ export function computeDiffPairs(parsed, cloud) {
   }
 
   return pairs;
+}
+
+/**
+ * corrections JSON → 4종 인덱스 객체.
+ *   pairSet: Set<"before||target"> — 정확 중복 체크
+ *   beforeMap: Map<before, Set<target>> — 같은 before 가 여러 target 에 걸림
+ *   targetToSection: Map<target, section_id>
+ *   skipSet: Set<word> — 보호 단어
+ */
+function buildVariantIndex(corrections) {
+  if (!corrections) return null;
+  const pairSet = new Set();
+  const beforeMap = new Map();
+  const targetToSection = new Map();
+  const skipSet = new Set();
+
+  for (const s of corrections.sections || []) {
+    for (const g of s.groups || []) {
+      if (!g.target) continue;
+      targetToSection.set(g.target, s.id);
+      for (const e of g.errors || []) {
+        const text = (e?.text || '').trim();
+        if (!text) continue;
+        pairSet.add(`${text}||${g.target}`);
+        if (!beforeMap.has(text)) beforeMap.set(text, new Set());
+        beforeMap.get(text).add(g.target);
+      }
+    }
+  }
+  for (const w of corrections.skip_words || []) {
+    const word = (w?.word || '').trim();
+    if (word) skipSet.add(word);
+  }
+
+  return { pairSet, beforeMap, targetToSection, skipSet };
+}
+
+/**
+ * pair 분류: 현재 사전/skip_words 상태에 따라 status 부여.
+ *
+ * status 매트릭스:
+ *   candidate  — before/after 둘 다 존재 & 신규 (사전에 없음 & skip 없음)
+ *   existing   — (before, after) 쌍 이미 사전에 등록됨
+ *   conflict   — before 는 있으나 다른 target 으로 등록됨
+ *   protected  — before 가 skip_words 에 있음 (보호 우선)
+ *   reorganize — type 이 insert/delete 인 경우 (재구성 성격, 사전 대상 아님)
+ *
+ * protectedConflict 플래그: skip 有 + 사전 有 동시 성립 (UI 경고용)
+ */
+function classifyPair(pair, variantIndex) {
+  if (!variantIndex) return { ...pair, status: 'loading' };
+
+  const { before, after } = pair;
+
+  // insert/delete 는 재구성 — 사전 추가 대상 아님
+  if (pair.type !== 'replace' || !before || !after) {
+    return { ...pair, status: 'reorganize' };
+  }
+
+  const inSkip = variantIndex.skipSet.has(before);
+  const inDict = variantIndex.beforeMap.has(before);
+  const pairExact = variantIndex.pairSet.has(`${before}||${after}`);
+
+  // skip 우선 (protected)
+  if (inSkip) {
+    return {
+      ...pair,
+      status: 'protected',
+      protectedConflict: inDict,  // 사전 有 + skip 有 모순
+      existingTargets: inDict ? [...variantIndex.beforeMap.get(before)] : [],
+    };
+  }
+
+  // 정확 쌍 중복
+  if (pairExact) {
+    return { ...pair, status: 'existing', existingTarget: after };
+  }
+
+  // before 가 다른 target 으로 등록됨 (conflict)
+  if (inDict) {
+    return {
+      ...pair,
+      status: 'conflict',
+      existingTargets: [...variantIndex.beforeMap.get(before)],
+    };
+  }
+
+  return { ...pair, status: 'candidate' };
 }
