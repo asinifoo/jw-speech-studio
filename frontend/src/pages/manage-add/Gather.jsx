@@ -383,6 +383,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttReviewOutlineFocus, setSttReviewOutlineFocus] = useState(false);
   const [sttReviewOutlines, setSttReviewOutlines] = useState([]);
   const [sttReviewOutlineOpen, setSttReviewOutlineOpen] = useState(false);
+  const [sttReturnAfterSave, setSttReturnAfterSave] = useState(false);
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
   const [sttCorrectionsData, setSttCorrectionsData] = useState(null);
@@ -1740,11 +1741,23 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                   })}
                                 </div>
                               )}
-                              <button type="button"
-                                onClick={() => setSttReviewOutlineOpen(false)}
-                                style={{ marginTop: 4, padding: '3px 10px', fontSize: '0.714rem', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-muted)', borderRadius: 4, cursor: 'pointer' }}>
-                                접기 ▲
-                              </button>
+                              <div style={{ marginTop: 4, display: 'flex', gap: 4 }}>
+                                <button type="button"
+                                  onClick={() => setSttReviewOutlineOpen(false)}
+                                  style={{ padding: '3px 10px', fontSize: '0.714rem', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-muted)', borderRadius: 4, cursor: 'pointer' }}>
+                                  접기 ▲
+                                </button>
+                                <button type="button"
+                                  onClick={() => {
+                                    setSttReturnAfterSave(true);
+                                    setSttReviewOutlineOpen(false);
+                                    setGatherMode('text');
+                                  }}
+                                  title="검색 결과에 없는 골자를 새로 등록 후 자동 복귀"
+                                  style={{ padding: '3px 10px', fontSize: '0.714rem', border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', borderRadius: 4, cursor: 'pointer', fontWeight: 600 }}>
+                                  + 새 골자 등록
+                                </button>
+                              </div>
                             </div>
                           ) : sttReviewMeta.outline_id ? (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -2267,6 +2280,26 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           const res = await saveOutline(payload);
                           setTxtResult(`✓ ${res.message}`);
                           outlineList().then(r => setOutlines(r.outlines || [])).catch(() => {});
+                          if (sttReturnAfterSave) {
+                            const num = txtMeta.outlineNum || '';
+                            const year = txtMeta.year || '';
+                            const version = txtMeta.version || '';
+                            const otype = txtMeta.outlineType || '';
+                            let outlineId = `${otype}_${num}`;
+                            if (year) outlineId += `_y${year}`;
+                            if (version) outlineId += `_v${version}`;
+                            setSttReviewMeta(m => ({
+                              ...m,
+                              outline_id: outlineId,
+                              outline_num: num,
+                              outline_year: year,
+                              outline_version: version,
+                            }));
+                            setSttReviewOutlineQuery(`${otype}_${num} - ${txtMeta.outlineTitle || ''}`);
+                            setSttReviewOutlineOpen(false);
+                            setSttReturnAfterSave(false);
+                            setGatherMode('stt');
+                          }
                         } catch (err) { setTxtResult('오류: ' + err.message); }
                         finally { setTxtSaving(false); }
                       }} disabled={txtSaving} style={{
@@ -2275,8 +2308,18 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         fontSize: '0.929rem', fontWeight: 700, cursor: 'pointer', position: 'relative', overflow: 'hidden',
                       }}>
                         {txtSaving && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', borderRadius: 8, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
-                        <span style={{ position: 'relative', zIndex: 1 }}>{txtSaving ? '저장 중...' : '골자 저장'}</span>
+                        <span style={{ position: 'relative', zIndex: 1 }}>{txtSaving ? '저장 중...' : sttReturnAfterSave ? '저장 후 STT 검토로 돌아가기' : '골자 저장'}</span>
                       </button>
+                      {sttReturnAfterSave && !txtSaving && (
+                        <button onClick={() => {
+                          setSttReturnAfterSave(false);
+                          setGatherMode('stt');
+                        }} style={{
+                          width: '100%', padding: '8px 0', marginTop: 6, borderRadius: 8,
+                          border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)',
+                          fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
+                        }}>← 저장하지 않고 STT 검토로 돌아가기</button>
+                      )}
                       {txtResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: txtResult.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{txtResult}</div>}
                     </div>
                   )}
