@@ -717,6 +717,24 @@ export async function sttCorrectionsReload() {
   if (!res.ok) throw new Error(await _errMsg(res, '리로드 실패'));
   return res.json();
 }
+export async function sttCorrectionsAddVariants(sectionId, target, variants) {
+  const res = await fetch(`${API}/stt/corrections/variants`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ section_id: sectionId, target, variants }),
+  });
+  if (!res.ok) throw new Error(await _errMsg(res, '사전 추가 실패'));
+  return res.json();
+}
+export async function sttCorrectionsAddSkipWords(words) {
+  const res = await fetch(`${API}/stt/corrections/skip_words`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ words }),
+  });
+  if (!res.ok) throw new Error(await _errMsg(res, '보호 단어 추가 실패'));
+  return res.json();
+}
 
 // ── STT 작업 관리 (Phase 4 Build-4) ──
 export async function sttUpload(file) {
