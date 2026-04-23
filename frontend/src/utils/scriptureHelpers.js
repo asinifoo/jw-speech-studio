@@ -47,8 +47,16 @@ export function parseScriptureList(raw) {
  * outlineDetail 응답의 subtopics dict → 평면 성구 배열.
  * 중복 제거, 순서 보존.
  *
- * subtopics 스키마: { [subtopicTitle]: [{ id, point_num, content, scriptures, ... }, ...] }
+ * subtopics 스키마: { [subtopicTitle]: [{ id, point_num, content, scriptures, scripture_usage, ... }, ...] }
+ *
+ * 낭독/참조 구분 두 패턴 병존 (Doc-35 배경):
+ *   - 패턴 A: scripture_usage="낭독" + scriptures 깨끗 (routers/preprocess.py md 경로, 실측 9.1%)
+ *   - 패턴 B: scriptures 내 "(낭독)" 태그 + scripture_usage=""  (DOCX 경로, 실측 0.3%)
+ *   - 패턴 C: 둘 다 (실측 0건, 안전망)
+ * 정규화 방식: scriptures 에 태그 없고 usage 있으면 "(usage)" 접미사 부여 → 패턴 B 와 일관.
  */
+const USAGE_TAG_RE = /\s*\((낭독|참조|미언급|적용)\)/;
+
 export function collectScripturesFromOutline(subtopics) {
   if (!subtopics || typeof subtopics !== 'object') return [];
   const seen = new Set();
@@ -56,10 +64,13 @@ export function collectScripturesFromOutline(subtopics) {
   for (const points of Object.values(subtopics)) {
     if (!Array.isArray(points)) continue;
     for (const pt of points) {
-      for (const v of parseScriptureList(pt?.scriptures)) {
-        if (!seen.has(v)) {
-          seen.add(v);
-          out.push(v);
+      const usage = (pt?.scripture_usage || '').trim();
+      for (const ref of parseScriptureList(pt?.scriptures)) {
+        const hasTag = USAGE_TAG_RE.test(ref);
+        const finalRef = (!hasTag && usage) ? `${ref} (${usage})` : ref;
+        if (!seen.has(finalRef)) {
+          seen.add(finalRef);
+          out.push(finalRef);
         }
       }
     }
