@@ -1,7 +1,7 @@
 """성경 검색, WOL 검색 API"""
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from models import BibleSearchRequest, WolSearchRequest
-from services.bible_utils import BOOK_TO_ABBR, normalize_book_name, expand_scripture_refs, get_verse_text, _SINGLE_CHAPTER_BOOKS
+from services.bible_utils import BOOK_TO_ABBR, normalize_book_name, expand_scripture_refs, get_verse_text, _SINGLE_CHAPTER_BOOKS, extract_scriptures_from_text
 from services.wol import search_wol, _HAS_BS4
 from db import get_db
 import re
