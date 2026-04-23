@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import KoreanTextarea from '../../components/KoreanTextarea';
 import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../../components/utils';
 import { getBody } from '../../utils/textHelpers';
@@ -10,7 +10,7 @@ import { useAlert } from '../../providers/AlertProvider';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
-import SttCorrectionDiff from './SttCorrectionDiff';
+import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
 import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
@@ -412,6 +412,10 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       sttCorrectionsGet().then(r => setSttCorrectionsData(r.data || null)).catch(() => {});
     }
   }, [sttReviewJob, sttCorrectionsData]);
+  const sttDiffPairCount = useMemo(() => {
+    if (!sttReviewJob?.parsed_text || !sttReviewJob?.cloud_text) return 0;
+    return computeDiffPairs(sttReviewJob.parsed_text, sttReviewJob.cloud_text).length;
+  }, [sttReviewJob?.parsed_text, sttReviewJob?.cloud_text]);
   useEffect(() => {
     if (!sttReviewPersistMountedRef.current) { sttReviewPersistMountedRef.current = true; return; }
     if (sttReviewJob?.job_id) {
@@ -1570,17 +1574,30 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         { key: 'parsed', label: '파서', show: !!sttReviewJob.parsed_text },
                         { key: 'local', label: '로컬', show: !!sttReviewJob.local_text },
                         { key: 'cloud', label: '클라우드', show: !!sttReviewJob.cloud_text },
-                        { key: 'diff', label: '교정 diff', show: !!(sttReviewJob.parsed_text && sttReviewJob.cloud_text) },
+                        { key: 'diff', label: '교정 diff', show: !!(sttReviewJob.parsed_text && sttReviewJob.cloud_text), badge: sttDiffPairCount },
                       ].filter(t => t.show).map(t => (
                         <button key={t.key} onClick={() => setSttReviewTab(t.key)}
                           style={{
-                            flex: 1, padding: '6px 10px', border: 'none',
+                            flex: '1 1 0%', minWidth: 0, padding: '6px 10px', border: 'none',
                             background: sttReviewTab === t.key ? 'var(--bg-card)' : 'transparent',
                             color: sttReviewTab === t.key ? 'var(--accent)' : 'var(--c-muted)',
                             fontSize: '0.786rem', fontWeight: sttReviewTab === t.key ? 700 : 500,
                             cursor: 'pointer', borderRadius: 6, whiteSpace: 'nowrap',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                           }}>
-                          {t.label}
+                          <span>{t.label}</span>
+                          {t.badge > 0 && (
+                            <span style={{
+                              fontSize: '0.643rem', fontWeight: 600,
+                              padding: '1px 6px', borderRadius: 8,
+                              background: sttReviewTab === t.key ? 'var(--tint-green)' : 'var(--bg-subtle)',
+                              color: sttReviewTab === t.key ? 'var(--accent)' : 'var(--c-dim)',
+                              minWidth: 18, textAlign: 'center', lineHeight: 1.4,
+                            }}
+                              title="신규 후보 N건">
+                              {t.badge}
+                            </span>
+                          )}
                         </button>
                       ))}
                     </div>
