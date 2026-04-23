@@ -10,7 +10,8 @@ import { useAlert } from '../../providers/AlertProvider';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
-import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave } from '../../api';
+import SttCorrectionDiff from './SttCorrectionDiff';
+import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
   const parts = [];
@@ -383,6 +384,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttReviewOutlines, setSttReviewOutlines] = useState([]);
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
+  const [sttCorrectionsData, setSttCorrectionsData] = useState(null);
 
   // Phase 5b-2: STT 검토 화면 persist + mount 시 자동 복원
   const sttReviewRestoredRef = useRef(false);
@@ -405,6 +407,11 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       if (raw.tab) setSttReviewTab(raw.tab);
     }).catch(() => { try { localStorage.removeItem('jw-stt-review'); } catch {} });
   }, [subTab, gatherMode]);
+  useEffect(() => {
+    if (sttReviewJob && !sttCorrectionsData) {
+      sttCorrectionsGet().then(r => setSttCorrectionsData(r.data || null)).catch(() => {});
+    }
+  }, [sttReviewJob, sttCorrectionsData]);
   useEffect(() => {
     if (!sttReviewPersistMountedRef.current) { sttReviewPersistMountedRef.current = true; return; }
     if (sttReviewJob?.job_id) {
@@ -1563,6 +1570,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         { key: 'parsed', label: '파서', show: !!sttReviewJob.parsed_text },
                         { key: 'local', label: '로컬', show: !!sttReviewJob.local_text },
                         { key: 'cloud', label: '클라우드', show: !!sttReviewJob.cloud_text },
+                        { key: 'diff', label: '교정 diff', show: !!(sttReviewJob.parsed_text && sttReviewJob.cloud_text) },
                       ].filter(t => t.show).map(t => (
                         <button key={t.key} onClick={() => setSttReviewTab(t.key)}
                           style={{
@@ -1577,6 +1585,20 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       ))}
                     </div>
                     {(() => {
+                      if (sttReviewTab === 'diff') {
+                        return (
+                          <SttCorrectionDiff
+                            parsedText={sttReviewJob.parsed_text || ''}
+                            cloudText={sttReviewJob.cloud_text || ''}
+                            corrections={sttCorrectionsData}
+                            jobId={sttReviewJob.job_id || ''}
+                            preprocDirty={false}
+                            onVariantAdded={() => sttCorrectionsGet().then(r => setSttCorrectionsData(r.data || null)).catch(() => {})}
+                            showAlert={showAlert}
+                            showConfirm={showConfirm}
+                          />
+                        );
+                      }
                       const isLast = (sttReviewJob.cloud_text && sttReviewTab === 'cloud')
                         || (!sttReviewJob.cloud_text && sttReviewJob.local_text && sttReviewTab === 'local')
                         || (!sttReviewJob.cloud_text && !sttReviewJob.local_text && sttReviewJob.parsed_text && sttReviewTab === 'parsed');
