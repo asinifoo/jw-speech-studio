@@ -326,3 +326,22 @@ def reload_cache() -> dict:
         "total_rules": len(get_rules()),
         "total_sections": len(data.get("sections", [])),
     }
+
+
+def format_skip_words_for_prompt(words: list) -> str:
+    """skip_words 리스트를 STT 클라우드 프롬프트용 문자열로 변환.
+
+    빈 리스트: "(없음)"
+    1건 이상: bullet + 따옴표, 줄바꿈 구분
+
+    reason 필드는 UI 전용 (사용자가 단어 등록 이유 판단용).
+    프롬프트에는 word 만 주입 (LLM 혼동 방지 + 토큰 절약).
+    """
+    if not words:
+        return "(없음)"
+    lines = []
+    for w in words:
+        word = (w.get("word") or "").strip()
+        if word:
+            lines.append(f'- "{word}"')
+    return "\n".join(lines) if lines else "(없음)"

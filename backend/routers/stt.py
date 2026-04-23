@@ -24,6 +24,7 @@ from services.stt_corrections_service import (
     validate_data,
     list_backups,
     reload_cache,
+    format_skip_words_for_prompt,
 )
 from services.llm import call_llm
 
@@ -596,10 +597,14 @@ def _correct_pipeline_background(
                     "error_message": "stt_correction 프롬프트가 설정되지 않았습니다",
                 })
                 return
+            skip_words_list = load_data().get("skip_words", [])
+            skip_words_block = format_skip_words_for_prompt(skip_words_list)
             prompt = (
-                template.replace("{text}", current_text)
+                template
+                .replace("{skip_words}", skip_words_block)
+                .replace("{text}", current_text)
                 if "{text}" in template
-                else template + "\n\n원문:\n" + current_text
+                else template.replace("{skip_words}", skip_words_block) + "\n\n원문:\n" + current_text
             )
             result = call_llm(prompt, model=cloud_model)
             if not result or not result.strip():
