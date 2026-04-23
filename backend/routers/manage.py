@@ -496,7 +496,7 @@ def outline_detail(outline_id: str, outline_type: str = "", version: str = "", y
         st = meta.get("sub_topic", "기타")
         if st not in subtopics:
             subtopics[st] = []
-        subtopics[st].append({"id": doc_id, "point_num": meta.get("point_num", ""), "level": meta.get("level", ""), "content": meta.get("point_content", ""), "scriptures": meta.get("scriptures", "")})
+        subtopics[st].append({"id": doc_id, "point_num": meta.get("point_num", ""), "level": meta.get("level", ""), "content": meta.get("point_content", ""), "scriptures": meta.get("scriptures", ""), "scripture_usage": meta.get("scripture_usage", "")})
 
     # 정렬
     def sort_key(st):
