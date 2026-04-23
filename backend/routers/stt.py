@@ -25,6 +25,8 @@ from services.stt_corrections_service import (
     list_backups,
     reload_cache,
     format_skip_words_for_prompt,
+    add_variants,
+    add_skip_words,
 )
 from services.llm import call_llm
 
@@ -436,6 +438,49 @@ def stt_corrections_validate():
 def stt_corrections_reload():
     """파일 직접 수정 후 강제 재로드."""
     return reload_cache()
+
+
+@router.post("/api/stt/corrections/variants")
+def stt_corrections_add_variants(req: dict):
+    """증분 API — 특정 section+target 에 error variant 추가 (백업 skip).
+
+    req: {section_id, target, variants: [{text, note?, source_stt_job_id?}, ...]}
+    """
+    section_id = (req.get("section_id") or "").strip()
+    target = (req.get("target") or "").strip()
+    variants = req.get("variants") or []
+
+    if not section_id:
+        raise HTTPException(400, "section_id 필수")
+    if not target:
+        raise HTTPException(400, "target 필수")
+    if not isinstance(variants, list):
+        raise HTTPException(400, "variants는 list여야 합니다")
+
+    try:
+        return add_variants(section_id=section_id, target=target, variants=variants)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"add_variants 실패: {e}")
+
+
+@router.post("/api/stt/corrections/skip_words")
+def stt_corrections_add_skip_words(req: dict):
+    """증분 API — skip_words 추가 (백업 skip).
+
+    req: {words: [{word, reason?}, ...]}
+    """
+    words = req.get("words") or []
+    if not isinstance(words, list):
+        raise HTTPException(400, "words는 list여야 합니다")
+
+    try:
+        return add_skip_words(words=words)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"add_skip_words 실패: {e}")
 
 
 @router.get("/api/stt/jobs")

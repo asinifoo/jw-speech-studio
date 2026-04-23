@@ -345,3 +345,141 @@ def format_skip_words_for_prompt(words: list) -> str:
         if word:
             lines.append(f'- "{word}"')
     return "\n".join(lines) if lines else "(없음)"
+
+
+def save_data_without_backup(data: dict) -> None:
+    """백업 생성 없이 atomic 저장 + 캐시 무효화. 증분 API 전용.
+
+    save_data() 와 동일한 validation/atomic-write/cache 로직을 공유하되,
+    백업 디렉토리 복사와 cleanup 단계를 생략한다.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("data는 dict여야 합니다")
+    if "sections" not in data:
+        raise ValueError("sections 필드 필수")
+
+    data["updated_at"] = datetime.now().isoformat()
+
+    tmp = _JSON_PATH.with_suffix(".json.tmp")
+    tmp.write_text(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    tmp.replace(_JSON_PATH)
+
+    with _cache_lock:
+        _cache["mtime"] = 0.0
+        _cache["data"] = None
+        _cache["rules"] = []
+
+
+def add_variants(
+    section_id: str,
+    target: str,
+    variants: list,
+) -> dict:
+    """섹션의 target 그룹에 error variant 증분 추가. 동일 text 는 중복 skip.
+
+    variants: [{text, note?, source_stt_job_id?}, ...]
+
+    Returns:
+        {"added": N, "skipped": N, "total_variants": N, "section_id": ..., "target": ...}
+
+    Raises:
+        ValueError: section_id/target 없음, variants 아닌 타입
+    """
+    if not isinstance(variants, list):
+        raise ValueError("variants는 list여야 합니다")
+
+    data = load_data()
+
+    section = None
+    for s in data.get("sections", []) or []:
+        if s.get("id") == section_id:
+            section = s
+            break
+    if not section:
+        raise ValueError(f"section not found: {section_id}")
+
+    group = None
+    for g in section.get("groups", []) or []:
+        if g.get("target") == target:
+            group = g
+            break
+    if not group:
+        raise ValueError(f"target not found in section {section_id}: {target}")
+
+    existing_texts = {e.get("text") for e in group.get("errors", []) or []}
+
+    added = 0
+    skipped = 0
+    for v in variants:
+        if not isinstance(v, dict):
+            skipped += 1
+            continue
+        text = (v.get("text") or "").strip()
+        if not text:
+            skipped += 1
+            continue
+        if text in existing_texts:
+            skipped += 1
+            continue
+        entry = {"text": text, "note": v.get("note", "") or ""}
+        if v.get("source_stt_job_id"):
+            entry["source_stt_job_id"] = v["source_stt_job_id"]
+        group.setdefault("errors", []).append(entry)
+        existing_texts.add(text)
+        added += 1
+
+    if added > 0:
+        save_data_without_backup(data)
+
+    return {
+        "added": added,
+        "skipped": skipped,
+        "total_variants": len(group.get("errors", []) or []),
+        "section_id": section_id,
+        "target": target,
+    }
+
+
+def add_skip_words(words: list) -> dict:
+    """skip_words 배열에 증분 추가. 동일 word 는 중복 skip.
+
+    words: [{word, reason?}, ...]
+
+    Returns:
+        {"added": N, "skipped": N, "total": N}
+    """
+    if not isinstance(words, list):
+        raise ValueError("words는 list여야 합니다")
+
+    data = load_data()
+    skip_list = data.setdefault("skip_words", [])
+    existing_words = {w.get("word") for w in skip_list}
+
+    added = 0
+    skipped = 0
+    for item in words:
+        if not isinstance(item, dict):
+            skipped += 1
+            continue
+        word = (item.get("word") or "").strip()
+        if not word:
+            skipped += 1
+            continue
+        if word in existing_words:
+            skipped += 1
+            continue
+        skip_list.append({"word": word, "reason": item.get("reason", "") or ""})
+        existing_words.add(word)
+        added += 1
+
+    if added > 0:
+        save_data_without_backup(data)
+
+    return {
+        "added": added,
+        "skipped": skipped,
+        "total": len(skip_list),
+    }
