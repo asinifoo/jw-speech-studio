@@ -347,22 +347,130 @@ def format_skip_words_for_prompt(words: list) -> str:
     return "\n".join(lines) if lines else "(없음)"
 
 
-def format_verses_for_prompt(verses: list) -> str:
-    """성구 목록을 STT 클라우드 프롬프트용 문자열로 변환.
+_USAGE_TAG_RE = re.compile(r"\s*\((낭독|참조|미언급|적용)\)")
 
-    빈 리스트: "(없음)"
-    1건 이상: bullet 형식, 줄바꿈 구분
 
-    입력은 이미 정규화된 문자열 배열 (예: ["사 53:1-5", "요 3:16"]).
-    LLM 이 성구 인용 오인식을 이 목록 중 하나로 교정 우선하도록 안내.
+def _strip_usage_tag(ref: str) -> str:
+    return _USAGE_TAG_RE.sub("", ref).strip()
+
+
+def _lookup_verse_bodies(refs: list) -> dict:
+    """각 ref → expand_scripture_refs 로 개별 절 전개 → get_verse_text 로 본문 조회.
+
+    반환: {original_ref: [본문1, 본문2, ...]}. 조회 실패 시 빈 list.
+
+    Phase 3.6-A: get_verse_text 가 단일 절 exact match 만 되므로 expand 선행 필수.
+    Lazy import (순환 회피 + 테스트 용이).
     """
-    if not verses:
+    from db import get_db
+    from services.bible_utils import expand_scripture_refs, get_verse_text
+
+    client = get_db()
+    result = {}
+    for ref in refs:
+        clean = _strip_usage_tag(ref)
+        try:
+            expanded = expand_scripture_refs(clean)
+        except Exception:
+            expanded = []
+        bodies = []
+        for single_ref in expanded:
+            try:
+                body = get_verse_text(single_ref, client)
+            except Exception:
+                body = None
+            if body:
+                bodies.append(body)
+        result[ref] = bodies
+    return result
+
+
+def format_verses_for_prompt(verses) -> str:
+    """성구 목록을 STT 클라우드 프롬프트용 문자열로 변환 (4-state mode, Phase 3.6-A).
+
+    입력 (dict):
+      {
+        "mode": "none" | "ref_only" | "reading_text" | "all_text",
+        "all": ["사 53:3", "요 3:16 (낭독)", ...],
+        "readings": ["요 3:16 (낭독)", ...]   # reading_text 본문 조회 대상
+      }
+
+    Phase 1 호환: list 입력 시 ref_only 모드로 자동 승격.
+
+    mode 별:
+      - none / all 비어있음        → "(없음)"
+      - ref_only                   → bullet 목록 (Phase 1 동작)
+      - reading_text               → "## 낭독 성구" + "## 참조 성구" 2섹션
+                                    readings 비었으면 ref_only 로 fallback (R5)
+      - all_text                   → 모든 ref 본문 포함, 단일 섹션
+
+    낭독 태그 제거 후 get_verse_text 호출 (R3 기존 관행).
+    reading_text 섹션 중복 제거: all 중 낭독 태그 strip 값이 readings 와 같으면 참조에서 배제.
+    """
+    # Phase 1 호환: list → ref_only dict
+    if isinstance(verses, list):
+        verses = {"mode": "ref_only", "all": verses, "readings": []}
+
+    if not isinstance(verses, dict):
         return "(없음)"
+
+    mode = (verses.get("mode") or "ref_only").strip() or "ref_only"
+    all_refs = [v for v in (verses.get("all") or []) if isinstance(v, str) and v.strip()]
+    readings = [v for v in (verses.get("readings") or []) if isinstance(v, str) and v.strip()]
+
+    if mode == "none" or not all_refs:
+        return "(없음)"
+
+    # R5: reading_text + readings=[] → ref_only fallback
+    if mode == "reading_text" and not readings:
+        mode = "ref_only"
+
+    if mode == "ref_only":
+        return "\n".join(f"- {v}" for v in all_refs)
+
+    # reading_text / all_text: 본문 조회
+    target_refs = readings if mode == "reading_text" else all_refs
+    bodies_map = _lookup_verse_bodies(target_refs)
+
     lines = []
-    for v in verses:
-        s = (v or "").strip() if isinstance(v, str) else ""
-        if s:
-            lines.append(f"- {s}")
+    if mode == "reading_text":
+        reading_keys = set(readings)
+        reading_cleaned = {_strip_usage_tag(r) for r in readings}
+
+        reading_lines = []
+        for ref in readings:
+            bodies = bodies_map.get(ref, [])
+            if bodies:
+                reading_lines.append(f"- {ref}:")
+                reading_lines.append(f'  "{" ".join(bodies)}"')
+            else:
+                reading_lines.append(f"- {ref}")
+
+        ref_lines = []
+        for ref in all_refs:
+            if ref in reading_keys:
+                continue
+            if _strip_usage_tag(ref) in reading_cleaned:
+                continue  # 낭독에 이미 본문 포함 — 참조 중복 방지
+            ref_lines.append(f"- {ref}")
+
+        if reading_lines:
+            lines.append("## 낭독 성구 (본문 기준 정확 교정)")
+            lines.extend(reading_lines)
+        if ref_lines:
+            if lines:
+                lines.append("")
+            lines.append("## 참조 성구 (reference 만)")
+            lines.extend(ref_lines)
+    else:  # all_text
+        for ref in all_refs:
+            bodies = bodies_map.get(ref, [])
+            if bodies:
+                lines.append(f"- {ref}:")
+                lines.append(f'  "{" ".join(bodies)}"')
+            else:
+                lines.append(f"- {ref}")
+
     return "\n".join(lines) if lines else "(없음)"
 
 
