@@ -382,6 +382,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttReviewOutlineQuery, setSttReviewOutlineQuery] = useState('');
   const [sttReviewOutlineFocus, setSttReviewOutlineFocus] = useState(false);
   const [sttReviewOutlines, setSttReviewOutlines] = useState([]);
+  const [sttReviewOutlineOpen, setSttReviewOutlineOpen] = useState(false);
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
   const [sttCorrectionsData, setSttCorrectionsData] = useState(null);
@@ -812,9 +813,10 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         const filtered = all.filter(g => {
           const title = (g.title || '').toLowerCase();
           const tcode = (g.outline_type || '').toLowerCase();
-          const num = (g.num || '').toString().toLowerCase();
-          const prefix = (g.prefix || '').toLowerCase();
-          return title.includes(q) || tcode.includes(q) || num.includes(q) || prefix.includes(q);
+          const typeName = (g.outline_type_name || '').toLowerCase();
+          const num = (g.outline_num || g.num || '').toString().toLowerCase();
+          const fullPrefix = `${tcode}_${num}`.toLowerCase();
+          return title.includes(q) || tcode.includes(q) || num.includes(q) || fullPrefix.includes(q) || typeName.includes(q);
         }).slice(0, 20);
         setSttReviewOutlines(filtered);
       }).catch(() => setSttReviewOutlines([]));
@@ -1702,6 +1704,72 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           <option value="memo">메모</option>
                         </select>
                       </div>
+                      {sttReviewMeta.source === 'speech' && (
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.714rem', color: 'var(--c-muted)', marginBottom: 2 }}>
+                            골자 (선택)
+                          </label>
+                          {sttReviewOutlineOpen ? (
+                            <div style={{ position: 'relative' }}>
+                              <input type="text"
+                                value={sttReviewOutlineQuery}
+                                onChange={e => setSttReviewOutlineQuery(e.target.value)}
+                                onFocus={() => setSttReviewOutlineFocus(true)}
+                                onBlur={() => setTimeout(() => setSttReviewOutlineFocus(false), 200)}
+                                placeholder="골자 번호 또는 제목 검색..."
+                                autoFocus
+                                style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--bd)', borderRadius: 6, fontSize: '0.786rem', background: 'var(--bg-card)', color: 'var(--c-text-dark)', outline: 'none', boxSizing: 'border-box' }}
+                              />
+                              {sttReviewOutlineFocus && sttReviewOutlineQuery.trim() && sttReviewOutlines.length > 0 && (
+                                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', marginTop: 2 }}>
+                                  {sttReviewOutlines.map((g, gi) => {
+                                    const num = g.outline_num || g.num || '';
+                                    const pfx = `${g.outline_type || ''}_${num}`;
+                                    const year = g.year || g.outline_year || '';
+                                    const ver = g.version || '';
+                                    return (
+                                      <div key={`${pfx}_${year}_${ver}_${gi}`}
+                                        onMouseDown={() => { selectSttReviewOutline(g); setSttReviewOutlineOpen(false); }}
+                                        style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.714rem', flexShrink: 0 }}>{pfx}</span>
+                                        {year && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)', flexShrink: 0 }}>{year}년</span>}
+                                        {ver && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)', flexShrink: 0 }}>v{ver}</span>}
+                                        <span style={{ flex: 1, fontSize: '0.714rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title || ''}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              <button type="button"
+                                onClick={() => setSttReviewOutlineOpen(false)}
+                                style={{ marginTop: 4, padding: '3px 10px', fontSize: '0.714rem', border: '1px solid var(--bd)', background: 'var(--bg-subtle)', color: 'var(--c-muted)', borderRadius: 4, cursor: 'pointer' }}>
+                                접기 ▲
+                              </button>
+                            </div>
+                          ) : sttReviewMeta.outline_id ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <button type="button"
+                                onClick={() => setSttReviewOutlineOpen(true)}
+                                title="다시 검색하려면 클릭"
+                                style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', borderRadius: 6, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                                {sttReviewOutlineQuery || sttReviewMeta.outline_id}
+                              </button>
+                              <button type="button"
+                                onClick={() => selectSttReviewOutline(null)}
+                                title="선택 해제"
+                                style={{ padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <button type="button"
+                              onClick={() => setSttReviewOutlineOpen(true)}
+                              style={{ width: '100%', padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', borderRadius: 6, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' }}>
+                              골자 선택 ▼
+                            </button>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <label style={{ display: 'block', fontSize: '0.714rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제 (선택)</label>
                         <input type="text" value={sttReviewMeta.topic || ''}
