@@ -588,7 +588,7 @@ _RAW_LINE_RE = re.compile(r'\[\s*[\d.]+pt\]\s*\[([^\]]+)\](?:\s*\[[^\]]*\])?\s*(
 
 def _lines_to_indented_text(raw_lines: list) -> str:
     """
-    parse_outline_docx()의 raw_lines를 [텍스트 입력] 파서와 호환되는
+    parse_outline_docx()의 raw_lines를 [골자 입력] 파서와 호환되는
     들여쓰기 plain text로 변환.
 
     규칙:

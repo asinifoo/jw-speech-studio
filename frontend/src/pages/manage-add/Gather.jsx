@@ -118,7 +118,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [mdParsing, setMdParsing] = useState(false);
   const [mdSaving, setMdSaving] = useState({});
   const [mdResult, setMdResult] = useState('');
-  // 텍스트 입력 모드
+  // 골자 입력 모드 (gatherMode='text' 식별자는 A안에서 유지)
   const [txtMeta, setTxtMeta] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-text-meta')) || { outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '' }; } catch { return { outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '' }; } });
   const [txtContent, setTxtContent] = useState(() => { try { return localStorage.getItem('jw-text-content') || ''; } catch { return ''; } });
   const [txtParsed, setTxtParsed] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-text-parsed')) || []; } catch { return []; } });
@@ -1006,7 +1006,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden' }}>
           {/* 전처리 상위 탭 — 카드 헤더 언더라인 */}
             <div style={S.underlineContainer}>
-              {[['file', '파일 업로드', 'var(--accent)'], ['text', '텍스트 입력', 'var(--accent)'], ['stt', 'STT 업로드', 'var(--accent)'], ['pub_input', '출판물', 'var(--accent-purple)']].map(([k, l, c]) => {
+              {[['file', '파일 업로드', 'var(--accent)'], ['text', '골자 입력', 'var(--accent)'], ['stt', 'STT 업로드', 'var(--accent)'], ['pub_input', '출판물', 'var(--accent-purple)']].map(([k, l, c]) => {
                 const active = gatherMode === k;
                 return (
                   <button key={k} onClick={() => setGatherMode(k)} style={S.underlineTab(active, c)}>
@@ -1727,7 +1727,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                 </div>
               )}
 
-              {/* ═══ 3. 텍스트 입력 모드 ═══ */}
+              {/* ═══ 3. 골자 입력 모드 (gatherMode='text') ═══ */}
               {gatherMode === 'text' && (
                 <div>
                   {/* DOCX에서 불러오기 */}

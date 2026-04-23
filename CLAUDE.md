@@ -90,7 +90,7 @@
 ├── 전처리 (addTab="preprocess")
 │   ├── 파일 업로드 (.md / .txt preprocessed)
 │   ├── txt 원본
-│   └── 텍스트 입력 (소주제 파싱, 계층 편집, 성구/출판물 분리)
+│   └── 골자 입력 (소주제 파싱, 계층 편집, 성구/출판물 분리)
 │       ├── [📄 DOCX에서 불러오기] — 골자 DOCX → 텍스트 자동 변환 + 메타 주입
 │       │   (유형/번호/버전/제목/유의사항/시간/년도 자동 채움)
 │       ├── 메타 입력: 유형/번호/버전/제목/시간/유의사항
@@ -170,7 +170,7 @@
 **outline_year 저장 규칙**:
 - 파일명 파서가 `S-XXX-YY` 패턴에서 YY 추출 (1단계)
 - 특별강연/RP 외 유형은 year=null
-- 프론트 [텍스트 입력] 탭: 유형이 S-123/S-211일 때만 "년도" 입력란 표시
+- 프론트 [골자 입력] 탭: 유형이 S-123/S-211일 때만 "년도" 입력란 표시
 
 **outline_type 영문 통일 원칙 (필수, Phase 3.1)**:
 - DB 저장 시 outline_type은 항상 영문 코드 사용 ("S-34" / "S-31" / "S-123" / "CO_C" / "CO_R" / "SB" / "ETC" 등)
@@ -221,7 +221,7 @@
 **파일**: `backend/services/outline_parser.py`
 
 - `parse_outline_docx(bytes) → dict` — python-docx로 들여쓰기 + 스타일 기반 계층 분류 (raw_lines + subtopics)
-- `_lines_to_indented_text(raw_lines) → str` — raw_lines를 프론트 [텍스트 입력] 파서와 호환되는 들여쓰기 plain text로 변환 (L1=0칸, L2=1칸, L3=2칸...)
+- `_lines_to_indented_text(raw_lines) → str` — raw_lines를 프론트 [골자 입력] 파서와 호환되는 들여쓰기 plain text로 변환 (L1=0칸, L2=1칸, L3=2칸...)
 - `_extract_meta_from_docx(parsed, filename) → dict` — title/note/version/total_time/outline_year 추출
 - `parse_outline_filename(filename) → dict` — `S-XXX-YY_KO_NNN_v**-**.docx` 패턴 파싱, outline_year 별도 필드
 
@@ -241,7 +241,7 @@
 - 정규식: `[가-힣]+(?:\s+(?:[가-힣]+|\d+서))*\s+\d+:[\d,\s\-]+(?:\s*(?:및\s*)?각주)?`
 - 본문 텍스트는 **절대 수정하지 않음** — 마커는 content에 복원, 성구만 별도 필드로 분리
 
-### 텍스트 입력 파싱 (프론트 [파싱] 버튼)
+### 골자 입력 파싱 (프론트 [파싱] 버튼)
 - `(N분)` → 소주제 (L1 위 계층)
 - 스페이스 0개 → L1, 1개 → L2, 2개 → L3, 3개 → L4, 4개+ → L5
 - 줄 끝 `(성구; 「출판물」)` 괄호에서 자동 분리
@@ -251,7 +251,7 @@
 - 레벨 드롭다운 편집, 성구/출판물 수동 편집
 - **[🔢 번호 재정렬] 버튼**: 중간 요점 삭제 후 1.1, 1.2, 1.2.1 순차 재부여 (소주제 경계에서 카운터 리셋, 상위 빈 카운터 자동 1)
 
-### 골자 유형 선택 (텍스트 입력)
+### 골자 유형 선택 (골자 입력)
 - [공개 강연] [생활과 봉사] [특별 행사] [대회] [기타]
 - 특별 행사 하위: [기념식] [특별 강연] [RP 모임]
 - 대회 하위: [순회 대회] [지역 대회]
@@ -436,7 +436,7 @@
   - DB 하위 [골자][연설][출판물][원문][연사메모] — **건수 표시 ✅**
   - 추가 > 입력 [연설][토의][봉사 모임][방문][출판물]
   - 추가 > 임시저장 [연설 draft][메모]
-  - 추가 > 전처리 [파일 업로드][txt 원본][텍스트 입력]
+  - 추가 > 전처리 [파일 업로드][txt 원본][골자 입력]
   - 검색 > 원문 [공개 강연][JW 방송][대회][특별 행사][기타]
   - 2줄 구조: 탭 이름 + 건수(없으면 `visibility: hidden`으로 자리만)
 
@@ -480,7 +480,7 @@
 - `POST /api/preprocess/parse-md` — md 파일 파싱 (본문 메타 우선, 파일명 폴백)
 - `POST /api/preprocess/docx-to-text` — **DOCX → 들여쓰기 텍스트 + meta** (결정론적, LLM 미사용)
   - 응답: `{text, meta: {outline_type, outline_type_name, outline_num, outline_year, version, title, note, total_time}}`
-  - 프론트 [텍스트 입력] textarea로 주입 후 사용자가 [파싱] 버튼 수동 클릭
+  - 프론트 [골자 입력] textarea로 주입 후 사용자가 [파싱] 버튼 수동 클릭
 - `POST /api/preprocess/check-duplicates` — 중복 체크 (type+num+year+version 4-tuple 매칭)
   - where 절은 type+num+version, outline_year는 후처리 메타 필터 (신규 필드 부재 레코드 호환)
   - 응답: `{duplicates: [{type, outline_num, outline_year, version, count, message}], has_duplicates}`

@@ -110,8 +110,8 @@ async def upload_file(file: UploadFile = File(...)):
 @router.post("/api/preprocess/docx-to-text")
 async def docx_to_text_endpoint(file: UploadFile = File(...)):
     """
-    골자 DOCX → [텍스트 입력] 파서와 호환되는 들여쓰기 plain text + meta.
-    구조화된 JSON은 반환하지 않음. 계층 해석은 프론트 [텍스트 입력] 파서가 담당.
+    골자 DOCX → [골자 입력] 파서와 호환되는 들여쓰기 plain text + meta.
+    구조화된 JSON은 반환하지 않음. 계층 해석은 프론트 [골자 입력] 파서가 담당.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="파일이 없습니다")
