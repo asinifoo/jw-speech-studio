@@ -720,9 +720,57 @@ export default function ManageAiTab() {
                         )}
                       </div>
                     </div>
-                    {editing && requiredVars.length > 0 && (
+                    {editing && requiredVars.length > 0 && key !== 'stt_correction' && (
                       <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 4 }}>
                         ⚠️ 필수 변수: {requiredVars.join(', ')} — 제거 시 동작 깨짐
+                      </div>
+                    )}
+                    {editing && key === 'stt_correction' && (
+                      <div style={{
+                        marginBottom: 6, padding: '8px 10px', borderRadius: 6,
+                        background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)',
+                        fontSize: '0.643rem', color: 'var(--c-text)', lineHeight: 1.6,
+                      }}>
+                        <div style={{ fontWeight: 700, color: 'var(--c-danger)', marginBottom: 2 }}>
+                          필수 변수 (제거 시 동작 깨짐):
+                        </div>
+                        <div style={{ marginLeft: 8, marginBottom: 4 }}>
+                          <code>{'{text}'}</code> — STT 원문 (반드시 포함)
+                        </div>
+                        <div style={{ fontWeight: 700, color: 'var(--accent)', marginBottom: 2 }}>
+                          선택 변수 (비어도 동작):
+                        </div>
+                        <div style={{ marginLeft: 8 }}>
+                          <div><code>{'{skip_words}'}</code> — 수정 제외 단어 목록</div>
+                          <div><code>{'{verses}'}</code> — 골자 참고 성구 목록 (mode 선택 시)</div>
+                        </div>
+                        <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px dashed var(--bd-light)' }}>
+                          <div style={{ fontWeight: 600, color: 'var(--c-muted)', marginBottom: 2 }}>예시 스니펫:</div>
+                          <pre style={{
+                            margin: 0, padding: 6, background: 'var(--bg-card)', borderRadius: 4,
+                            fontSize: '0.643rem', fontFamily: 'monospace', color: 'var(--c-text-dark)',
+                            whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+                          }}>
+{`[참고 성구 목록]
+이 연설에 관련된 성구입니다. STT 인식 오류 시 이 목록의 성구로 정확히 교정하세요.
+{verses}
+
+원문:
+{text}`}
+                          </pre>
+                          <button type="button"
+                            onClick={() => {
+                              const snippet = `[참고 성구 목록]\n이 연설에 관련된 성구입니다. STT 인식 오류 시 이 목록의 성구로 정확히 교정하세요.\n{verses}\n\n원문:\n{text}`;
+                              navigator.clipboard?.writeText(snippet);
+                            }}
+                            style={{
+                              marginTop: 4, padding: '2px 8px', borderRadius: 4,
+                              border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)',
+                              fontSize: '0.643rem', cursor: 'pointer', fontFamily: 'inherit',
+                            }}>
+                            📋 스니펫 복사
+                          </button>
+                        </div>
                       </div>
                     )}
                     {editing ? (

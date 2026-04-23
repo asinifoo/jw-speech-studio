@@ -389,6 +389,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttReviewVerses, setSttReviewVerses] = useState([]);
   const [sttVerseMode, setSttVerseMode] = useState('reading_text');
   const [sttVersesModalOpen, setSttVersesModalOpen] = useState(false);
+  const [sttLastCorrectedOutlineId, setSttLastCorrectedOutlineId] = useState('');
+  const [sttLastCorrectedVerseMode, setSttLastCorrectedVerseMode] = useState('');
+  const [sttWarningDismissed, setSttWarningDismissed] = useState('');
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
   const [sttCorrectionsData, setSttCorrectionsData] = useState(null);
@@ -792,6 +795,12 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
             else setSttReviewTab('parsed');
             setSttReviewStatus('✓ 교정 완료');
             setSttReviewCorrecting(false);
+            // Phase 4: cloud 교정 완료 시점의 outline_id/verse_mode 스냅샷 저장
+            if (fresh.cloud_text) {
+              setSttLastCorrectedOutlineId(sttReviewMeta?.outline_id || '');
+              setSttLastCorrectedVerseMode(sttVerseMode);
+              setSttWarningDismissed('');
+            }
             clearInterval(sttPollRef.current);
             sttPollRef.current = null;
             setTimeout(() => setSttReviewStatus(''), 3000);
@@ -1516,6 +1525,32 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     </div>
                   </div>
 
+                  {/* 재교정 권장 배너 (골자 또는 verse mode 변경 + cloud_text 존재 시) */}
+                  {(() => {
+                    const curOid = sttReviewMeta?.outline_id || '';
+                    const hasCloud = !!sttReviewJob?.cloud_text;
+                    const changed = curOid !== sttLastCorrectedOutlineId || sttVerseMode !== sttLastCorrectedVerseMode;
+                    const dismissKey = `${curOid}:${sttVerseMode}`;
+                    if (!hasCloud || !changed || sttWarningDismissed === dismissKey) return null;
+                    return (
+                      <div style={{
+                        padding: '10px 14px', borderRadius: 8,
+                        background: 'var(--tint-orange)',
+                        border: '1px solid var(--accent-orange)',
+                        color: 'var(--c-text)', fontSize: '0.786rem', lineHeight: 1.5,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                      }}>
+                        <span style={{ flex: 1 }}>⚠️ 골자 또는 성구 주입 모드가 변경됨 — 재교정 권장</span>
+                        <button type="button"
+                          onClick={() => setSttWarningDismissed(dismissKey)}
+                          title="현재 조합에 한해 숨김"
+                          style={{ padding: '2px 8px', border: 'none', background: 'transparent', color: 'var(--c-muted)', cursor: 'pointer', fontSize: '0.857rem', lineHeight: 1 }}>
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })()}
+
                   {/* 교정 옵션 카드 */}
                   <div style={{
                     padding: '12px 14px', background: 'var(--bg-card)',
@@ -1864,6 +1899,14 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                   )}
                                 </div>
                               )}
+                              {sttVerseMode === 'reading_text' && sttReviewVerses.length > 0
+                                && sttReviewVerses.filter(v => v.includes('(낭독)')).length === 0 && (
+                                <div style={{
+                                  marginTop: 4, fontSize: '0.643rem', color: 'var(--c-dim)', lineHeight: 1.5,
+                                }}>
+                                  ℹ️ 이 골자엔 낭독 성구 정보가 없어 reference 만 주입됩니다 (전체 본문 모드 선택 시 모든 성구 본문 포함 가능)
+                                </div>
+                              )}
                             </>
                           ) : (
                             <button type="button"
@@ -1926,7 +1969,19 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       닫기
                     </button>
                   }>
-                  {sttReviewVerses.map(v => `- ${v}`).join('\n')}
+                  <div style={{ fontFamily: 'monospace', fontSize: '0.857rem', lineHeight: 1.7 }}>
+                    {sttReviewVerses.map((v, i) => {
+                      const isReading = v.includes('(낭독)');
+                      const highlight = isReading && sttVerseMode === 'reading_text';
+                      return (
+                        <div key={i}>
+                          - {highlight
+                            ? <b style={{ color: 'var(--accent)' }}>{v}</b>
+                            : <span>{v}</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </Modal>
               )}
 
