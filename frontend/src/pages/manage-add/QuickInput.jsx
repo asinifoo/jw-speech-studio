@@ -69,17 +69,10 @@ export default function ManageQuickInput() {
       )}
 
       {qiForm.type === 'service' && (
-        <div style={{ marginBottom: 8 }}>
-          <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
-          <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...S.inputField, width: '100%' }} />
-        </div>
-      )}
-
-      {qiForm.type === 'visit' && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>대상</div>
-            <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수" style={{ ...S.inputField, width: '100%' }} />
+            <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>인도자</div>
+            <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
@@ -87,6 +80,23 @@ export default function ManageQuickInput() {
           </div>
         </div>
       )}
+
+      {qiForm.type === 'visit' && (<>
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>방문자</div>
+            <input value={qiForm.speaker} onChange={e => setQiForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>날짜</div>
+            <input value={qiForm.date} onChange={e => setQiForm(p => ({ ...p, date: e.target.value }))} placeholder="2605" style={{ ...S.inputField, width: '100%' }} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>대상</div>
+          <input value={qiForm.target} onChange={e => setQiForm(p => ({ ...p, target: e.target.value }))} placeholder="김철수" style={{ ...S.inputField, width: '100%' }} />
+        </div>
+      </>)}
 
       {qiForm.type === 'publication' && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
@@ -139,7 +149,7 @@ export default function ManageQuickInput() {
           try {
             const typeCode = { speech: 'SP', discussion: 'DC', service: 'SV', visit: 'VS', publication: 'PB', other: 'ET' }[qiForm.type] || 'ET';
             const outlineNumForSave = qiEditingOutlineNum || `${typeCode}_${String(Date.now()).slice(-8)}`;
-            const idPart = (qiForm.speaker || qiForm.target || qiForm.pub_code || qiForm.pub_title || 'unknown').trim() || 'unknown';
+            const idPart = (qiForm.speaker || qiForm.target || qiForm.pub_code || qiForm.pub_title || '미상').trim() || '미상';
             const resp = await draftSave({
               outline_type: 'QUICK',
               outline_num: outlineNumForSave,

@@ -914,9 +914,12 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const saveStructureForm = async (form, source, resetFn, dflt) => {
     if (!form.content?.trim()) { setSaveMsg('내용을 입력하세요'); return; }
     if (source === '출판물' && !form.pub_code?.trim()) { setSaveMsg('출판물 코드를 입력하세요'); return; }
+    const effectiveForm = (source === '봉사 모임' || source === '방문')
+      ? { ...form, speaker: (form.speaker || '').trim() || '미상' }
+      : form;
     setSaving(true); setSaveMsg('');
     try {
-      const payload = { ...gatherFormDefault, ...form, source, entry_type: source === '출판물' ? 'publication' : 'expression' };
+      const payload = { ...gatherFormDefault, ...effectiveForm, source, entry_type: source === '출판물' ? 'publication' : 'expression' };
       const res = await dbAdd(payload);
       const actionLabel = source === '출판물' && res.action ? (
         res.action === 'created' ? ' — 새 출판물'

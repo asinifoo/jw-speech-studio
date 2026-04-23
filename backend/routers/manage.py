@@ -706,7 +706,7 @@ def db_add(req: DbAddRequest):
             "outline_num": "",
             "outline_type": "",
             "subtopic": "",
-            "speaker": "",
+            "speaker": req.speaker,
             "sub_source": "",
             "point_content": "",
             "pub_code": "",
