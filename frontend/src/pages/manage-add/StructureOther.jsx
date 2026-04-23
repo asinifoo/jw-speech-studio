@@ -28,13 +28,17 @@ export default function ManageStructureOther({
               </div>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드</div>
-                  <input value={discForm.pub_code} onChange={e => setDiscForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...S.inputField, width: '100%' }} />
+                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>발표자</div>
+                  <input value={discForm.speaker || ''} onChange={e => setDiscForm(p => ({ ...p, speaker: e.target.value }))} placeholder="최진규" style={{ ...S.inputField, width: '100%' }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>날짜</div>
                   <input value={discForm.date} onChange={e => setDiscForm(p => ({ ...p, date: e.target.value }))} placeholder="2604" style={{ ...S.inputField, width: '100%' }} />
                 </div>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>출판물 코드</div>
+                <input value={discForm.pub_code} onChange={e => setDiscForm(p => ({ ...p, pub_code: e.target.value }))} placeholder="파26 2월호" style={{ ...S.inputField, width: '100%' }} />
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>

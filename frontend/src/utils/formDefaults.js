@@ -1,4 +1,4 @@
-export const discFormDefault = { sub_source: '', pub_code: '', topic: '', date: '', subtopic: '', keywords: '', scriptures: '', content: '' };
+export const discFormDefault = { sub_source: '', speaker: '', pub_code: '', topic: '', date: '', subtopic: '', keywords: '', scriptures: '', content: '' };
 export const svcFormDefault = { service_type: '', speaker: '', date: '', scriptures: '', pub_code: '', keywords: '', content: '', rating: 0, favorite: false };
 export const visitFormDefault = { visit_target: '', situation: '', speaker: '', date: '', keywords: '', scriptures: '', pub_code: '', content: '', rating: 0, favorite: false };
 export const pubFormDefault = { pub_code: '', reference: '', pub_title: '', pub_type: '', point_summary: '', keywords: '', scriptures: '', content: '', outline_title: '', outline_type: '', outline_num: '', outline_year: '', version: '', point_id: '', subtopic: '' };

@@ -677,7 +677,7 @@ def db_add(req: DbAddRequest):
             "subtopic": req.subtopic,
             "outline_num": "",
             "outline_type": "",
-            "speaker": "",
+            "speaker": req.speaker,
             "point_content": "",
             "tag": "",
             "usage": "사용",

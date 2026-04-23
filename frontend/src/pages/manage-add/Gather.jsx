@@ -914,7 +914,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const saveStructureForm = async (form, source, resetFn, dflt) => {
     if (!form.content?.trim()) { setSaveMsg('내용을 입력하세요'); return; }
     if (source === '출판물' && !form.pub_code?.trim()) { setSaveMsg('출판물 코드를 입력하세요'); return; }
-    const effectiveForm = (source === '봉사 모임' || source === '방문')
+    const effectiveForm = (source === '봉사 모임' || source === '방문' || source === '토의')
       ? { ...form, speaker: (form.speaker || '').trim() || '미상' }
       : form;
     setSaving(true); setSaveMsg('');
