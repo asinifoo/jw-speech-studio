@@ -4,9 +4,11 @@ import KoreanTextarea from '../components/KoreanTextarea';
 import { getTranscriptBody } from '../utils/textHelpers';
 import { listTranscripts, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
+import { useAlert } from '../providers/AlertProvider';
 
 export default function TranscriptPage({ fontSize }) {
   const showConfirm = useConfirm();
+  const showAlert = useAlert();
   const [transcripts, setTranscripts] = useState({});
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('공개 강연');
@@ -195,7 +197,7 @@ export default function TranscriptPage({ fontSize }) {
                       return next;
                     });
                     setSelSpeaker(null);
-                  } catch (e) { alert('삭제 오류: ' + e.message); }
+                  } catch (e) { showAlert('삭제 오류: ' + e.message, { variant: 'error' }); }
                 }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
               </>
             )}

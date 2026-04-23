@@ -10,8 +10,10 @@ import WolFiltersPanel from '../components/WolFiltersPanel';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
 import { getBody } from '../utils/textHelpers';
 import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getServiceTypes, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
+import { useAlert } from '../providers/AlertProvider';
 
 export default function ServiceMeetingPage({ fontSize, ai }) {
+  const showAlert = useAlert();
   const _ss = (() => { try { return JSON.parse(localStorage.getItem('jw-svc-state')); } catch(e) { return null; } })();
   const [selTypes, setSelTypes] = useState(() => new Set(_ss?.selTypes || []));
   const [scriptures, setScriptures] = useState(_ss?.scriptures || '');
@@ -103,7 +105,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
         if (ra !== rb) return rb - ra;
         return (mb.date || '').localeCompare(ma.date || '');
       }));
-    } catch (e) { alert('검색 오류: ' + e.message); }
+    } catch (e) { showAlert('검색 오류: ' + e.message, { variant: 'error' }); }
     finally { setSearchLoading(false); setPastLoading(false); }
     if (scriptures.trim()) {
       try { const bRes = await bibleSearch(scriptures); setAutoScriptures(bRes.results || []); } catch(e) { setAutoScriptures([]); }

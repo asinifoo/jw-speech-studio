@@ -6,6 +6,7 @@ import { S } from '../../styles';
 import { discFormDefault, svcFormDefault, visitFormDefault, pubFormDefault, gatherFormDefault } from '../../utils/formDefaults';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import { useConfirm } from '../../providers/ConfirmProvider';
+import { useAlert } from '../../providers/AlertProvider';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
@@ -54,6 +55,7 @@ const getOutlineTypeInfo = (code) => {
 
 export default function ManageGather({ fontSize, pageType, pendingPub, clearPendingPub, onSaveReturn }) {
   const showConfirm = useConfirm();
+  const showAlert = useAlert();
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
   const [gatherForm, setGatherForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
@@ -423,7 +425,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const handleStartSttDraftEdit = async (_draftId, speaker, date, jobId) => {
     try {
       const dr = await draftLoad({ outline_num: '', speaker: speaker || '', date: date || '', outline_type: 'ETC' });
-      if (!dr.exists) { alert('임시저장을 찾을 수 없습니다.'); return; }
+      if (!dr.exists) { showAlert('임시저장을 찾을 수 없습니다.', { variant: 'info' }); return; }
       localStorage.setItem('jw-speech-transfer', JSON.stringify({
         isSttDraft: true,
         outline_type: 'ETC',
@@ -443,7 +445,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       setStructureMode('speech_input');
       window.dispatchEvent(new Event('si-transfer'));
     } catch (e) {
-      alert('임시저장 로드 실패: ' + e.message);
+      showAlert('임시저장 로드 실패: ' + e.message, { variant: 'error' });
     }
   };
 
@@ -751,11 +753,11 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
 
   const saveSttSpeech = async () => {
     if (!sttReviewJob) return;
-    if (!sttReviewMeta.speaker.trim()) { alert('연사를 입력해주세요'); return; }
-    if (!sttReviewMeta.speech_date) { alert('날짜를 입력해주세요'); return; }
-    if (!/^\d{4}$/.test(sttReviewMeta.speech_date)) { alert('날짜는 YYMM 4자리 숫자로 입력해주세요 (예: 2604)'); return; }
-    if (!sttReviewMeta.source) { alert('유형을 선택해주세요'); return; }
-    if (!sttReviewFinalText.trim()) { alert('저장할 텍스트가 없습니다. 교정을 먼저 실행해주세요.'); return; }
+    if (!sttReviewMeta.speaker.trim()) { showAlert('연사를 입력해주세요', { variant: 'info' }); return; }
+    if (!sttReviewMeta.speech_date) { showAlert('날짜를 입력해주세요', { variant: 'info' }); return; }
+    if (!/^\d{4}$/.test(sttReviewMeta.speech_date)) { showAlert('날짜는 YYMM 4자리 숫자로 입력해주세요 (예: 2604)', { variant: 'info' }); return; }
+    if (!sttReviewMeta.source) { showAlert('유형을 선택해주세요', { variant: 'info' }); return; }
+    if (!sttReviewFinalText.trim()) { showAlert('저장할 텍스트가 없습니다. 교정을 먼저 실행해주세요.', { variant: 'info' }); return; }
 
     setSttReviewStatus('임시저장 전달 중...');
     try {

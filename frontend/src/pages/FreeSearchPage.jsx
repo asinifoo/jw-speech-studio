@@ -6,9 +6,11 @@ import { BIBLE_ABBR, BIBLE_FULL } from '../utils/bible';
 import { getBody } from '../utils/textHelpers';
 import { freeSearch, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
+import { useAlert } from '../providers/AlertProvider';
 
 export default function FreeSearchPage({ fontSize }) {
   const showConfirm = useConfirm();
+  const showAlert = useAlert();
   const _fs = (() => { try { return JSON.parse(localStorage.getItem('jw-free-state')); } catch(e) { return null; } })();
   const [query, setQuery] = useState(_fs?.query || '');
   const [results, setResults] = useState(_fs?.results || []);
@@ -43,7 +45,7 @@ export default function FreeSearchPage({ fontSize }) {
     if (!query.trim()) return;
     setLoading(true); setResults([]); setShowCount(20); setCopied({}); setDbEditIdx(-1);
     try { const res = await freeSearch(query.trim(), 40); setResults(res.results || []); }
-    catch (e) { alert('검색 오류: ' + e.message); }
+    catch (e) { showAlert('검색 오류: ' + e.message, { variant: 'error' }); }
     finally { setLoading(false); }
   };
 

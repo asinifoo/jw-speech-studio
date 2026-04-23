@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAiModels, saveAiModels as saveAiModelsAPI, getApiKeys, saveApiKeys, getApiVersions, saveApiVersions, ollamaModels, ollamaPull, ollamaDelete, getPasswordStatus, changePassword, getFilterModel, setFilterModel, getOllamaCtx, setOllamaCtx, getOllamaThink, setOllamaThink, getChatTurns, setChatTurns, setChatSearchTopK, getPrompts, setPrompt, resetPrompt, savePromptDefault } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
+import { useAlert } from '../providers/AlertProvider';
 
 // AI 탭 UI state persist (Phase 5b-1) — 탭 discard 후 재로드 시 열어둔 섹션 복원
 const _aiInit = (() => {
@@ -10,6 +11,7 @@ const _aiInit = (() => {
 
 export default function ManageAiTab() {
   const showConfirm = useConfirm();
+  const showAlert = useAlert();
   // ── AI_MODELS_DEFAULT (원본 ManagePage.jsx L558-563) ──
   const AI_MODELS_DEFAULT = {
     Local: [{ value: 'gemma4:26b', label: 'Gemma 4 26B' }, { value: 'qwen3.5:27b', label: 'Qwen 3.5 27B' }],
@@ -435,7 +437,7 @@ export default function ManageAiTab() {
                         try {
                           await ollamaDelete(m.name);
                           setFilterModelState(prev => ({ ...prev, models: prev.models.filter(mm => mm.name !== m.name) }));
-                        } catch (e) { alert(e.message); }
+                        } catch (e) { showAlert(e.message, { variant: 'error' }); }
                         finally { setDeletingModel(''); }
                       }} disabled={isDeleting}
                         style={{ padding: '3px 8px', borderRadius: 8, border: '1px solid #e55', background: 'transparent', color: '#e55', fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0 }}>
@@ -457,7 +459,7 @@ export default function ManageAiTab() {
                       try {
                         const res = await setOllamaCtx(v, 'filter');
                         setOllamaCtxState(res);
-                      } catch (e) { alert(e.message); }
+                      } catch (e) { showAlert(e.message, { variant: 'error' }); }
                     }}
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
@@ -479,7 +481,7 @@ export default function ManageAiTab() {
                       try {
                         const res = await setOllamaCtx(v, 'gen');
                         setOllamaCtxState(res);
-                      } catch (e) { alert(e.message); }
+                      } catch (e) { showAlert(e.message, { variant: 'error' }); }
                     }}
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
@@ -501,7 +503,7 @@ export default function ManageAiTab() {
                       try {
                         const res = await setOllamaCtx(v, 'chat');
                         setOllamaCtxState(res);
-                      } catch (e) { alert(e.message); }
+                      } catch (e) { showAlert(e.message, { variant: 'error' }); }
                     }}
                       style={{
                         padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
@@ -586,7 +588,7 @@ export default function ManageAiTab() {
                               try {
                                 const res = await setChatTurns(v);
                                 setChatTurnsState(res.chat_max_turns);
-                              } catch (e) { alert(e.message); }
+                              } catch (e) { showAlert(e.message, { variant: 'error' }); }
                             }}
                               style={{
                                 padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
@@ -615,7 +617,7 @@ export default function ManageAiTab() {
                               try {
                                 const res = await setChatSearchTopK(v);
                                 setChatSearchTopKState(res.chat_search_top_k);
-                              } catch (e) { alert(e.message); }
+                              } catch (e) { showAlert(e.message, { variant: 'error' }); }
                             }}
                               style={{
                                 padding: '5px 10px', borderRadius: 8, fontSize: '0.786rem', cursor: 'pointer', fontFamily: 'inherit',
@@ -686,7 +688,7 @@ export default function ManageAiTab() {
                                   setPromptEdits(prev => ({ ...prev, [key]: promptData.defaults[key] }));
                                   setPromptData(prev => ({ ...prev, prompts: { ...prev.prompts, [key]: prev.defaults[key] } }));
                                   stopEdit(key);
-                                } catch (e) { alert(e.message); }
+                                } catch (e) { showAlert(e.message, { variant: 'error' }); }
                               }}
                                 style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer' }}>초기화</button>
                             )}
@@ -694,7 +696,7 @@ export default function ManageAiTab() {
                               try {
                                 await savePromptDefault(key, promptEdits[key]);
                                 setPromptData(prev => ({ ...prev, defaults: { ...prev.defaults, [key]: promptEdits[key] } }));
-                              } catch (e) { alert(e.message); }
+                              } catch (e) { showAlert(e.message, { variant: 'error' }); }
                             }} disabled={promptEdits[key] === promptData.defaults[key]}
                               style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'var(--bd)'), background: promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'transparent', color: promptEdits[key] !== promptData.defaults[key] ? '#fff' : 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>기본값 저장</button>
                             <button onClick={async () => {
@@ -703,7 +705,7 @@ export default function ManageAiTab() {
                                 await setPrompt(key, promptEdits[key]);
                                 setPromptData(prev => ({ ...prev, prompts: { ...prev.prompts, [key]: promptEdits[key] } }));
                                 stopEdit(key);
-                              } catch (e) { alert(e.message); }
+                              } catch (e) { showAlert(e.message, { variant: 'error' }); }
                               finally { setPromptSaving(''); }
                             }} disabled={promptSaving === key || promptEdits[key] === promptData.prompts[key]}
                               style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid var(--accent)', background: (promptEdits[key] !== promptData.prompts[key]) ? 'var(--accent)' : 'transparent', color: (promptEdits[key] !== promptData.prompts[key]) ? '#fff' : 'var(--c-muted)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>

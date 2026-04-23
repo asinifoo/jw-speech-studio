@@ -4,10 +4,12 @@ import { getBody } from '../utils/textHelpers';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
 import { chatStream, abortGeneration, getChatSessions, getChatSession, saveChatSession, deleteChatSession, getWolStatus, uploadFile } from '../api';
 import WolFiltersPanel from '../components/WolFiltersPanel';
+import { useAlert } from '../providers/AlertProvider';
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
 export default function ChatSearchPage({ fontSize, ai }) {
+  const showAlert = useAlert();
   const [sessions, setSessions] = useState([]);       // [{id, title, messageCount, updated}]
   const [currentId, setCurrentId] = useState(() => { try { return localStorage.getItem('jw-chat-current') || null; } catch(e) { return null; } });
   const [messages, setMessages] = useState([]);
@@ -126,7 +128,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
       setExpandedResultIdx(-1);
       setExpandedCards({});
       setShowSessionList(false);
-    } catch (e) { alert(e.message); }
+    } catch (e) { showAlert(e.message, { variant: 'error' }); }
   };
 
   const newChat = () => {
@@ -165,7 +167,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
       const res = await uploadFile(file);
       setAttachedFile({ name: res.filename, chars: res.chars, text: res.text, truncated: res.truncated });
     } catch (err) {
-      alert('파일 업로드 실패: ' + err.message);
+      showAlert('파일 업로드 실패: ' + err.message, { variant: 'error' });
     } finally {
       setFileUploading(false);
       if (fileRef.current) fileRef.current.value = '';

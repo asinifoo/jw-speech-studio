@@ -5,6 +5,7 @@ import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftChe
 import { cleanMd } from '../../components/utils';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import { useConfirm } from '../../providers/ConfirmProvider';
+import { useAlert } from '../../providers/AlertProvider';
 import OriginalBlock from './speech-input/OriginalBlock';
 import SaveActions from './speech-input/SaveActions';
 import OutlineSelectorBar from './speech-input/OutlineSelectorBar';
@@ -18,6 +19,7 @@ const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYea
 
 export default function ManageSpeechInput({ siTransferTick, outlines }) {
   const showConfirm = useConfirm();
+  const showAlert = useAlert();
 
   // ── si* state (33개) ──
   const [siOutline, setSiOutline] = useState(_siInit.outline || null);
@@ -291,8 +293,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
 
   const handleComplete = async () => {
     // 공통 검증
-    if (!siSpeaker.trim()) { alert('연사를 입력해주세요'); return; }
-    if (!siDate.trim()) { alert('날짜를 입력해주세요'); return; }
+    if (!siSpeaker.trim()) { showAlert('연사를 입력해주세요', { variant: 'info' }); return; }
+    if (!siDate.trim()) { showAlert('날짜를 입력해주세요', { variant: 'info' }); return; }
 
     setSiCompleting(true); setSiSaveMsg('');
     try {

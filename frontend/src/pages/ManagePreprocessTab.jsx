@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { sttCorrectionsGet, sttCorrectionsSave, sttCorrectionsValidate, sttCorrectionsReload } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
+import { useAlert } from '../providers/AlertProvider';
 
 export default function ManagePreprocessTab() {
   const showConfirm = useConfirm();
+  const showAlert = useAlert();
   // ── 전처리 state (원본 ManagePage.jsx L621-643) ──
   const [preprocData, setPreprocData] = useState(null);
   const [preprocValidation, setPreprocValidation] = useState(null);
@@ -198,7 +200,7 @@ export default function ManagePreprocessTab() {
     if (!trimmed || trimmed === oldTarget) { setPreprocEditingTarget(null); return; }
     const section = preprocData.sections.find(s => s.id === sectionId);
     if (section.groups.find(g => g.target === trimmed)) {
-      alert(`이미 존재하는 타겟: ${trimmed}`);
+      showAlert(`이미 존재하는 타겟: ${trimmed}`, { variant: 'info' });
       return;
     }
     setPreprocData({
@@ -234,10 +236,10 @@ export default function ManagePreprocessTab() {
     const { sectionId, target, errorText } = preprocAddingGroupTo;
     const t = target.trim();
     const e = errorText.trim();
-    if (!t || !e) { alert('타겟과 첫 오류 텍스트 모두 입력해주세요'); return; }
+    if (!t || !e) { showAlert('타겟과 첫 오류 텍스트 모두 입력해주세요', { variant: 'info' }); return; }
     const section = preprocData.sections.find(s => s.id === sectionId);
     if (section.groups?.find(g => g.target === t)) {
-      alert(`이미 존재하는 타겟: ${t}`);
+      showAlert(`이미 존재하는 타겟: ${t}`, { variant: 'info' });
       return;
     }
     setPreprocData({
@@ -258,7 +260,7 @@ export default function ManagePreprocessTab() {
   const commitEditError = () => {
     const { sectionId, target, errorIndex, text, note } = preprocEditingError;
     const trimmed = text.trim();
-    if (!trimmed) { alert('오류 텍스트는 비어있을 수 없습니다'); return; }
+    if (!trimmed) { showAlert('오류 텍스트는 비어있을 수 없습니다', { variant: 'info' }); return; }
     setPreprocData({
       ...preprocData,
       sections: preprocData.sections.map(s => s.id !== sectionId ? s : ({
@@ -296,11 +298,11 @@ export default function ManagePreprocessTab() {
   const commitAddError = () => {
     const { sectionId, target, text, note } = preprocAddingErrorTo;
     const t = text.trim();
-    if (!t) { alert('오류 텍스트를 입력해주세요'); return; }
+    if (!t) { showAlert('오류 텍스트를 입력해주세요', { variant: 'info' }); return; }
     const section = preprocData.sections.find(s => s.id === sectionId);
     const group = section?.groups?.find(g => g.target === target);
     if (group?.errors?.find(e => e.text === t)) {
-      alert(`이미 존재하는 오류: ${t}`);
+      showAlert(`이미 존재하는 오류: ${t}`, { variant: 'info' });
       return;
     }
     setPreprocData({
@@ -417,9 +419,9 @@ export default function ManagePreprocessTab() {
   const commitAddSkip = () => {
     const w = preprocSkipAdding.word.trim();
     const r = preprocSkipAdding.reason.trim();
-    if (!w) { alert('단어를 입력해주세요'); return; }
+    if (!w) { showAlert('단어를 입력해주세요', { variant: 'info' }); return; }
     if ((preprocData.skip_words || []).find(s => s.word === w)) {
-      alert(`이미 존재하는 단어: ${w}`);
+      showAlert(`이미 존재하는 단어: ${w}`, { variant: 'info' });
       return;
     }
     setPreprocData({
@@ -436,7 +438,7 @@ export default function ManagePreprocessTab() {
   const commitEditSkip = () => {
     const w = preprocSkipEditing.word.trim();
     const r = preprocSkipEditing.reason.trim();
-    if (!w) { alert('단어는 비어있을 수 없습니다'); return; }
+    if (!w) { showAlert('단어는 비어있을 수 없습니다', { variant: 'info' }); return; }
     setPreprocData({
       ...preprocData,
       skip_words: preprocData.skip_words.map((s, i) =>

@@ -10,8 +10,10 @@ import WolFiltersPanel from '../components/WolFiltersPanel';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
 import { getBody } from '../utils/textHelpers';
 import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
+import { useAlert } from '../providers/AlertProvider';
 
 export default function VisitPage({ fontSize, ai }) {
+  const showAlert = useAlert();
   const _vs = (() => { try { return JSON.parse(localStorage.getItem('jw-visit-state')); } catch(e) { return null; } })();
   const [ageGroup, setAgeGroup] = useState(_vs?.ageGroup || '');
   const [situations, setSituations] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-visit-sit')) || ['일반']; } catch(e) { return ['일반']; } });
@@ -108,7 +110,7 @@ export default function VisitPage({ fontSize, ai }) {
         if (ra !== rb) return rb - ra;
         return (mb.date || '').localeCompare(ma.date || '');
       }));
-    } catch (e) { alert('검색 오류: ' + e.message); }
+    } catch (e) { showAlert('검색 오류: ' + e.message, { variant: 'error' }); }
     finally { setSearchLoading(false); setPastLoading(false); }
     if (scriptures.trim()) {
       try { const bRes = await bibleSearch(scriptures); setAutoScriptures(bRes.results || []); } catch(e) { setAutoScriptures([]); }
