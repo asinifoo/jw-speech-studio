@@ -347,6 +347,25 @@ def format_skip_words_for_prompt(words: list) -> str:
     return "\n".join(lines) if lines else "(없음)"
 
 
+def format_verses_for_prompt(verses: list) -> str:
+    """성구 목록을 STT 클라우드 프롬프트용 문자열로 변환.
+
+    빈 리스트: "(없음)"
+    1건 이상: bullet 형식, 줄바꿈 구분
+
+    입력은 이미 정규화된 문자열 배열 (예: ["사 53:1-5", "요 3:16"]).
+    LLM 이 성구 인용 오인식을 이 목록 중 하나로 교정 우선하도록 안내.
+    """
+    if not verses:
+        return "(없음)"
+    lines = []
+    for v in verses:
+        s = (v or "").strip() if isinstance(v, str) else ""
+        if s:
+            lines.append(f"- {s}")
+    return "\n".join(lines) if lines else "(없음)"
+
+
 def save_data_without_backup(data: dict) -> None:
     """백업 생성 없이 atomic 저장 + 캐시 무효화. 증분 API 전용.
 

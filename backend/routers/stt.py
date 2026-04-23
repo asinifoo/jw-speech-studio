@@ -25,6 +25,7 @@ from services.stt_corrections_service import (
     list_backups,
     reload_cache,
     format_skip_words_for_prompt,
+    format_verses_for_prompt,
     add_variants,
     add_skip_words,
 )
@@ -554,9 +555,13 @@ def _correct_pipeline_background(
     local_model: str,
     use_cloud: bool,
     cloud_model: str,
+    verses: list = None,
 ):
     """3단계 파이프라인: 파서 → 로컬 LLM → 클라우드 LLM.
-    단계별 _update_job 호출하여 프론트 폴링 시 실시간 반영."""
+    단계별 _update_job 호출하여 프론트 폴링 시 실시간 반영.
+
+    verses: 선택. 클라우드 프롬프트의 {verses} 에 주입될 성구 목록.
+    """
     elapsed = {}
     try:
         # 재교정 시 이전 단계 결과 완전 초기화 (파이프라인 새로 시작)
@@ -644,12 +649,14 @@ def _correct_pipeline_background(
                 return
             skip_words_list = load_data().get("skip_words", [])
             skip_words_block = format_skip_words_for_prompt(skip_words_list)
+            verses_block = format_verses_for_prompt(verses or [])
             prompt = (
                 template
+                .replace("{verses}", verses_block)
                 .replace("{skip_words}", skip_words_block)
                 .replace("{text}", current_text)
                 if "{text}" in template
-                else template.replace("{skip_words}", skip_words_block) + "\n\n원문:\n" + current_text
+                else template.replace("{verses}", verses_block).replace("{skip_words}", skip_words_block) + "\n\n원문:\n" + current_text
             )
             result = call_llm(prompt, model=cloud_model)
             if not result or not result.strip():
@@ -704,6 +711,7 @@ def stt_correct(job_id: str, req: dict):
       local_model: str = "gemma4:e4b",
       use_cloud: bool = False,
       cloud_model: str = "",
+      verses: list[str] = [],        # 클라우드 프롬프트 {verses} 주입용 (선택)
     }
     """
     jobs = _load_jobs()
@@ -718,6 +726,8 @@ def stt_correct(job_id: str, req: dict):
     local_model = (req.get("local_model") or "gemma4:e4b").strip()
     use_cloud = bool(req.get("use_cloud", False))
     cloud_model = (req.get("cloud_model") or "").strip()
+    verses_raw = req.get("verses") or []
+    verses = [str(v).strip() for v in verses_raw if isinstance(v, (str, int, float)) and str(v).strip()] if isinstance(verses_raw, list) else []
 
     # 파서만 단독 실행 (동기)
     if not use_local and not use_cloud:
@@ -762,7 +772,7 @@ def stt_correct(job_id: str, req: dict):
     # LLM 포함 → 비동기
     t = threading.Thread(
         target=_correct_pipeline_background,
-        args=(job_id, use_local, local_model, use_cloud, cloud_model),
+        args=(job_id, use_local, local_model, use_cloud, cloud_model, verses),
         daemon=True,
     )
     t.start()
