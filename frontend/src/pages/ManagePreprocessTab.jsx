@@ -31,6 +31,17 @@ export default function ManagePreprocessTab() {
   const [preprocSkipEditing, setPreprocSkipEditing] = useState({ word: '', reason: '' });
   const [preprocSkipAdding, setPreprocSkipAdding] = useState(null);
 
+  // ── dirty 전역 노출 (Level 1.5 Phase 4) ──
+  // STT 검토 화면이 localStorage 폴링으로 감지 → 증분 사전 추가 차단
+  useEffect(() => {
+    // mount 시 리셋 (이전 세션 stale 제거)
+    setPreprocDirty(false);
+    try { localStorage.setItem('jw-preproc-dirty', '0'); } catch {}
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem('jw-preproc-dirty', preprocDirty ? '1' : '0'); } catch {}
+  }, [preprocDirty]);
+
   // ── 전처리 함수 (원본 ManagePage.jsx L645-1068) ──
   const loadPreproc = async () => {
     setPreprocLoading(true);
