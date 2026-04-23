@@ -3,6 +3,7 @@ import KoreanTextarea from '../../components/KoreanTextarea';
 import { S } from '../../styles';
 import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../../api';
 import { cleanMd } from '../../components/utils';
+import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import OriginalBlock from './speech-input/OriginalBlock';
 import SaveActions from './speech-input/SaveActions';
 import OutlineSelectorBar from './speech-input/OutlineSelectorBar';
@@ -398,7 +399,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   };
 
   const handleReset = () => {
-    if (!confirm('입력한 내용을 모두 초기화하시겠습니까?')) return;
+    if (!confirm(RESET_CONFIRM_MSG)) return;
     setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiSpeaker(''); setSiDate(_siDateDefault);
     setSiMode('quick'); setSiExpanded({}); setSiNotes({}); setSiDetails({});
     setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과 봉사'); siDraftLoadedRef.current = false;

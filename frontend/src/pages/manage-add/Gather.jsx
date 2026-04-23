@@ -4,6 +4,7 @@ import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../../compon
 import { getBody } from '../../utils/textHelpers';
 import { S } from '../../styles';
 import { discFormDefault, svcFormDefault, visitFormDefault, pubFormDefault, gatherFormDefault } from '../../utils/formDefaults';
+import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
@@ -1962,7 +1963,18 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       flex: 1, padding: '8px 0', borderRadius: 8, border: 'none',
                       background: 'var(--accent)', color: '#fff', fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
                     }}>파싱</button>
-                    <button onClick={() => { setTxtContent(''); setTxtParsed([]); setTxtResult(''); }} style={{
+                    <button onClick={() => {
+                      if (!confirm(RESET_CONFIRM_MSG)) return;
+                      setTxtContent('');
+                      setTxtParsed([]);
+                      setTxtResult('');
+                      setTxtMeta({ outlineType: 'S-34', outlineNum: '', outlineTitle: '', version: '', duration: '', year: '', note: '' });
+                      try {
+                        localStorage.removeItem('jw-text-meta');
+                        localStorage.removeItem('jw-text-content');
+                        localStorage.removeItem('jw-text-parsed');
+                      } catch {}
+                    }} style={{
                       padding: '8px 12px', borderRadius: 8, border: '1px solid var(--bd)',
                       background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer',
                     }}>초기화</button>
@@ -2270,10 +2282,20 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     placeholder="출판물 내용을 입력하세요" rows={8}
                     style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
                 </div>
-                <button onClick={() => saveStructureForm(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
-                  width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
-                  fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-                }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => {
+                    if (!confirm(RESET_CONFIRM_MSG)) return;
+                    setPubForm(pubFormDefault);
+                  }} style={{
+                    padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',
+                    background: 'var(--bg-card)', color: 'var(--c-faint)',
+                    fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0,
+                  }}>초기화</button>
+                  <button onClick={() => saveStructureForm(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
+                    flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
+                    fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                  }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
+                </div>
                 {fromPub && !saving && (
                   <button onClick={() => { setFromPub(false); if (onSaveReturn) onSaveReturn(); }} style={{
                     width: '100%', padding: '8px 0', marginTop: 6, borderRadius: 8,

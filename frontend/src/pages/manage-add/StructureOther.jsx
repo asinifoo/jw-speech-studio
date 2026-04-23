@@ -2,6 +2,13 @@ import KoreanTextarea from '../../components/KoreanTextarea';
 import { S } from '../../styles';
 import { saveCategories, deleteServiceType } from '../../api';
 import { discFormDefault, svcFormDefault, visitFormDefault } from '../../utils/formDefaults';
+import { RESET_CONFIRM_MSG } from '../../utils/formReset';
+
+const RESET_BTN_STYLE = {
+  padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',
+  background: 'var(--bg-card)', color: 'var(--c-faint)',
+  fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0,
+};
 
 export default function ManageStructureOther({
   structureMode,
@@ -13,6 +20,10 @@ export default function ManageStructureOther({
   catEditing, setCatEditing,
   catNewVal, setCatNewVal,
 }) {
+  const handleDiscReset = () => { if (!confirm(RESET_CONFIRM_MSG)) return; setDiscForm(discFormDefault); };
+  const handleSvcReset = () => { if (!confirm(RESET_CONFIRM_MSG)) return; setSvcForm(svcFormDefault); };
+  const handleVisitReset = () => { if (!confirm(RESET_CONFIRM_MSG)) return; setVisitForm(visitFormDefault); };
+
   return (<>
           {structureMode === 'discussion' && (<>
 
@@ -64,10 +75,13 @@ export default function ManageStructureOther({
                   placeholder="내용을 입력하세요" rows={8}
                   style={{ ...S.inputField, display: 'block', width: '100%', resize: 'vertical', lineHeight: 1.9 }} />
               </div>
-              <button onClick={() => saveTab(discForm, '토의', setDiscForm, discFormDefault)} disabled={saving || !discForm.content.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
-                fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-              }}>{saving ? '저장 중...' : '저장'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleDiscReset} style={RESET_BTN_STYLE}>초기화</button>
+                <button onClick={() => saveTab(discForm, '토의', setDiscForm, discFormDefault)} disabled={saving || !discForm.content.trim()} style={{
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
+                  fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                }}>{saving ? '저장 중...' : '저장'}</button>
+              </div>
               {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
@@ -142,10 +156,13 @@ export default function ManageStructureOther({
                   fontSize: '0.857rem', cursor: 'pointer', fontWeight: 700,
                 }}>{svcForm.favorite ? '★' : '☆'}</button>
               </div>
-              <button onClick={() => saveTab(svcForm, '봉사 모임', setSvcForm, svcFormDefault)} disabled={saving || !svcForm.content.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
-                fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-              }}>{saving ? '저장 중...' : '저장'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleSvcReset} style={RESET_BTN_STYLE}>초기화</button>
+                <button onClick={() => saveTab(svcForm, '봉사 모임', setSvcForm, svcFormDefault)} disabled={saving || !svcForm.content.trim()} style={{
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
+                  fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                }}>{saving ? '저장 중...' : '저장'}</button>
+              </div>
               {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
@@ -239,10 +256,13 @@ export default function ManageStructureOther({
                   fontSize: '0.857rem', cursor: 'pointer', fontWeight: 700,
                 }}>{visitForm.favorite ? '★' : '☆'}</button>
               </div>
-              <button onClick={() => saveTab(visitForm, '방문', setVisitForm, visitFormDefault)} disabled={saving || !visitForm.content.trim()} style={{
-                width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-orange)', color: '#fff',
-                fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
-              }}>{saving ? '저장 중...' : '저장'}</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={handleVisitReset} style={RESET_BTN_STYLE}>초기화</button>
+                <button onClick={() => saveTab(visitForm, '방문', setVisitForm, visitFormDefault)} disabled={saving || !visitForm.content.trim()} style={{
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-orange)', color: '#fff',
+                  fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
+                }}>{saving ? '저장 중...' : '저장'}</button>
+              </div>
               {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
   </>);

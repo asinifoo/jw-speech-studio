@@ -36,8 +36,14 @@ export default function SaveActions({
         </div>
       )}
 
-      {/* [저장] = draft만 저장 */}
+      {/* [초기화] + [임시저장] + [저장] 한 행 */}
       <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={onReset} style={{
+          padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',
+          background: 'var(--bg-card)', color: 'var(--c-faint)',
+          fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0,
+        }}>초기화</button>
+
         <button onClick={onSaveDraft} disabled={saving || completing} style={{
           flex: 1, padding: '10px 0', borderRadius: 8, border: '1px solid var(--bd)',
           background: saving ? 'var(--bd-medium)' : 'var(--bg-card)', color: 'var(--c-text-dark)',
@@ -56,11 +62,6 @@ export default function SaveActions({
           {completing && <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', borderRadius: 8, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)', animation: 'shimmer 1.5s ease-in-out infinite' }} />}
           <span style={{ position: 'relative', zIndex: 1 }}>{completing ? '저장 중...' : '저장'}</span>
         </button>}
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        <div style={{ flex: 1 }} />
-        <button onClick={onReset} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
       </div>
       {saveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: saveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>{saveMsg}</div>}
     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { S } from '../../styles';
 import { draftSave } from '../../api';
 import { quickFormDefault } from '../../utils/formDefaults';
+import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 
 export default function ManageQuickInput() {
   const [qiForm, setQiForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-quick-form')) || quickFormDefault; } catch { return quickFormDefault; } });
@@ -136,17 +137,23 @@ export default function ManageQuickInput() {
         <div style={{ marginBottom: 8, padding: '8px 10px', borderRadius: 8, background: '#D85A3010', border: '1px solid #D85A3040', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.714rem', color: 'var(--accent-orange)', fontWeight: 700 }}>📝 수정 중</span>
           <span style={{ fontSize: '0.714rem', color: 'var(--c-sub)', fontFamily: 'monospace' }}>QUICK_{qiEditingOutlineNum}</span>
-          <div style={{ flex: 1 }} />
-          <button onClick={() => { setQiEditingOutlineNum(''); setQiForm(quickFormDefault); setQiSaveMsg(''); }}
-            style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>
-            새로 만들기
-          </button>
           <div style={{ flexBasis: '100%', fontSize: '0.643rem', color: 'var(--c-dim)' }}>※ 연사/날짜 변경 시 새 draft로 저장됩니다</div>
         </div>
       )}
 
-      {/* 저장 버튼 */}
+      {/* [초기화] + 저장 버튼 */}
       <div style={{ display: 'flex', gap: 6 }}>
+        <button onClick={() => {
+          if (!confirm(RESET_CONFIRM_MSG)) return;
+          setQiForm(quickFormDefault);
+          setQiEditingOutlineNum('');
+          setQiSaveMsg('');
+          try { localStorage.removeItem('jw-quick-form'); } catch {}
+        }} style={{
+          padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',
+          background: 'var(--bg-card)', color: 'var(--c-faint)',
+          fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0,
+        }}>초기화</button>
         <button onClick={async () => {
           if (!qiForm.content.trim()) { setQiSaveMsg('내용을 입력해주세요'); return; }
           setQiSaving(true); setQiSaveMsg('');
