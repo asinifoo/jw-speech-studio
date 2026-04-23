@@ -11,8 +11,7 @@ import AiModelSelector from './components/AiModelSelector';
 import GenerateButton from './components/GenerateButton';
 import RefinePanel from './components/RefinePanel';
 import useAiModel from './hooks/useAiModel';
-import { ConfirmProvider } from './providers/ConfirmProvider';
-import { AlertProvider } from './providers/AlertProvider';
+import { useConfirm } from './providers/ConfirmProvider';
 const BibleSearchPage = lazy(() => import('./pages/BibleSearchPage'));
 const TranscriptPage = lazy(() => import('./pages/TranscriptPage'));
 const FreeSearchPage = lazy(() => import('./pages/FreeSearchPage'));
@@ -22,6 +21,7 @@ const VisitPage = lazy(() => import('./pages/VisitPage'));
 const ManagePage = lazy(() => import('./pages/ManagePage'));
 
 export default function App() {
+  const showConfirm = useConfirm();
   // 마운트 완료 시 페이드인 + 스크롤 복원
   useEffect(() => {
     requestAnimationFrame(() => document.getElementById('root')?.classList.add('ready'));
@@ -343,7 +343,7 @@ export default function App() {
     fontSize: '0.929rem', lineHeight: 1.8, fontFamily: 'inherit', outline: 'none', resize: 'vertical',
   };
 
-  return (<ConfirmProvider><AlertProvider>
+  return (<>
       <style>{`:root {
   --bg: #F2F2F7;
   --bg-card: #FFFFFF;
@@ -1001,7 +1001,7 @@ textarea { resize: vertical; }
                             <div style={{ color: 'var(--c-sub)', lineHeight: 1.5 }}>{st.content.length > 80 ? st.content.slice(0, 80) + '...' : st.content}</div>
                           </div>
                           <button onClick={() => setEditingStyleIdx(si)} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-dim)', fontSize: '0.571rem', cursor: 'pointer', flexShrink: 0 }}>편집</button>
-                          <button onClick={() => { if (!confirm(`"${st.name}" 삭제?`)) return; const n = myStyles.filter((_, i) => i !== si); setMyStyles(n); saveMyStyles({ styles: n }); }} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid var(--c-danger)', background: 'transparent', color: 'var(--c-danger)', fontSize: '0.571rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
+                          <button onClick={async () => { if (!await showConfirm(`"${st.name}" 삭제?`, { confirmVariant: 'danger' })) return; const n = myStyles.filter((_, i) => i !== si); setMyStyles(n); saveMyStyles({ styles: n }); }} style={{ padding: '1px 6px', borderRadius: 3, border: '1px solid var(--c-danger)', background: 'transparent', color: 'var(--c-danger)', fontSize: '0.571rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
                         </div>
                       )}
                     </div>
@@ -1207,5 +1207,5 @@ textarea { resize: vertical; }
         </div>
       )}
     </div>
-  </AlertProvider></ConfirmProvider>);
+  </>);
 }
