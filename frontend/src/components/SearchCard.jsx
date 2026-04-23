@@ -4,6 +4,7 @@ import ScoreBar from './ScoreBar';
 import KoreanTextarea from './KoreanTextarea';
 import { parseDocument, tagColor, tagLabel, sourceLabel, cleanMd, parseKeywords } from './utils';
 import { dbUpdate, dbDelete } from '../api';
+import { useConfirm } from '../providers/ConfirmProvider';
 
 const PRESETS = {
   default:  { actionBtn: S.btnXsAccent,  dangerBtn: S.btnXsDanger },
@@ -12,6 +13,7 @@ const PRESETS = {
 };
 
 export default function SearchCard({ item, checked, onToggle, editedText, onEditText, cardKey, cardPubs, setCardPub, onDbDelete, onItemUpdate, preset = 'default' }) {
+  const showConfirm = useConfirm();
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const P = PRESETS[preset] || PRESETS.default;
@@ -88,7 +90,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
 
   const deleteDb = async (e) => {
     e.stopPropagation();
-    if (!confirm('이 항목을 DB에서 삭제하시겠습니까?')) return;
+    if (!await showConfirm('이 항목을 DB에서 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
     setDbStatus('삭제 중...');
     try {
       await dbDelete(col, item.id);

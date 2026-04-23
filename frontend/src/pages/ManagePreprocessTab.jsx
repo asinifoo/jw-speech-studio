@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { sttCorrectionsGet, sttCorrectionsSave, sttCorrectionsValidate, sttCorrectionsReload } from '../api';
+import { useConfirm } from '../providers/ConfirmProvider';
 
 export default function ManagePreprocessTab() {
+  const showConfirm = useConfirm();
   // ── 전처리 state (원본 ManagePage.jsx L621-643) ──
   const [preprocData, setPreprocData] = useState(null);
   const [preprocValidation, setPreprocValidation] = useState(null);
@@ -210,11 +212,11 @@ export default function ManagePreprocessTab() {
     setPreprocEditingTarget(null);
   };
 
-  const deleteGroup = (sectionId, target) => {
+  const deleteGroup = async (sectionId, target) => {
     const section = preprocData.sections.find(s => s.id === sectionId);
     const group = section?.groups?.find(g => g.target === target);
     if (!group) return;
-    if (!window.confirm(`"${target}" 그룹을 삭제하시겠습니까? (오류 ${group.errors?.length || 0}개 함께 삭제)`)) return;
+    if (!await showConfirm(`"${target}" 그룹을 삭제하시겠습니까? (오류 ${group.errors?.length || 0}개 함께 삭제)`, { confirmVariant: 'danger' })) return;
     setPreprocData({
       ...preprocData,
       sections: preprocData.sections.map(s => s.id !== sectionId ? s : ({
@@ -271,8 +273,8 @@ export default function ManagePreprocessTab() {
     setPreprocEditingError(null);
   };
 
-  const deleteError = (sectionId, target, errorIndex) => {
-    if (!window.confirm('이 오류를 삭제하시겠습니까?')) return;
+  const deleteError = async (sectionId, target, errorIndex) => {
+    if (!await showConfirm('이 오류를 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
     setPreprocData({
       ...preprocData,
       sections: preprocData.sections.map(s => s.id !== sectionId ? s : ({
@@ -336,12 +338,12 @@ export default function ManagePreprocessTab() {
     if (!s) return 0;
     return Object.values(s).reduce((sum, set) => sum + (set instanceof Set ? set.size : 0), 0);
   };
-  const deleteSelectedInSection = (sectionId) => {
+  const deleteSelectedInSection = async (sectionId) => {
     const sel = preprocSelected[sectionId];
     if (!sel) return;
     const total = getSelectedCountInSection(sectionId);
     if (total === 0) return;
-    if (!window.confirm(`선택된 ${total}개 오류를 삭제하시겠습니까?`)) return;
+    if (!await showConfirm(`선택된 ${total}개 오류를 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
     setPreprocData({
       ...preprocData,
       sections: preprocData.sections.map(s => s.id !== sectionId ? s : ({
@@ -444,8 +446,8 @@ export default function ManagePreprocessTab() {
     setPreprocDirty(true);
     setPreprocSkipEditingIdx(null);
   };
-  const deleteSkip = (idx) => {
-    if (!window.confirm('이 단어를 수정 제외 목록에서 삭제하시겠습니까?')) return;
+  const deleteSkip = async (idx) => {
+    if (!await showConfirm('이 단어를 수정 제외 목록에서 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
     setPreprocData({
       ...preprocData,
       skip_words: preprocData.skip_words.filter((_, i) => i !== idx),

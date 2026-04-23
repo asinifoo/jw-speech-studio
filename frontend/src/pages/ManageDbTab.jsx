@@ -4,6 +4,7 @@ import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../component
 import { getBody } from '../utils/textHelpers';
 import { S } from '../styles';
 import { dbDelete, dbUpdate, deleteOutline, listManualEntries, listCollection, listOriginals, listSpeakerMemos } from '../api';
+import { useConfirm } from '../providers/ConfirmProvider';
 
 const OUTLINE_TYPE_CODES = {
   '공개강연': 'S-34',
@@ -33,6 +34,7 @@ function formatSbMmw(num) {
 }
 
 export default function ManageDbTab({ mode }) {
+  const showConfirm = useConfirm();
   // ── 상수 (원본 ManagePage.jsx L495-503) ──
   const _dbTabs = [
     { key: '골자', color: 'var(--accent)' },
@@ -209,7 +211,7 @@ export default function ManageDbTab({ mode }) {
                     const count = viewSource === '골자'
                       ? dbEntries.filter(r => dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}`)).length
                       : dbSelected.size;
-                    if (!confirm(`선택한 ${dbSelected.size}개 항목 (${count}건)을 삭제하시겠습니까?`)) return;
+                    if (!await showConfirm(`선택한 ${dbSelected.size}개 항목 (${count}건)을 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                     setDbDeleting(true);
                     try {
                       if (viewSource === '골자') {
@@ -337,7 +339,7 @@ export default function ManageDbTab({ mode }) {
                     <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.items.length}개 요점</span>
                     <button onClick={async (e) => {
                       e.stopPropagation();
-                      if (!confirm(`${headerLabel || g.num} 골자를 삭제하시겠습니까? (${g.items.length}개 요점 + JSON 파일)`)) return;
+                      if (!await showConfirm(`${headerLabel || g.num} 골자를 삭제하시겠습니까? (${g.items.length}개 요점 + JSON 파일)`, { confirmVariant: 'danger' })) return;
                       try {
                         const res = await deleteOutline(pfx || g.num, g.year || '');
                         if (!res || (res.deleted || 0) === 0) {
@@ -548,7 +550,7 @@ export default function ManageDbTab({ mode }) {
                       }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent)', background: 'var(--bg-card)', color: 'var(--accent)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>→상세</button>
                     )}
                     <button onClick={async () => {
-                      if (!confirm('삭제하시겠습니까?')) return;
+                      if (!await showConfirm('삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
                       try { await dbDelete(r.collection, r.id); setDbEntries(p => p.filter(e => e.id !== r.id)); } catch (e) { alert('오류: ' + e.message); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </div>
@@ -674,7 +676,7 @@ export default function ManageDbTab({ mode }) {
                   <span style={{ fontSize: '0.786rem', color: 'var(--c-danger)', fontWeight: 600 }}>{dbSelected.size}개 선택</span>
                   <button onClick={() => setDbSelected(new Set())} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.714rem', cursor: 'pointer' }}>선택 해제</button>
                   <button onClick={async () => {
-                    if (!confirm(`선택한 ${dbSelected.size}개 연사메모를 삭제하시겠습니까?`)) return;
+                    if (!await showConfirm(`선택한 ${dbSelected.size}개 연사메모를 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                     setDbDeleting(true);
                     try {
                       for (const id of dbSelected) { await dbDelete('speech_expressions', id); }
@@ -772,7 +774,7 @@ export default function ManageDbTab({ mode }) {
                   {!isEditing && <>
                     <button onClick={() => setEditingSpMemo(p => ({ ...p, [i]: body }))} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent-purple)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
                     <button onClick={async () => {
-                      if (!confirm('삭제하시겠습니까?')) return;
+                      if (!await showConfirm('삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
                       try { await dbDelete(m.collection || 'speech_expressions', m.id); setSpeakerMemos(p => p.filter((_, j) => j !== i)); } catch (e) { alert('오류: ' + e.message); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </>}

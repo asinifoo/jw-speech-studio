@@ -5,6 +5,7 @@ import { getBody } from '../../utils/textHelpers';
 import { S } from '../../styles';
 import { discFormDefault, svcFormDefault, visitFormDefault, pubFormDefault, gatherFormDefault } from '../../utils/formDefaults';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
+import { useConfirm } from '../../providers/ConfirmProvider';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
@@ -52,6 +53,7 @@ const getOutlineTypeInfo = (code) => {
 };
 
 export default function ManageGather({ fontSize, pageType, pendingPub, clearPendingPub, onSaveReturn }) {
+  const showConfirm = useConfirm();
   const _isAddPage = pageType === 'add' || pageType === 'input';
   const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
   const [gatherForm, setGatherForm] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-gather-form')) || gatherFormDefault; } catch(e) { return gatherFormDefault; } });
@@ -314,7 +316,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   };
 
   const handleSttDelete = async (jobId, filename) => {
-    if (!window.confirm(`"${filename}" 삭제하시겠습니까? 관련 파일 모두 제거됩니다.`)) return;
+    if (!await showConfirm(`"${filename}" 삭제하시겠습니까? 관련 파일 모두 제거됩니다.`, { confirmVariant: 'danger' })) return;
     try {
       await sttDelete(jobId);
       await sttLoadJobs();
@@ -2344,7 +2346,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     {t}
                     {editingSTypes && ti < speechSubTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(speechSubTypes, ti, ti+1); setSpeechSubTypes(next); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingSTypes && !defaultSTypes.includes(t) && (
-                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}
+                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!await showConfirm(msg, { confirmVariant: 'danger' })) return; const next = speechSubTypes.filter(x => x !== t); setSpeechSubTypes(next); if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-speech-sub', JSON.stringify(next)); } catch(e) {} }}
                         style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2447,7 +2449,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     {t}
                     {editingDTypes && ti < discussionTypes.length - 1 && <span onClick={(e) => { e.stopPropagation(); const next = swapArr(discussionTypes, ti, ti+1); setDiscussionTypes(next); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                     {editingDTypes && !defaultDTypes.includes(t) && (
-                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!confirm(msg)) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}
+                      <span onClick={async (e) => { e.stopPropagation(); const cnt = (await freeSearch(t, 5)).results?.filter(r => r.metadata?.service_type === t).length || 0; const msg = cnt > 0 ? `"${t}"에 관련 자료가 있습니다.\n삭제하시겠습니까?` : `"${t}"을(를) 삭제하시겠습니까?`; if (!await showConfirm(msg, { confirmVariant: 'danger' })) return; const next = discussionTypes.filter(x => x !== t); setDiscussionTypes(next); if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' })); try { localStorage.setItem('jw-cats-discussion', JSON.stringify(next)); } catch(e) {} }}
                         style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                     )}
                   </button>
@@ -2509,7 +2511,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         const r = await listBySource('봉사 모임', 100, t);
                         const cnt = r.total || 0;
                         const msg = cnt > 0 ? `"${t}"에 ${cnt}건의 자료가 있습니다.\n삭제하면 모두 "일반"으로 변경됩니다.\n삭제하시겠습니까?` : `"${t}" 봉사 종류를 삭제하시겠습니까?`;
-                        if (!confirm(msg)) return;
+                        if (!await showConfirm(msg, { confirmVariant: 'danger' })) return;
                         if (cnt > 0) await deleteServiceType(t);
                         setManageServiceTypes(p => p.filter(x => x !== t));
                         if (gatherForm.service_type === t) setGatherForm(p => ({ ...p, service_type: '' }));
@@ -2570,7 +2572,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       {sel ? '✓ ' : ''}{t}
                       {editingVSits && ti < visitSituations.length - 1 && <span onClick={(e) => { e.stopPropagation(); setVisitSituations(swapArr(visitSituations, ti, ti+1)); }} style={{ cursor: 'pointer', fontSize: '0.643rem', color: 'var(--c-muted)' }}>▶</span>}
                       {editingVSits && !defaultVSits.includes(t) && (
-                        <span onClick={(e) => { e.stopPropagation(); if (!confirm(`"${t}"을(를) 삭제하시겠습니까?`)) return; setVisitSituations(prev => prev.filter(x => x !== t)); setSelSituations(prev => { const next = new Set(prev); next.delete(t); return next; }); }}
+                        <span onClick={async (e) => { e.stopPropagation(); if (!await showConfirm(`"${t}"을(를) 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return; setVisitSituations(prev => prev.filter(x => x !== t)); setSelSituations(prev => { const next = new Set(prev); next.delete(t); return next; }); }}
                           style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: '50%', background: 'var(--c-danger)', color: '#fff', fontSize: '0.643rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontWeight: 800 }}>×</span>
                       )}
                     </button>

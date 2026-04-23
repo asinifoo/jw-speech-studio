@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { S } from '../../styles';
 import { draftList, draftDelete, listBySource, dbDelete } from '../../api';
+import { useConfirm } from '../../providers/ConfirmProvider';
 
 export default function ManageDrafts({
   dbDrafts, setDbDrafts,
@@ -8,6 +9,7 @@ export default function ManageDrafts({
   onDraftMove,
   onMemoMove,
 }) {
+  const showConfirm = useConfirm();
   const [draftsFilter, setDraftsFilter] = useState('draft');
   const [memoMoveModal, setMemoMoveModal] = useState(null);
   const [memoLoading, setMemoLoading] = useState(false);
@@ -78,7 +80,7 @@ export default function ManageDrafts({
                     이동
                   </button>
                   <button onClick={async () => {
-                    if (!confirm('이 임시저장을 삭제하시겠습니까?')) return;
+                    if (!await showConfirm('이 임시저장을 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
                     await draftDelete(dr.draft_id);
                     setDbDrafts(p => p.filter((_, i) => i !== di));
                   }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
@@ -115,7 +117,7 @@ export default function ManageDrafts({
                       <button onClick={() => setMemoMoveModal({ id: me.id, collection: 'speech_expressions', topic: mt.outline_title || mt.topic || '', body })}
                         style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--accent-orange)', background: 'var(--bg-card)', color: 'var(--accent-orange)', fontSize: '0.643rem', cursor: 'pointer', fontWeight: 600 }}>이동</button>
                       <button onClick={async () => {
-                        if (!confirm('이 메모를 삭제하시겠습니까?')) return;
+                        if (!await showConfirm('이 메모를 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
                         await dbDelete('speech_expressions', me.id);
                         setMemoEntries(p => p.filter(e => e.id !== me.id));
                       }} style={{ padding: '3px 10px', borderRadius: 6, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>

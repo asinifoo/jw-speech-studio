@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getAiModels, saveAiModels as saveAiModelsAPI, getApiKeys, saveApiKeys, getApiVersions, saveApiVersions, ollamaModels, ollamaPull, ollamaDelete, getPasswordStatus, changePassword, getFilterModel, setFilterModel, getOllamaCtx, setOllamaCtx, getOllamaThink, setOllamaThink, getChatTurns, setChatTurns, setChatSearchTopK, getPrompts, setPrompt, resetPrompt, savePromptDefault } from '../api';
+import { useConfirm } from '../providers/ConfirmProvider';
 
 // AI 탭 UI state persist (Phase 5b-1) — 탭 discard 후 재로드 시 열어둔 섹션 복원
 const _aiInit = (() => {
@@ -8,6 +9,7 @@ const _aiInit = (() => {
 })();
 
 export default function ManageAiTab() {
+  const showConfirm = useConfirm();
   // ── AI_MODELS_DEFAULT (원본 ManagePage.jsx L558-563) ──
   const AI_MODELS_DEFAULT = {
     Local: [{ value: 'gemma4:26b', label: 'Gemma 4 26B' }, { value: 'qwen3.5:27b', label: 'Qwen 3.5 27B' }],
@@ -428,7 +430,7 @@ export default function ManageAiTab() {
                     </button>
                     {!isCurrent && (
                       <button onClick={async () => {
-                        if (!confirm(`'${m.name}' 모델을 삭제하시겠습니까?`)) return;
+                        if (!await showConfirm(`'${m.name}' 모델을 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                         setDeletingModel(m.name);
                         try {
                           await ollamaDelete(m.name);
@@ -775,7 +777,7 @@ export default function ManageAiTab() {
                     {apiKeyStatus[key] && (
                       <button onClick={async () => {
                         if (!aiPassword) { setAiError('비밀번호를 입력하세요'); return; }
-                        if (!confirm(`${label} API 키를 삭제하시겠습니까?`)) return;
+                        if (!await showConfirm(`${label} API 키를 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                         try { await saveApiKeys(aiPassword, { [key]: '' }); setApiKeyStatus(await getApiKeys()); setApiKeyInputs(prev => ({ ...prev, [key]: '' })); }
                         catch (e) { setAiError(e.message); }
                       }}

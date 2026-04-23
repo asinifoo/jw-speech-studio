@@ -3,8 +3,10 @@ import { copyText } from '../components/copyUtil';
 import KoreanTextarea from '../components/KoreanTextarea';
 import { getTranscriptBody } from '../utils/textHelpers';
 import { listTranscripts, dbUpdate, dbDelete } from '../api';
+import { useConfirm } from '../providers/ConfirmProvider';
 
 export default function TranscriptPage({ fontSize }) {
+  const showConfirm = useConfirm();
   const [transcripts, setTranscripts] = useState({});
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('공개 강연');
@@ -181,7 +183,7 @@ export default function TranscriptPage({ fontSize }) {
                 <div style={{ flex: 1 }} />
                 <button onClick={() => { setEditing(true); setEditVal(selSpeaker.text); setEditStat(''); }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--accent-purple)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.786rem', cursor: 'pointer' }}>수정</button>
                 <button onClick={async () => {
-                  if (!confirm('이 원문을 삭제하시겠습니까?')) return;
+                  if (!await showConfirm('이 원문을 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
                   try {
                     await dbDelete(selSpeaker.collection, selSpeaker.id);
                     setTranscripts(prev => {

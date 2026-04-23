@@ -5,8 +5,10 @@ import { parseDocument, cleanMd, sourceLabel, tagLabel, tagColor, parseKeywords 
 import { BIBLE_ABBR, BIBLE_FULL } from '../utils/bible';
 import { getBody } from '../utils/textHelpers';
 import { freeSearch, dbUpdate, dbDelete } from '../api';
+import { useConfirm } from '../providers/ConfirmProvider';
 
 export default function FreeSearchPage({ fontSize }) {
+  const showConfirm = useConfirm();
   const _fs = (() => { try { return JSON.parse(localStorage.getItem('jw-free-state')); } catch(e) { return null; } })();
   const [query, setQuery] = useState(_fs?.query || '');
   const [results, setResults] = useState(_fs?.results || []);
@@ -351,7 +353,7 @@ export default function FreeSearchPage({ fontSize }) {
                     } catch (e) { setDbStat('오류: ' + e.message); }
                   }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                   <button onClick={async () => {
-                    if (!confirm('이 항목을 DB에서 삭제하시겠습니까?')) return;
+                    if (!await showConfirm('이 항목을 DB에서 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
                     setDbStat('삭제 중...');
                     try {
                       await dbDelete(col, r.id);
