@@ -1588,11 +1588,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           <span>{t.label}</span>
                           {t.badge > 0 && (
                             <span style={{
-                              fontSize: '0.643rem', fontWeight: 600,
-                              padding: '1px 6px', borderRadius: 8,
-                              background: sttReviewTab === t.key ? 'var(--tint-green)' : 'var(--bg-subtle)',
-                              color: sttReviewTab === t.key ? 'var(--accent)' : 'var(--c-dim)',
-                              minWidth: 18, textAlign: 'center', lineHeight: 1.4,
+                              marginLeft: 2, padding: '1px 7px', borderRadius: 10,
+                              background: 'var(--bg-muted)', color: 'var(--c-muted)',
+                              fontSize: '0.714rem', fontWeight: 600, lineHeight: 1.4,
                             }}
                               title="신규 후보 N건">
                               {t.badge}

@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { diffArrays } from 'diff';
+import { sttCorrectionsAddVariants, sttCorrectionsAddSkipWords } from '../../api';
 
 /**
  * STT 검토 화면의 [교정 diff] 탭 전용 컴포넌트.
@@ -10,10 +11,10 @@ import { diffArrays } from 'diff';
  *   cloudText: string — 클라우드 LLM 결과
  *   corrections: object — stt_corrections.json 전체 데이터 (sections, skip_words)
  *   jobId: string — source_stt_job_id 추적용
- *   preprocDirty: boolean — ManagePreprocessTab 편집 중이면 true
+ *   preprocDirty: boolean — ManagePreprocessTab 편집 중이면 true (Phase 4)
  *   onVariantAdded: () => void — 추가 성공 후 콜백 (corrections 재 fetch)
- *   showAlert: (msg, opts) => void — AlertProvider 훅
- *   showConfirm: (msg, opts) => Promise<boolean> — ConfirmProvider 훅
+ *   showAlert: (msg, opts) => void
+ *   showConfirm: (msg, opts) => Promise<boolean>
  */
 export default function SttCorrectionDiff({
   parsedText, cloudText, corrections, jobId,
@@ -28,6 +29,17 @@ export default function SttCorrectionDiff({
     [pairs, variantIndex]
   );
 
+  const [ignored, setIgnored] = useState(() => new Set());
+  const [expanded, setExpanded] = useState({});        // pairKey → bool
+  const [sectionBy, setSectionBy] = useState({});      // pairKey → section_id
+  const [targetBy, setTargetBy] = useState({});        // pairKey → target string
+  const [addingSet, setAddingSet] = useState(() => new Set());  // pairKey → 진행 중
+
+  const visible = useMemo(
+    () => classified.filter(p => !ignored.has(`${p.before}||${p.after}`)),
+    [classified, ignored]
+  );
+
   const stats = useMemo(() => ({
     total: classified.length,
     candidate: classified.filter(p => p.status === 'candidate').length,
@@ -36,6 +48,77 @@ export default function SttCorrectionDiff({
     conflict: classified.filter(p => p.status === 'conflict').length,
     reorganize: classified.filter(p => p.status === 'reorganize').length,
   }), [classified]);
+
+  const sections = corrections?.sections || [];
+
+  // ─── 핸들러 ───
+
+  const setAdding = (key, flag) => {
+    setAddingSet(s => {
+      const n = new Set(s);
+      if (flag) n.add(key); else n.delete(key);
+      return n;
+    });
+  };
+
+  const handleAddVariant = async (pair, pairKey, sectionId, target) => {
+    const trimmedTarget = (target || '').trim();
+    if (!sectionId || !trimmedTarget) {
+      showAlert('섹션과 타겟을 확인하세요.', { variant: 'info' });
+      return;
+    }
+    setAdding(pairKey, true);
+    try {
+      const result = await sttCorrectionsAddVariants(sectionId, trimmedTarget, [{
+        text: pair.before,
+        note: '',
+        source_stt_job_id: jobId || '',
+      }]);
+      if (result.added > 0) {
+        showAlert(`✓ 사전 추가됨: ${pair.before} → ${trimmedTarget}`, { variant: 'success' });
+        setExpanded(e => ({ ...e, [pairKey]: false }));
+        onVariantAdded && onVariantAdded();
+      } else {
+        showAlert('이미 등록된 규칙입니다.', { variant: 'info' });
+      }
+    } catch (e) {
+      showAlert(`추가 실패: ${e.message}`, { variant: 'error' });
+    } finally {
+      setAdding(pairKey, false);
+    }
+  };
+
+  const handleAddSkipWord = async (pair, pairKey) => {
+    const ok = await showConfirm(
+      `"${pair.before}" 를 수정 제외 단어로 추가하시겠습니까?\n\n향후 STT 교정 시 이 단어는 보호됩니다.`,
+      { confirmLabel: '영구 거부', confirmVariant: 'danger' }
+    );
+    if (!ok) return;
+    setAdding(pairKey, true);
+    try {
+      const result = await sttCorrectionsAddSkipWords([{
+        word: pair.before,
+        reason: jobId ? `STT diff 영구 거부 (job ${String(jobId).slice(-6)})` : 'STT diff 영구 거부',
+      }]);
+      if (result.added > 0) {
+        showAlert('✓ 수정 제외 단어에 추가됨', { variant: 'success' });
+        onVariantAdded && onVariantAdded();
+      } else {
+        showAlert('이미 보호된 단어입니다.', { variant: 'info' });
+      }
+    } catch (e) {
+      showAlert(`추가 실패: ${e.message}`, { variant: 'error' });
+    } finally {
+      setAdding(pairKey, false);
+    }
+  };
+
+  const handleIgnore = (pair) => {
+    const key = `${pair.before}||${pair.after}`;
+    setIgnored(s => new Set(s).add(key));
+  };
+
+  // ─── 렌더 ───
 
   return (
     <div style={{ padding: 16 }}>
@@ -51,14 +134,218 @@ export default function SttCorrectionDiff({
           </>
         )}
       </div>
-      <div style={{
-        color: 'var(--c-muted)', padding: 24, textAlign: 'center',
-        fontSize: '0.786rem', background: 'var(--bg-subtle)', borderRadius: 8,
-      }}>
-        (Phase 3 커밋 8 에서 카드 UI 완성 예정)
+
+      {!variantIndex && (
+        <div style={{
+          color: 'var(--c-muted)', padding: 24, textAlign: 'center',
+          fontSize: '0.786rem', background: 'var(--bg-subtle)', borderRadius: 8,
+        }}>
+          사전 로딩 중…
+        </div>
+      )}
+
+      {variantIndex && visible.length === 0 && (
+        <div style={{
+          color: 'var(--c-muted)', padding: 24, textAlign: 'center',
+          fontSize: '0.786rem', background: 'var(--bg-subtle)', borderRadius: 8,
+        }}>
+          표시할 변경 사항이 없습니다.
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {variantIndex && visible.map((pair, i) => {
+          const pairKey = `${pair.before}||${pair.after}||${i}`;
+          const isExpanded = !!expanded[pairKey];
+          const isAdding = addingSet.has(pairKey);
+          const curSection = sectionBy[pairKey] ?? (sections[sections.length - 1]?.id || '');
+          const curTarget = targetBy[pairKey] ?? pair.after;
+
+          const canAdd = pair.status === 'candidate' || pair.status === 'conflict';
+
+          return (
+            <div key={pairKey} style={{
+              border: '1px solid var(--bd)', borderRadius: 8,
+              padding: 12, background: 'var(--bg-card)',
+            }}>
+              {/* 헤더 행: before → after + StatusBadge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <code style={{
+                  background: 'var(--bg-subtle)', padding: '2px 6px', borderRadius: 4,
+                  color: 'var(--c-danger)', textDecoration: 'line-through',
+                  fontSize: '0.857rem',
+                }}>
+                  {pair.before || '(없음)'}
+                </code>
+                <span style={{ color: 'var(--c-dim)' }}>→</span>
+                <code style={{
+                  background: 'var(--bg-subtle)', padding: '2px 6px', borderRadius: 4,
+                  color: 'var(--accent)', fontWeight: 600,
+                  fontSize: '0.857rem',
+                }}>
+                  {pair.after || '(없음)'}
+                </code>
+                <StatusBadge pair={pair} />
+              </div>
+
+              {/* 버튼 행 */}
+              {(canAdd || pair.status !== 'reorganize') && (
+                <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                  {canAdd && (
+                    <button
+                      onClick={() => setExpanded(e => ({ ...e, [pairKey]: !isExpanded }))}
+                      disabled={isAdding}
+                      style={btnStyle('accent', isAdding)}>
+                      {isExpanded ? '접기' : '+ 사전 추가'}
+                    </button>
+                  )}
+                  {canAdd && (
+                    <button
+                      onClick={() => handleAddSkipWord(pair, pairKey)}
+                      disabled={isAdding}
+                      style={btnStyle('danger', isAdding)}>
+                      영구 거부
+                    </button>
+                  )}
+                  {pair.status !== 'reorganize' && (
+                    <button
+                      onClick={() => handleIgnore(pair)}
+                      disabled={isAdding}
+                      style={btnStyle('muted', isAdding)}>
+                      무시
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* 확장 패널 */}
+              {canAdd && isExpanded && (
+                <div style={{
+                  marginTop: 8, padding: 10, background: 'var(--bg-subtle)',
+                  borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 6,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.714rem', color: 'var(--c-muted)', minWidth: 50 }}>섹션</label>
+                    <select
+                      value={curSection}
+                      onChange={e => setSectionBy(s => ({ ...s, [pairKey]: e.target.value }))}
+                      style={{
+                        flex: 1, minWidth: 120, padding: '4px 8px',
+                        border: '1px solid var(--bd)', borderRadius: 4,
+                        fontSize: '0.786rem', background: 'var(--bg-card)',
+                        color: 'var(--c-text-dark)', outline: 'none',
+                      }}>
+                      {sections.map(s => (
+                        <option key={s.id} value={s.id}>{s.name || s.id}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: '0.714rem', color: 'var(--c-muted)', minWidth: 50 }}>타겟</label>
+                    <input
+                      type="text"
+                      value={curTarget}
+                      onChange={e => setTargetBy(s => ({ ...s, [pairKey]: e.target.value }))}
+                      style={{
+                        flex: 1, minWidth: 120, padding: '4px 8px',
+                        border: '1px solid var(--bd)', borderRadius: 4,
+                        fontSize: '0.786rem', background: 'var(--bg-card)',
+                        color: 'var(--c-text-dark)', outline: 'none',
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                    <button
+                      onClick={() => setExpanded(e => ({ ...e, [pairKey]: false }))}
+                      disabled={isAdding}
+                      style={btnStyle('muted', isAdding)}>
+                      취소
+                    </button>
+                    <button
+                      onClick={() => handleAddVariant(pair, pairKey, curSection, curTarget)}
+                      disabled={isAdding}
+                      style={btnStyle('accent', isAdding)}>
+                      {isAdding ? '추가 중…' : '확인'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
+}
+
+// ─── StatusBadge ───
+
+function StatusBadge({ pair }) {
+  const { status, existingTarget, existingTargets, protectedConflict } = pair;
+
+  const baseStyle = {
+    display: 'inline-block', padding: '2px 8px', borderRadius: 10,
+    fontSize: '0.643rem', fontWeight: 600, lineHeight: 1.4, whiteSpace: 'nowrap',
+  };
+
+  if (status === 'candidate') {
+    return <span style={{ ...baseStyle, background: 'var(--tint-green)', color: 'var(--accent)' }}>신규</span>;
+  }
+  if (status === 'existing') {
+    return (
+      <span style={{ ...baseStyle, background: 'var(--tint-blue)', color: 'var(--accent-blue)' }}
+        title={`등록된 target: ${existingTarget}`}>
+        ✓ 등록됨
+      </span>
+    );
+  }
+  if (status === 'conflict') {
+    const list = (existingTargets || []).join(', ');
+    return (
+      <span style={{ ...baseStyle, background: 'var(--tint-orange)', color: 'var(--accent-orange)' }}
+        title={`다른 target 으로 기록됨: ${list}`}>
+        ⚠️ 다른 target
+      </span>
+    );
+  }
+  if (status === 'protected') {
+    if (protectedConflict) {
+      return (
+        <span style={{ ...baseStyle, background: 'var(--tint-red, rgba(204,68,68,0.12))', color: 'var(--c-danger)' }}
+          title="skip_words 에 있으면서 사전에도 variant 등록됨 — 보호 우선 적용">
+          ⚠️ 충돌 (보호+사전)
+        </span>
+      );
+    }
+    return (
+      <span style={{ ...baseStyle, background: 'var(--bg-muted)', color: 'var(--c-dim)' }}
+        title="skip_words 에 등록된 보호 단어">
+        🛡 보호됨
+      </span>
+    );
+  }
+  if (status === 'reorganize') {
+    return <span style={{ ...baseStyle, background: 'var(--bg-subtle)', color: 'var(--c-faint)' }}>재구성</span>;
+  }
+  return null;
+}
+
+// ─── 버튼 스타일 ───
+
+function btnStyle(variant, disabled) {
+  const base = {
+    height: 24, padding: '0 10px', borderRadius: 6,
+    fontSize: '0.714rem', fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer',
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    opacity: disabled ? 0.5 : 1, fontFamily: 'inherit',
+  };
+  if (variant === 'accent') {
+    return { ...base, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff' };
+  }
+  if (variant === 'danger') {
+    return { ...base, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)' };
+  }
+  return { ...base, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)' };
 }
 
 // ─── 헬퍼 ───
