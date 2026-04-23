@@ -11,6 +11,8 @@ import AiModelSelector from './components/AiModelSelector';
 import GenerateButton from './components/GenerateButton';
 import RefinePanel from './components/RefinePanel';
 import useAiModel from './hooks/useAiModel';
+import { ConfirmProvider } from './providers/ConfirmProvider';
+import { AlertProvider } from './providers/AlertProvider';
 const BibleSearchPage = lazy(() => import('./pages/BibleSearchPage'));
 const TranscriptPage = lazy(() => import('./pages/TranscriptPage'));
 const FreeSearchPage = lazy(() => import('./pages/FreeSearchPage'));
@@ -341,7 +343,7 @@ export default function App() {
     fontSize: '0.929rem', lineHeight: 1.8, fontFamily: 'inherit', outline: 'none', resize: 'vertical',
   };
 
-  return (<>
+  return (<ConfirmProvider><AlertProvider>
       <style>{`:root {
   --bg: #F2F2F7;
   --bg-card: #FFFFFF;
@@ -1205,5 +1207,5 @@ textarea { resize: vertical; }
         </div>
       )}
     </div>
-  </>);
+  </AlertProvider></ConfirmProvider>);
 }
