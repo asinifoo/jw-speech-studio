@@ -387,6 +387,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttReviewOutlineOpen, setSttReviewOutlineOpen] = useState(false);
   const [sttReturnAfterSave, setSttReturnAfterSave] = useState(false);
   const [sttReviewVerses, setSttReviewVerses] = useState([]);
+  const [sttVerseMode, setSttVerseMode] = useState('reading_text');
   const [sttVersesModalOpen, setSttVersesModalOpen] = useState(false);
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
@@ -749,12 +750,17 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     setSttReviewCorrecting(true);
     setSttReviewStatus('교정 중...');
     try {
+      const readings = sttReviewVerses.filter(v => v.includes('(낭독)'));
       const options = {
         use_local: sttReviewUseLocal,
         local_model: sttReviewLocalModel,
         use_cloud: sttReviewUseCloud,
         cloud_model: sttReviewCloudModel,
-        verses: sttReviewVerses,
+        verses: {
+          mode: sttVerseMode,
+          all: sttReviewVerses,
+          readings,
+        },
       };
       const result = await sttCorrect(sttReviewJob.job_id, options);
 
@@ -1805,16 +1811,50 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                               </div>
                               {sttReviewVerses.length > 0 && (
                                 <div style={{
+                                  marginTop: 8, padding: 2, background: 'var(--bg-subtle)',
+                                  borderRadius: 6, display: 'flex', gap: 2,
+                                }}>
+                                  {[
+                                    { key: 'none', label: '없음' },
+                                    { key: 'ref_only', label: 'reference 만' },
+                                    { key: 'reading_text', label: '낭독 본문' },
+                                    { key: 'all_text', label: '전체 본문' },
+                                  ].map(m => (
+                                    <button key={m.key} type="button"
+                                      onClick={() => setSttVerseMode(m.key)}
+                                      title={m.key === 'reading_text' ? '낭독 성구 본문만 프롬프트에 포함 (기본)'
+                                        : m.key === 'all_text' ? '모든 성구 본문 포함 (토큰 많음)'
+                                        : m.key === 'ref_only' ? 'reference 목록만 (본문 없음)'
+                                        : '성구 주입 안 함'}
+                                      style={{
+                                        flex: '1 1 0%', minWidth: 0, padding: '5px 6px', border: 'none',
+                                        background: sttVerseMode === m.key ? 'var(--bg-card)' : 'transparent',
+                                        color: sttVerseMode === m.key ? 'var(--accent)' : 'var(--c-muted)',
+                                        fontSize: '0.714rem', fontWeight: sttVerseMode === m.key ? 700 : 500,
+                                        cursor: 'pointer', borderRadius: 4, whiteSpace: 'nowrap',
+                                        fontFamily: 'inherit',
+                                      }}>
+                                      {m.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                              {sttReviewVerses.length > 0 && (
+                                <div style={{
                                   marginTop: 6, fontSize: '0.714rem', color: 'var(--c-muted)',
                                   display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, lineHeight: 1.7,
                                 }}>
                                   <span style={{ flexShrink: 0 }}>📖</span>
-                                  {sttReviewVerses.slice(0, 5).map((v, i) => (
-                                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                                      {i > 0 && <span style={{ color: 'var(--c-dim)' }}>·</span>}
-                                      <span>{v}</span>
-                                    </span>
-                                  ))}
+                                  {sttReviewVerses.slice(0, 5).map((v, i) => {
+                                    const isReading = v.includes('(낭독)');
+                                    const highlight = isReading && sttVerseMode === 'reading_text';
+                                    return (
+                                      <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                        {i > 0 && <span style={{ color: 'var(--c-dim)' }}>·</span>}
+                                        <span style={highlight ? { color: 'var(--accent)', fontWeight: 700 } : undefined}>{v}</span>
+                                      </span>
+                                    );
+                                  })}
                                   {sttReviewVerses.length > 5 && (
                                     <button type="button"
                                       onClick={() => setSttVersesModalOpen(true)}
