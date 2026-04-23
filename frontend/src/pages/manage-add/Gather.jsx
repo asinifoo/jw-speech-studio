@@ -11,6 +11,8 @@ import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
 import ManageDrafts from './Drafts';
 import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
+import { Modal } from '../../components/Modal';
+import { collectScripturesFromOutline } from '../../utils/scriptureHelpers';
 import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
@@ -384,6 +386,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [sttReviewOutlines, setSttReviewOutlines] = useState([]);
   const [sttReviewOutlineOpen, setSttReviewOutlineOpen] = useState(false);
   const [sttReturnAfterSave, setSttReturnAfterSave] = useState(false);
+  const [sttReviewVerses, setSttReviewVerses] = useState([]);
+  const [sttVersesModalOpen, setSttVersesModalOpen] = useState(false);
   const [sttSavedModal, setSttSavedModal] = useState(null);
   const [sttReviewStatus, setSttReviewStatus] = useState('');
   const [sttCorrectionsData, setSttCorrectionsData] = useState(null);
@@ -418,6 +422,29 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     if (!sttReviewJob?.parsed_text || !sttReviewJob?.cloud_text) return 0;
     return computeDiffPairs(sttReviewJob.parsed_text, sttReviewJob.cloud_text).length;
   }, [sttReviewJob?.parsed_text, sttReviewJob?.cloud_text]);
+  // ── 골자 성구 자동 로드 (Level 1.5 Phase 3-B) ──
+  // outline_id 변경 감지 → outlineDetail → collectScripturesFromOutline → state
+  // outline_id 는 version `/` 포함될 수 있어 path 로 직접 못 씀 (FastAPI 404).
+  // SpeechInput 패턴 준거: path 는 type+num 만, version/year 는 쿼리로.
+  useEffect(() => {
+    const oid = sttReviewMeta?.outline_id || '';
+    if (!oid) { setSttReviewVerses([]); return; }
+    // outline_id 에서 _y / _v 토큰 앞까지만 path-safe prefix 추출
+    const yIdx = oid.indexOf('_y');
+    const vIdx = oid.indexOf('_v');
+    let cut = oid.length;
+    if (yIdx > 0) cut = Math.min(cut, yIdx);
+    if (vIdx > 0) cut = Math.min(cut, vIdx);
+    const pathOid = oid.slice(0, cut);
+    let cancelled = false;
+    outlineDetail(pathOid, '', sttReviewMeta.outline_version || '', sttReviewMeta.outline_year || '')
+      .then(detail => {
+        if (cancelled) return;
+        setSttReviewVerses(collectScripturesFromOutline(detail?.subtopics || {}));
+      })
+      .catch(() => { if (!cancelled) setSttReviewVerses([]); });
+    return () => { cancelled = true; };
+  }, [sttReviewMeta?.outline_id, sttReviewMeta?.outline_version, sttReviewMeta?.outline_year]);
   // ── preprocDirty 폴링 (Level 1.5 Phase 4) ──
   const [preprocDirtyFlag, setPreprocDirtyFlag] = useState(() => {
     try { return localStorage.getItem('jw-preproc-dirty') === '1'; } catch { return false; }
@@ -727,6 +754,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         local_model: sttReviewLocalModel,
         use_cloud: sttReviewUseCloud,
         cloud_model: sttReviewCloudModel,
+        verses: sttReviewVerses,
       };
       const result = await sttCorrect(sttReviewJob.job_id, options);
 
@@ -1760,20 +1788,43 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                               </div>
                             </div>
                           ) : sttReviewMeta.outline_id ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <button type="button"
-                                onClick={() => setSttReviewOutlineOpen(true)}
-                                title="다시 검색하려면 클릭"
-                                style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', borderRadius: 6, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-                                {sttReviewOutlineQuery || sttReviewMeta.outline_id}
-                              </button>
-                              <button type="button"
-                                onClick={() => selectSttReviewOutline(null)}
-                                title="선택 해제"
-                                style={{ padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                                ✕
-                              </button>
-                            </div>
+                            <>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <button type="button"
+                                  onClick={() => setSttReviewOutlineOpen(true)}
+                                  title="다시 검색하려면 클릭"
+                                  style={{ flex: 1, minWidth: 0, padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--accent)', background: 'var(--tint-green)', color: 'var(--accent)', borderRadius: 6, cursor: 'pointer', textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                                  {sttReviewOutlineQuery || sttReviewMeta.outline_id}
+                                </button>
+                                <button type="button"
+                                  onClick={() => selectSttReviewOutline(null)}
+                                  title="선택 해제"
+                                  style={{ padding: '6px 10px', fontSize: '0.786rem', border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                                  ✕
+                                </button>
+                              </div>
+                              {sttReviewVerses.length > 0 && (
+                                <div style={{
+                                  marginTop: 6, fontSize: '0.714rem', color: 'var(--c-muted)',
+                                  display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, lineHeight: 1.7,
+                                }}>
+                                  <span style={{ flexShrink: 0 }}>📖</span>
+                                  {sttReviewVerses.slice(0, 5).map((v, i) => (
+                                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                      {i > 0 && <span style={{ color: 'var(--c-dim)' }}>·</span>}
+                                      <span>{v}</span>
+                                    </span>
+                                  ))}
+                                  {sttReviewVerses.length > 5 && (
+                                    <button type="button"
+                                      onClick={() => setSttVersesModalOpen(true)}
+                                      style={{ padding: 0, border: 'none', background: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.714rem', textDecoration: 'underline', fontFamily: 'inherit' }}>
+                                      +{sttReviewVerses.length - 5} more
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </>
                           ) : (
                             <button type="button"
                               onClick={() => setSttReviewOutlineOpen(true)}
@@ -1822,6 +1873,21 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     })()}
                   </div>
                 </div>
+              )}
+
+              {/* 골자 성구 전체 보기 모달 */}
+              {sttVersesModalOpen && (
+                <Modal
+                  title={`골자 성구 전체 (${sttReviewVerses.length}개)`}
+                  onClose={() => setSttVersesModalOpen(false)}
+                  actions={
+                    <button onClick={() => setSttVersesModalOpen(false)}
+                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
+                      닫기
+                    </button>
+                  }>
+                  {sttReviewVerses.map(v => `- ${v}`).join('\n')}
+                </Modal>
               )}
 
               {/* 임시저장 전달 완료 모달 */}
