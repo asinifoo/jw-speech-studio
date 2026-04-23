@@ -158,7 +158,7 @@ export default function SttCorrectionDiff({
           const pairKey = `${pair.before}||${pair.after}||${i}`;
           const isExpanded = !!expanded[pairKey];
           const isAdding = addingSet.has(pairKey);
-          const curSection = sectionBy[pairKey] ?? (sections[sections.length - 1]?.id || '');
+          const curSection = sectionBy[pairKey] ?? suggestSection(pair.after, variantIndex, sections);
           const curTarget = targetBy[pairKey] ?? pair.after;
 
           const canAdd = pair.status === 'candidate' || pair.status === 'conflict';
@@ -170,6 +170,9 @@ export default function SttCorrectionDiff({
             }}>
               {/* 헤더 행: before → after + StatusBadge */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {(hasScripturePattern(pair.before) || hasScripturePattern(pair.after)) && (
+                  <span title="성구 패턴 포함" style={{ fontSize: '0.929rem' }}>🕮</span>
+                )}
                 <code style={{
                   background: 'var(--bg-subtle)', padding: '2px 6px', borderRadius: 4,
                   color: 'var(--c-danger)', textDecoration: 'line-through',
@@ -211,6 +214,7 @@ export default function SttCorrectionDiff({
                     <button
                       onClick={() => handleIgnore(pair)}
                       disabled={isAdding}
+                      title={pair.status === 'candidate' ? 'Cloud 가 원문을 정확히 복원한 경우일 수 있으니 원문과 대조 권장' : undefined}
                       style={btnStyle('muted', isAdding)}>
                       무시
                     </button>
@@ -445,6 +449,41 @@ function buildVariantIndex(corrections) {
  *
  * protectedConflict 플래그: skip 有 + 사전 有 동시 성립 (UI 경고용)
  */
+/**
+ * 섹션 자동 제안: after 값 기반으로 적합한 section_id 를 추정한다.
+ *
+ * 우선순위:
+ *   1. after 가 기존 target 과 완전 일치 → 해당 섹션
+ *   2. priorityOrder 섹션 순회하며 prefix/substring match
+ *   3. fallback: 'general'
+ */
+export function suggestSection(after, variantIndex, sections) {
+  if (!variantIndex || !after) return 'general';
+
+  const direct = variantIndex.targetToSection.get(after);
+  if (direct) return direct;
+
+  const priorityOrder = ['bible_books', 'bible_names', 'jw_terms', 'jehovah', 'general'];
+  for (const sid of priorityOrder) {
+    const section = (sections || []).find(s => s.id === sid);
+    if (!section) continue;
+    for (const g of section.groups || []) {
+      if (!g.target) continue;
+      if (after.includes(g.target) || g.target.includes(after)) return sid;
+    }
+  }
+
+  return 'general';
+}
+
+/** 성구 번호 패턴 (예: "사 53:1", "요3:16", "이사야 53:1"). */
+const SCRIPTURE_PATTERN = /[가-힣]{1,4}\s?\d+\s*[:：]\s*\d+/;
+
+/** before/after 텍스트에 성구 번호 패턴 포함 여부. */
+function hasScripturePattern(text) {
+  return SCRIPTURE_PATTERN.test(text || '');
+}
+
 function classifyPair(pair, variantIndex) {
   if (!variantIndex) return { ...pair, status: 'loading' };
 
