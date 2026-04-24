@@ -12,7 +12,7 @@ from services.outline_parser import (
     _outline_prefix, _ver_safe, _TYPE_NAMES,
     normalize_outline_type,
 )
-from db import get_db, get_embedding, _bm25_cache
+from db import get_db, get_embedding, _bm25_cache, safe_meta
 
 router = APIRouter()
 
@@ -1182,9 +1182,9 @@ def search_speaker_memo(req: dict):
         return {"results": [], "total": 0, "error": str(e)}
     from db import hybrid_search
     items = hybrid_search(client, "speech_expressions", query, query_emb, top_k=top_k * 3)
-    filtered = [it for it in items if it.get("metadata", {}).get("source", "") == "speaker_memo"]
+    filtered = [it for it in items if safe_meta(it).get("source", "") == "speaker_memo"]
     if category:
-        filtered = [it for it in filtered if it.get("metadata", {}).get("memo_category", "") == category]
+        filtered = [it for it in filtered if safe_meta(it).get("memo_category", "") == category]
     return {"results": filtered[:top_k], "total": len(filtered)}
 
 

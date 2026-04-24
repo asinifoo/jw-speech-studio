@@ -19,7 +19,7 @@ def _verify_password(password: str):
 from services.llm import call_llm, call_llm_stream, query_ollama
 from services.wol import search_wol, fetch_wol_article, wol_results_to_search_format, _clean_wol_query, _HAS_BS4, _wol_article_cache
 from services.bible_utils import get_verse_text, expand_scripture_refs
-from db import get_db, get_embedding, hybrid_search, search_collection, _bm25_cache, _dedup_body
+from db import get_db, get_embedding, hybrid_search, search_collection, _bm25_cache, _dedup_body, safe_meta
 
 _CHAT_MAX_SESSIONS = 10
 _CHAT_SESSIONS_PATH = os.path.join(os.path.expanduser("~/jw-system"), "chat_sessions.json")
@@ -64,7 +64,7 @@ def _attach_pubs_to_results(results: list, pub_list: list) -> None:
     if not pub_list:
         return
     for item in results:
-        item_meta = item.get("metadata", {})
+        item_meta = safe_meta(item)
         sp_pn = item_meta.get("point_num", "") or item_meta.get("point_id", "")
         sp_on = item_meta.get("outline_num", "")
         sp_ot = item_meta.get("outline_type", "")
@@ -168,7 +168,7 @@ def search_points(req: SearchRequest):
         for col_name in collections:
             items = hybrid_search(client, col_name, query_text, query_emb, top_k=req.top_k)
             # 연설 준비에서 봉사 모임/방문 자료 제외
-            items = [it for it in items if it.get("metadata", {}).get("source", "") not in ("memo", "메모", "original", "원문", "speaker_memo", "outline", "service", "봉사 모임", "visit", "방문")]
+            items = [it for it in items if safe_meta(it).get("source", "") not in ("memo", "메모", "original", "원문", "speaker_memo", "outline", "service", "봉사 모임", "visit", "방문")]
             point_result["search_results"].extend(items)
 
         # 검색 결과에 관련 출판물 첨부 (Phase 3: referenced_by 배열)
@@ -186,7 +186,7 @@ def search_points(req: SearchRequest):
             doc_id = item.get("id", "")
             if doc_id and doc_id in seen_ids:
                 continue
-            meta = item.get("metadata", {})
+            meta = safe_meta(item)
             # point_num + speaker + date 조합으로 중복 체크
             mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), meta.get("point_content", "")[:50])
             if mk[0] and mk in seen_meta:
@@ -227,7 +227,7 @@ def free_search(req: FreeSearchRequest):
 
     all_results.sort(key=lambda x: x["score"], reverse=True)
     # DB 검색에서 원문만 제외 (골자/연사메모 포함)
-    all_results = [it for it in all_results if it.get("metadata", {}).get("source", "") != "원문"]
+    all_results = [it for it in all_results if safe_meta(it).get("source", "") != "원문"]
 
     # 출판물 첨부 (Phase 3: referenced_by 배열)
     pub_list = _load_pub_list(client)
@@ -243,7 +243,7 @@ def free_search(req: FreeSearchRequest):
         doc_id = item.get("id", "")
         if doc_id and doc_id in seen_ids:
             continue
-        meta = item.get("metadata", {})
+        meta = safe_meta(item)
         mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), meta.get("point_content", "")[:50])
         if mk[0] and mk in seen_meta:
             continue
@@ -289,7 +289,7 @@ def chat_stream(req: ChatRequest):
                 items = hybrid_search(client, col_name, req.message, query_emb, top_k=actual_top_k)
                 search_results.extend(items)
             search_results.sort(key=lambda x: x["score"], reverse=True)
-            search_results = [it for it in search_results if it.get("metadata", {}).get("source", "") not in ("원문", "memo", "speaker_memo", "outline")]
+            search_results = [it for it in search_results if safe_meta(it).get("source", "") not in ("원문", "memo", "speaker_memo", "outline")]
             # 중복 제거: doc_id + meta + body
             seen_ids = set()
             seen_meta = set()
@@ -299,7 +299,7 @@ def chat_stream(req: ChatRequest):
                 doc_id = item.get("id", "")
                 if doc_id and doc_id in seen_ids:
                     continue
-                meta = item.get("metadata", {})
+                meta = safe_meta(item)
                 mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), meta.get("point_content", "")[:50])
                 if mk[0] and mk in seen_meta:
                     continue
@@ -325,7 +325,7 @@ def chat_stream(req: ChatRequest):
 
             # URL이 있는 모든 결과의 본문 수집 (순차 + 0.5초 딜레이, 캐시 적용)
             for item in wol_results:
-                url = item.get("metadata", {}).get("wol_url", "")
+                url = safe_meta(item).get("wol_url", "")
                 if not url:
                     continue
                 # 캐시 히트면 딜레이 불필요
@@ -357,7 +357,7 @@ def chat_stream(req: ChatRequest):
     # 2. 컨텍스트 구성
     context_parts = []
     for i, item in enumerate(all_search):
-        meta = item.get("metadata", {})
+        meta = safe_meta(item)
         col_name = item.get("collection", "")
 
         if col_name == "wol":
@@ -623,7 +623,7 @@ def search_past(req: PastSearchRequest):
         all_results.extend(items)
 
     # 불필요한 source 제외
-    all_results = [it for it in all_results if it.get("metadata", {}).get("source", "") not in ("원문", "memo", "speaker_memo", "outline")]
+    all_results = [it for it in all_results if safe_meta(it).get("source", "") not in ("원문", "memo", "speaker_memo", "outline")]
 
     # source 필터 (봉사 모임/방문) — 한/영 모두 매칭
     from config import normalize_source, SOURCE_KO_TO_EN
@@ -631,12 +631,12 @@ def search_past(req: PastSearchRequest):
         en = normalize_source(req.source)
         ko_set = {k for k, v in SOURCE_KO_TO_EN.items() if v == en}
         allowed = {en} | ko_set
-        filtered = [it for it in all_results if it.get("metadata", {}).get("source", "") in allowed]
+        filtered = [it for it in all_results if safe_meta(it).get("source", "") in allowed]
     else:
         filtered = all_results
     # service_type 필터 (봉사 모임)
     if req.service_type:
-        filtered = [it for it in filtered if it.get("metadata", {}).get("service_type", "") == req.service_type]
+        filtered = [it for it in filtered if safe_meta(it).get("service_type", "") == req.service_type]
 
     filtered.sort(key=lambda x: x["score"], reverse=True)
     return {"entries": filtered[:req.top_k], "total": len(filtered)}

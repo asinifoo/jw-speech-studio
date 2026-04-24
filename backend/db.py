@@ -11,6 +11,19 @@ def get_db():
     return chromadb.HttpClient(host="localhost", port=8000)
 
 
+def safe_meta(item) -> dict:
+    """ChromaDB 응답 레코드의 metadata 를 안전하게 dict 로 반환 (Doc-49).
+
+    item.get("metadata") 가 None / 누락 / dict 아닌 값 모두 빈 dict 반환.
+    `dict.get(key, default)` 는 키 부재 시만 default 반환 — 값이 None 이면 None 그대로.
+    → `item.get("metadata", {}).get(...)` 패턴은 metadata=None 레코드에서 AttributeError 발생.
+    """
+    if not item:
+        return {}
+    meta = item.get("metadata")
+    return meta if isinstance(meta, dict) else {}
+
+
 def get_embedding(text: str) -> list:
     resp = requests.post(f"{OLLAMA_URL}/api/embeddings", json={"model": EMBED_MODEL, "prompt": text})
     resp.raise_for_status()

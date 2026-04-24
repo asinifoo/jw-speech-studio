@@ -8,7 +8,7 @@ import config
 from models import GenerateRequest, FilterRequest, ServiceMeetingRequest, RefineRequest
 from services.llm import call_llm, call_llm_stream, query_ollama
 from services.bible_utils import get_verse_text, expand_scripture_refs
-from db import get_db, get_embedding, hybrid_search
+from db import get_db, get_embedding, hybrid_search, safe_meta
 
 router = APIRouter()
 
@@ -30,7 +30,7 @@ def filter_results(req: FilterRequest):
             continue
         items_text = ""
         for i, item in enumerate(search_results):
-            meta = item.get("metadata", {})
+            meta = safe_meta(item)
             speaker = meta.get("speaker", "")
             items_text += f"\n[{i}] (점수:{item['score']}) {speaker}: {item['text'][:200]}"
         prompt = f"""다음은 연설 요점과 검색된 자료입니다.\n\n**요점**: {point_title}\n\n**검색 결과**:\n{items_text}\n\n각 검색 결과가 이 요점에 관련이 있는지 판단하세요.\n관련 없는 항목의 번호만 쉼표로 나열하세요.\n모두 관련 있으면 "없음"이라고 답하세요.\n번호만 답하세요."""
@@ -70,7 +70,7 @@ def _build_generate_prompt(req: GenerateRequest) -> str:
                     title_theme += f"\n**[성구]** {sc['ref']}: {sc['text']}"
             for item in point.get("search_results", []):
                 if item.get("selected", True) and not item.get("filtered", False):
-                    meta = item.get("metadata", {})
+                    meta = safe_meta(item)
                     speaker = meta.get("speaker", "")
                     title_theme += f"\n**[전체 참고]** ({speaker}) {item['text']}"
         else:
@@ -99,7 +99,7 @@ def _build_generate_prompt(req: GenerateRequest) -> str:
 
             for item in point.get("search_results", []):
                 if item.get("selected", True) and not item.get("filtered", False):
-                    meta = item.get("metadata", {})
+                    meta = safe_meta(item)
                     speaker = meta.get("speaker", "")
                     materials += f"\n**[참고]** ({speaker}) {item['text']}"
 
@@ -237,7 +237,7 @@ def _build_service_meeting_prompt(req: ServiceMeetingRequest) -> str:
     if req.past_meetings:
         materials += f"\n\n### 과거 참고 (스타일/구조 참고용)\n"
         for pm in req.past_meetings:
-            meta = pm.get("metadata", {})
+            meta = safe_meta(pm)
             materials += f"\n---\n**[{meta.get('date','')}] {meta.get('outline_title', '') or meta.get('topic', '')}**\n"
             lines = (pm.get("text", "")).split("\n")
             body = "\n".join(l for l in lines if not l.startswith("[") and l.strip())
@@ -245,7 +245,7 @@ def _build_service_meeting_prompt(req: ServiceMeetingRequest) -> str:
     if req.search_results:
         materials += f"\n\n### DB 검색 자료\n"
         for item in req.search_results:
-            meta = item.get("metadata", {})
+            meta = safe_meta(item)
             speaker = meta.get("speaker", "")
             materials += f"\n**[참고]** ({speaker}) {item.get('text', '')[:300]}\n"
     if req.notes:
