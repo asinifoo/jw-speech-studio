@@ -177,13 +177,13 @@ export default function ManageDbTab({ mode }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, minHeight: 28 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: '0.786rem', color: 'var(--c-muted)' }}>
                 <input type="checkbox" checked={dbSelected.size > 0 && dbSelected.size === (() => {
-                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}`] = true; }); return Object.keys(g).length; }
+                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`] = true; }); return Object.keys(g).length; }
                   if (viewSource === '연설' && speechFilter === '그룹') { const g = {}; dbEntries.forEach(r => { const m = r.metadata || {}; g[`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`] = true; }); return Object.keys(g).length; }
                   return dbEntries.length;
                 })()} onChange={e => {
                   if (e.target.checked) {
                     if (viewSource === '골자') {
-                      const groups = {}; dbEntries.forEach(r => { groups[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}`] = true; });
+                      const groups = {}; dbEntries.forEach(r => { groups[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`] = true; });
                       setDbSelected(new Set(Object.keys(groups)));
                     } else if (viewSource === '연설' && speechFilter === '그룹') {
                       const groups = {}; dbEntries.forEach(r => { const m = r.metadata || {}; groups[`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`] = true; });
@@ -197,7 +197,7 @@ export default function ManageDbTab({ mode }) {
               {dbSelected.size === 0 && (<>
                 <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', whiteSpace: 'nowrap' }}>{(() => {
                   if (viewSource === '연설' && speechFilter === '그룹') { const g = {}; dbEntries.forEach(r => { const m = r.metadata || {}; g[`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`] = true; }); return `${Object.keys(g).length}그룹`; }
-                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}`] = true; }); return `${Object.keys(g).length}그룹`; }
+                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`] = true; }); return `${Object.keys(g).length}그룹`; }
                   return `${dbEntries.length}건`;
                 })()}</span>
                 <button onClick={() => _loadDbTab(viewSource)} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
@@ -208,7 +208,7 @@ export default function ManageDbTab({ mode }) {
                   <button onClick={() => setDbSelected(new Set())} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.714rem', cursor: 'pointer' }}>선택 해제</button>
                   <button onClick={async () => {
                     const count = viewSource === '골자'
-                      ? dbEntries.filter(r => dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}`)).length
+                      ? dbEntries.filter(r => dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`)).length
                       : dbSelected.size;
                     if (!await showConfirm(`선택한 ${dbSelected.size}개 항목 (${count}건)을 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                     setDbDeleting(true);
@@ -216,17 +216,15 @@ export default function ManageDbTab({ mode }) {
                       if (viewSource === '골자') {
                         const failedKeys = [];
                         for (const gKey of dbSelected) {
-                          const items = dbEntries.filter(r => `${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}` === gKey);
+                          const items = dbEntries.filter(r => `${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}` === gKey);
                           if (items.length) {
                             const m = items[0].metadata || {};
                             const code = normalizeOutlineCode(m.outline_type) || m.outline_type || '';
                             const num = m.outline_num || '';
                             const ver = m.version || '';
-                            const year = m.outline_year || '';
                             const verSafe = ver ? '_v' + ver.replace(/\//g, '-') : '';
-                            const yearTag = year ? '_y' + year : '';
                             const base = code && /^\d+$/.test(num) ? code + '_' + num.replace(/^0+/, '').padStart(3, '0') : code || num;
-                            const res = await deleteOutline(base + yearTag + verSafe, year);
+                            const res = await deleteOutline(base + verSafe);
                             if (!res || (res.deleted || 0) === 0) failedKeys.push(gKey);
                           }
                         }
@@ -262,7 +260,7 @@ export default function ManageDbTab({ mode }) {
                         }
                       }
                       setDbCache(p => ({ ...p, [viewSource]: (p[viewSource] || []).filter(r => {
-                        if (viewSource === '골자') return !dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}`);
+                        if (viewSource === '골자') return !dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`);
                         if (viewSource === '연설' && speechFilter === '그룹') { const m = r.metadata || {}; return !dbSelected.has(`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`); }
                         return !dbSelected.has(r.id);
                       }) }));
@@ -287,23 +285,22 @@ export default function ManageDbTab({ mode }) {
               const ot = m.outline_type || '';
               const on = m.outline_num || '기타';
               const ver = m.version || '';
-              const yr = m.outline_year || '';
-              const key = `${ot}_${on}_${yr}_${ver}`;
-              if (!groups[key]) groups[key] = { num: on, title: m.outline_title || '', type: ot, year: yr, version: ver, items: [] };
+              const key = `${ot}_${on}_${ver}`;
+              if (!groups[key]) groups[key] = { num: on, title: m.outline_title || '', type: ot, version: ver, items: [] };
               if (!groups[key].title && m.outline_title) groups[key].title = m.outline_title;
               groups[key].items.push(r);
             });
             const sorted = Object.values(groups).sort((a, b) => {
               const codeA = normalizeOutlineCode(a.type) || a.type || 'ZZZ';
               const codeB = normalizeOutlineCode(b.type) || b.type || 'ZZZ';
-              const ka = `${codeA}_${(a.num || '').padStart(5, '0')}_${a.year || ''}_${a.version || ''}`;
-              const kb = `${codeB}_${(b.num || '').padStart(5, '0')}_${b.year || ''}_${b.version || ''}`;
+              const ka = `${codeA}_${(a.num || '').padStart(5, '0')}_${a.version || ''}`;
+              const kb = `${codeB}_${(b.num || '').padStart(5, '0')}_${b.version || ''}`;
               return ka.localeCompare(kb);
             });
             const q = dbSearch.trim().toLowerCase();
-            const filtered = q ? sorted.filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || (g.version || '').toLowerCase().includes(q) || (g.year || '').toLowerCase().includes(q)) : sorted;
+            const filtered = q ? sorted.filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || (g.version || '').toLowerCase().includes(q)) : sorted;
             return filtered.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>골자가 없습니다.</div> : filtered.map(g => {
-              const gKey = `${g.type}_${g.num}_${g.year || ''}_${g.version || ''}`;
+              const gKey = `${g.type}_${g.num}_${g.version || ''}`;
               const isOpen = expandedDbEntry['g_' + gKey];
               const gt = g.type || '';
               const code = normalizeOutlineCode(gt);
@@ -312,11 +309,8 @@ export default function ManageDbTab({ mode }) {
               const pfxBase = code ? (isNumeric ? code + '_' + num.replace(/^0+/, '').padStart(3, '0') : code) : num;
               const sbLabel = code === 'SB' ? formatSbMmw(num) : '';
               const verSafe = g.version ? '_v' + g.version.replace(/\//g, '-') : '';
-              const yearTag = g.year ? '_y' + g.year : '';
-              const pfx = pfxBase + yearTag + verSafe;
-              const headerLabel = g.year
-                ? (g.version ? `${pfxBase} ${g.year}년 v${g.version}` : `${pfxBase} ${g.year}년`)
-                : (g.version ? `${pfxBase} v${g.version}` : pfxBase);
+              const pfx = pfxBase + verSafe;
+              const headerLabel = g.version ? `${pfxBase} v${g.version}` : pfxBase;
               return (
                 <div key={gKey} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 4 }}>
                   <div onClick={() => setExpandedDbEntry(p => ({ ...p, ['g_' + gKey]: !p['g_' + gKey] }))} style={{
@@ -332,12 +326,6 @@ export default function ManageDbTab({ mode }) {
                       background: 'var(--tint-green, #e6f5ec)', color: 'var(--accent)',
                       flexShrink: 0, lineHeight: 1.3,
                     }}>{sbLabel}</span>}
-                    {g.year && <span style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                      background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)',
-                      flexShrink: 0, lineHeight: 1.3,
-                    }}>{g.year}년</span>}
                     {g.version && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
@@ -350,7 +338,7 @@ export default function ManageDbTab({ mode }) {
                       e.stopPropagation();
                       if (!await showConfirm(`${headerLabel || g.num} 골자를 삭제하시겠습니까? (${g.items.length}개 요점 + JSON 파일)`, { confirmVariant: 'danger' })) return;
                       try {
-                        const res = await deleteOutline(pfx || g.num, g.year || '');
+                        const res = await deleteOutline(pfx || g.num);
                         if (!res || (res.deleted || 0) === 0) {
                           showAlert('삭제 실패: 매칭 레코드 없음 (outline_id=' + (pfx || g.num) + ')', { variant: 'error' });
                           return;
@@ -599,7 +587,6 @@ export default function ManageDbTab({ mode }) {
                             <div key={i} style={{ fontSize: '0.714rem', paddingBottom: i < refs.length - 1 ? 6 : 0, borderBottom: i < refs.length - 1 ? '1px solid var(--bd)' : 'none' }}>
                               <div style={{ fontWeight: 600, color: 'var(--c-text)', marginBottom: 2 }}>
                                 {[rf.outline_type, rf.outline_num].filter(Boolean).join('_')}
-                                {rf.outline_year ? ` (${rf.outline_year}년)` : ''}
                                 {rf.version ? ` v${rf.version}` : ''}
                                 {rf.point_num ? ` 요점 ${rf.point_num}` : ''}
                               </div>

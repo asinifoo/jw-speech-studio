@@ -97,10 +97,7 @@ export const draftLoad = (p) => fetch(`${API}/speech-draft/load?${new URLSearchP
 export const draftComplete = data => _postJson('/speech-draft/complete', data);
 export const draftDelete = (id) => fetch(`${API}/speech-draft/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(r => r.json());
 export const draftList = () => fetch(`${API}/speech-draft/list`).then(r => r.json());
-export const deleteOutline = (id, year = '') => {
-  const qs = year ? `?year=${encodeURIComponent(year)}` : '';
-  return fetch(`${API}/preprocess/outline/${encodeURIComponent(id)}${qs}`, { method: 'DELETE' }).then(r => r.json());
-};
+export const deleteOutline = (id) => fetch(`${API}/preprocess/outline/${encodeURIComponent(id)}`, { method: 'DELETE' }).then(r => r.json());
 
 export async function refineSpeech(password, speech, instructions, model) {
   const res = await fetch(`${API}/refine`, {
@@ -178,11 +175,10 @@ export async function outlineList() {
   return res.json();
 }
 
-export async function outlineDetail(outlineId, outlineType = '', version = '', year = '') {
+export async function outlineDetail(outlineId, outlineType = '', version = '') {
   const q = new URLSearchParams();
   if (outlineType) q.set('outline_type', outlineType);
   if (version) q.set('version', version);
-  if (year) q.set('year', year);
   const qs = q.toString();
   const res = await fetch(`${API}/outline/${encodeURIComponent(outlineId)}${qs ? '?' + qs : ''}`);
   return res.json();

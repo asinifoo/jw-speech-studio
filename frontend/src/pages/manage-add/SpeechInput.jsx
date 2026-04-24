@@ -79,7 +79,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     if (!siOutline || !siOutline.outline_num) return;
     const oid = `${siOutline.outline_type || 'S-34'}_${siOutline.outline_num}`;
     setSiSubLoading(true);
-    outlineDetail(oid, siOutline.outline_type_name || siOutline.outline_type || '', siOutline.version || '', siOutline.outline_year || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => {}).finally(() => setSiSubLoading(false));
+    outlineDetail(oid, siOutline.outline_type_name || siOutline.outline_type || '', siOutline.version || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => {}).finally(() => setSiSubLoading(false));
   }, []);
 
   // ── useEffect 3: transfer 처리 (subTab/structureMode 조건 제거, siTransferTick만 의존) ──
@@ -163,7 +163,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
         const oid = `${matched.outline_type || 'S-34'}_${matched.outline_num}`;
         const oType = matched.outline_type_name || matched.outline_type || '';
         setSiSubLoading(true);
-        outlineDetail(oid, oType, matched.version || '', matched.outline_year || '').then(r => {
+        outlineDetail(oid, oType, matched.version || '').then(r => {
           setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || '');
           // draft 이어서 입력: draft 로드
           if (t.isDraft) {
@@ -474,7 +474,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     // 소주제 로드 (version 포함 — 같은 번호 다른 버전 섞임 방지)
     const oid = `${g.outline_type || 'S-34'}_${g.outline_num}`;
     setSiSubLoading(true);
-    outlineDetail(oid, g.outline_type_name || g.outline_type || '', g.version || '', g.outline_year || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => setSiSubtopics({})).finally(() => setSiSubLoading(false));
+    outlineDetail(oid, g.outline_type_name || g.outline_type || '', g.version || '').then(r => { setSiSubtopics(r.subtopics || {}); setSiOutlineNote(r.note || ''); }).catch(() => setSiSubtopics({})).finally(() => setSiSubLoading(false));
     // draft/note 체크는 연사/날짜 변경 시 useEffect에서 처리
     // 기본 날짜
     if (!siDate) { const d = new Date(); setSiDate(String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0')); }

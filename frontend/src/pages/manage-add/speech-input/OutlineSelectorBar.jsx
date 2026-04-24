@@ -38,12 +38,6 @@ export default function OutlineSelectorBar({
                 {matched.map(g => (
                   <div key={g.filename} onMouseDown={() => { setQueryFocus(false); onSelectOutline(g); }} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{getOutlinePrefix(g.outline_type, g.outline_num)}</span>
-                    {g.outline_year && <span style={{
-                      display: 'inline-flex', alignItems: 'center',
-                      padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
-                      background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)',
-                      flexShrink: 0, lineHeight: 1.3,
-                    }}>{g.outline_year}년</span>}
                     {g.version && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,

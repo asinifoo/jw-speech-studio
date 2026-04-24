@@ -376,7 +376,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     source: 'speech',
     outline_id: '',
     outline_num: '',
-    outline_year: '',
     outline_version: '',
     topic: '',
   });
@@ -410,7 +409,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       setSttReviewFinalText(raw.finalText ?? fresh.final_text ?? '');
       setSttReviewMeta({
         speaker: '', speech_date: _siDateDefault, source: 'speech',
-        outline_id: '', outline_num: '', outline_year: '', outline_version: '', topic: '',
+        outline_id: '', outline_num: '', outline_version: '', topic: '',
         ...(raw.meta || {}),
       });
       if (raw.tab) setSttReviewTab(raw.tab);
@@ -428,26 +427,22 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   // ── 골자 성구 자동 로드 (Level 1.5 Phase 3-B) ──
   // outline_id 변경 감지 → outlineDetail → collectScripturesFromOutline → state
   // outline_id 는 version `/` 포함될 수 있어 path 로 직접 못 씀 (FastAPI 404).
-  // SpeechInput 패턴 준거: path 는 type+num 만, version/year 는 쿼리로.
+  // SpeechInput 패턴 준거: path 는 type+num 만, version 은 쿼리로.
   useEffect(() => {
     const oid = sttReviewMeta?.outline_id || '';
     if (!oid) { setSttReviewVerses([]); return; }
-    // outline_id 에서 _y / _v 토큰 앞까지만 path-safe prefix 추출
-    const yIdx = oid.indexOf('_y');
+    // outline_id 에서 _v 토큰 앞까지만 path-safe prefix 추출
     const vIdx = oid.indexOf('_v');
-    let cut = oid.length;
-    if (yIdx > 0) cut = Math.min(cut, yIdx);
-    if (vIdx > 0) cut = Math.min(cut, vIdx);
-    const pathOid = oid.slice(0, cut);
+    const pathOid = vIdx > 0 ? oid.slice(0, vIdx) : oid;
     let cancelled = false;
-    outlineDetail(pathOid, '', sttReviewMeta.outline_version || '', sttReviewMeta.outline_year || '')
+    outlineDetail(pathOid, '', sttReviewMeta.outline_version || '')
       .then(detail => {
         if (cancelled) return;
         setSttReviewVerses(collectScripturesFromOutline(detail?.subtopics || {}));
       })
       .catch(() => { if (!cancelled) setSttReviewVerses([]); });
     return () => { cancelled = true; };
-  }, [sttReviewMeta?.outline_id, sttReviewMeta?.outline_version, sttReviewMeta?.outline_year]);
+  }, [sttReviewMeta?.outline_id, sttReviewMeta?.outline_version]);
   // ── preprocDirty 폴링 (Level 1.5 Phase 4) ──
   const [preprocDirtyFlag, setPreprocDirtyFlag] = useState(() => {
     try { return localStorage.getItem('jw-preproc-dirty') === '1'; } catch { return false; }
@@ -730,7 +725,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       source: 'speech',
       outline_id: '',
       outline_num: '',
-      outline_year: '',
       outline_version: '',
       topic: '',
     });
@@ -869,25 +863,22 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
 
   const selectSttReviewOutline = (g) => {
     if (!g) {
-      setSttReviewMeta(m => ({ ...m, outline_id: '', outline_num: '', outline_year: '', outline_version: '' }));
+      setSttReviewMeta(m => ({ ...m, outline_id: '', outline_num: '', outline_version: '' }));
       setSttReviewOutlineQuery('');
       return;
     }
-    const year = g.year || g.outline_year || '';
     const version = g.version || '';
     const num = g.num || g.outline_num || '';
     const otype = g.outline_type || '';
     let outlineId = g.outline_id || '';
     if (!outlineId && otype && num) {
       outlineId = `${otype}_${num}`;
-      if (year) outlineId += `_y${year}`;
       if (version) outlineId += `_v${version}`;
     }
     setSttReviewMeta(m => ({
       ...m,
       outline_id: outlineId,
       outline_num: num,
-      outline_year: year,
       outline_version: version,
     }));
     setSttReviewOutlineQuery(`${g.prefix || otype + '_' + num} - ${g.title || ''}`);
@@ -1787,14 +1778,12 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', marginTop: 2 }}>
                                   {sttReviewOutlines.map((g, gi) => {
                                     const pfx = getOutlinePrefix(g.outline_type, g.outline_num || g.num);
-                                    const year = g.year || g.outline_year || '';
                                     const ver = g.version || '';
                                     return (
-                                      <div key={`${pfx}_${year}_${ver}_${gi}`}
+                                      <div key={`${pfx}_${ver}_${gi}`}
                                         onMouseDown={() => { selectSttReviewOutline(g); setSttReviewOutlineOpen(false); }}
                                         style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.714rem', flexShrink: 0 }}>{pfx}</span>
-                                        {year && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)', flexShrink: 0 }}>{year}년</span>}
                                         {ver && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)', flexShrink: 0 }}>v{ver}</span>}
                                         <span style={{ flex: 1, fontSize: '0.714rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title || ''}</span>
                                         <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.outline_type_name || g.outline_type}</span>
@@ -2406,7 +2395,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           }
                           if (!subtopics.length) subtopics.push({ num: 0, title: '', time: txtMeta.duration, points: [] });
                           const payload = {
-                            files: [{ meta: { outline_type: txtMeta.outlineType, outline_type_name: getOutlineTypeInfo(txtMeta.outlineType).name, outline_num: txtMeta.outlineNum, outline_year: txtMeta.year || '', title: txtMeta.outlineTitle, version: txtMeta.version, time: txtMeta.duration, note: txtMeta.note || '' }, subtopics }],
+                            files: [{ meta: { outline_type: txtMeta.outlineType, outline_type_name: getOutlineTypeInfo(txtMeta.outlineType).name, outline_num: txtMeta.outlineNum, title: txtMeta.outlineTitle, version: txtMeta.version, time: txtMeta.duration, note: txtMeta.note || '' }, subtopics }],
                             overwrite: false,
                           };
                           const dupCheck = await checkDuplicates({ files: [{ ...payload.files[0], file_format: 'outline' }] });
@@ -2419,17 +2408,14 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           outlineList().then(r => setOutlines(r.outlines || [])).catch(() => {});
                           if (sttReturnAfterSave) {
                             const num = txtMeta.outlineNum || '';
-                            const year = txtMeta.year || '';
                             const version = txtMeta.version || '';
                             const otype = txtMeta.outlineType || '';
                             let outlineId = `${otype}_${num}`;
-                            if (year) outlineId += `_y${year}`;
                             if (version) outlineId += `_v${version}`;
                             setSttReviewMeta(m => ({
                               ...m,
                               outline_id: outlineId,
                               outline_num: num,
-                              outline_year: year,
                               outline_version: version,
                             }));
                             setSttReviewOutlineQuery(`${otype}_${num} - ${txtMeta.outlineTitle || ''}`);
@@ -2545,7 +2531,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>유형</div>
-                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: '' }))} style={{ ...S.inputField, width: '100%' }}>
+                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value }))} style={{ ...S.inputField, width: '100%' }}>
                               {typeOpts.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
                             </select>
                           </div>
