@@ -3,7 +3,7 @@ import KoreanTextarea from '../components/KoreanTextarea';
 import { parseDocument, sourceLabel, cleanMd, parseKeywords } from '../components/utils';
 import { getBody } from '../utils/textHelpers';
 import { S } from '../styles';
-import { dbDelete, dbUpdate, deleteOutline, listManualEntries, listCollection, listOriginals, listSpeakerMemos } from '../api';
+import { dbDelete, dbUpdate, deleteOutline, deleteTranscriptFile, listManualEntries, listCollection, listOriginals, listSpeakerMemos } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
 import { formatSbMmw, matchOutlineType } from '../utils/outlineFormat';
@@ -85,6 +85,17 @@ export default function ManageDbTab({ mode }) {
   const [calMonth, setCalMonth] = useState(() => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), 1); });
 
   // ── 함수 (원본 ManagePage.jsx L1242-1250) ──
+  // Doc-47: 원문 파일(collection='file')과 DB 레코드 통합 삭제 헬퍼
+  const deleteEntry = async (entry) => {
+    if (entry.collection === 'file') {
+      const filename = entry.metadata?.filename
+        || (entry.id?.startsWith('file_') ? entry.id.slice(5) : null);
+      if (!filename) throw new Error('파일명 추출 실패');
+      return await deleteTranscriptFile(filename);
+    }
+    return await dbDelete(entry.collection, entry.id);
+  };
+
   const _loadDbTab = (tab) => {
     setDbLoading(true);
     if (tab === '골자') listCollection('speech_points', 'outline').then(r => { setDbCache(p => ({ ...p, '골자': r.entries || [] })); setDbTabCounts(p => ({ ...p, '골자': r.total ?? (r.entries || []).length })); }).catch(() => {}).finally(() => setDbLoading(false));
@@ -239,7 +250,11 @@ export default function ManageDbTab({ mode }) {
                           }
                         }
                         for (const t of targets) {
-                          try { await dbDelete(t.collection, t.id); }
+                          try {
+                            const entry = dbEntries.find(e => e.id === t.id);
+                            if (!entry) { bulkFailed.push(`${t.id}: 항목 조회 실패`); continue; }
+                            await deleteEntry(entry);
+                          }
                           catch (e) { bulkFailed.push(`${t.id}: ${e.message}`); }
                         }
                         if (bulkFailed.length) {
@@ -545,7 +560,7 @@ export default function ManageDbTab({ mode }) {
                     )}
                     <button onClick={async () => {
                       if (!await showConfirm('삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
-                      try { await dbDelete(r.collection, r.id); setDbEntries(p => p.filter(e => e.id !== r.id)); } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
+                      try { await deleteEntry(r); setDbEntries(p => p.filter(e => e.id !== r.id)); } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </div>
                 </div>

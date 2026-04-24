@@ -96,6 +96,10 @@ class DbDeleteRequest(BaseModel):
     doc_id: str
 
 
+class TranscriptFileDeleteRequest(BaseModel):
+    filename: str
+
+
 class DbAddRequest(BaseModel):
     speaker: str = ""
     topic: str = ""

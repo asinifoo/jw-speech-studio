@@ -3,9 +3,10 @@ import os
 import re
 import json
 import time
+from pathlib import Path
 from fastapi import APIRouter, HTTPException
-from config import _OUTLINES_DIR, normalize_source
-from models import DbAddRequest, DbUpdateRequest, DbDeleteRequest, BatchItem, BatchAddRequest, BatchDeleteRequest
+from config import _OUTLINES_DIR, normalize_source, SPEECHES_DIR
+from models import DbAddRequest, DbUpdateRequest, DbDeleteRequest, BatchItem, BatchAddRequest, BatchDeleteRequest, TranscriptFileDeleteRequest
 from services.outline_parser import _outline_prefix, _ver_safe, normalize_outline_type, get_outline_types
 from db import get_db, get_embedding, _bm25_cache
 
@@ -776,7 +777,43 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
 
-_SPEECHES_DIR = os.path.join(os.path.expanduser("~/jw-system"), "speeches")
+_ALLOWED_TRANSCRIPT_EXT = {".md"}
+
+
+def _validate_transcript_filename(filename: str) -> Path:
+    """원문 파일명 검증. 6단 방어. 통과 시 resolved Path 반환.
+
+    Doc-47: path traversal / 심볼릭 링크 / 확장자 위조 방어.
+    """
+    if not filename or not filename.strip():
+        raise HTTPException(status_code=400, detail="Empty filename")
+    if "\x00" in filename:
+        raise HTTPException(status_code=400, detail="Null byte in filename")
+    if "/" in filename or "\\" in filename or os.path.basename(filename) != filename:
+        raise HTTPException(status_code=400, detail="Path separator not allowed")
+    if filename in (".", ".."):
+        raise HTTPException(status_code=400, detail="Relative path not allowed")
+    if Path(filename).suffix.lower() not in _ALLOWED_TRANSCRIPT_EXT:
+        raise HTTPException(status_code=400, detail=f"Extension not allowed (only {_ALLOWED_TRANSCRIPT_EXT})")
+    speeches_dir = Path(SPEECHES_DIR).resolve()
+    candidate = (speeches_dir / filename).resolve()
+    if candidate.parent != speeches_dir:
+        raise HTTPException(status_code=400, detail="Path traversal detected")
+    return candidate
+
+
+@router.post("/api/transcript/file/delete")
+def delete_transcript_file(req: TranscriptFileDeleteRequest):
+    """원문 md 파일 삭제. Doc-47: 3분기 예외 처리 (400/404/500)."""
+    path = _validate_transcript_filename(req.filename)
+    if not path.exists():
+        raise HTTPException(status_code=404, detail=f"File not found: {req.filename}")
+    try:
+        path.unlink()
+    except OSError as e:
+        raise HTTPException(status_code=500, detail=f"Delete failed: {e}")
+    return {"status": "삭제 완료", "filename": req.filename}
+
 
 @router.get("/api/db/originals")
 def list_originals():
@@ -816,12 +853,12 @@ def list_originals():
             continue
 
     # 2. ~/jw-system/speeches/ 폴더에서 파일 조회
-    if os.path.exists(_SPEECHES_DIR):
+    if os.path.exists(SPEECHES_DIR):
         import re as _re
-        for fname in sorted(os.listdir(_SPEECHES_DIR)):
+        for fname in sorted(os.listdir(SPEECHES_DIR)):
             if not fname.endswith(".md") and not fname.endswith(".txt"):
                 continue
-            fpath = os.path.join(_SPEECHES_DIR, fname)
+            fpath = os.path.join(SPEECHES_DIR, fname)
             try:
                 with open(fpath, "r", encoding="utf-8") as f:
                     content = f.read()
@@ -936,12 +973,12 @@ def list_transcripts():
         except Exception:
             continue
     # 파일 원문 추가
-    if os.path.exists(_SPEECHES_DIR):
+    if os.path.exists(SPEECHES_DIR):
         import re as _re
-        for fname in sorted(os.listdir(_SPEECHES_DIR)):
+        for fname in sorted(os.listdir(SPEECHES_DIR)):
             if not fname.endswith(".md") and not fname.endswith(".txt"):
                 continue
-            fpath = os.path.join(_SPEECHES_DIR, fname)
+            fpath = os.path.join(SPEECHES_DIR, fname)
             try:
                 with open(fpath, "r", encoding="utf-8") as f:
                     content = f.read()

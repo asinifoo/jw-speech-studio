@@ -4,7 +4,7 @@ import re
 import json
 import time
 from fastapi import APIRouter, HTTPException, UploadFile, File
-from config import _OUTLINES_DIR, _UPLOAD_DIR
+from config import _OUTLINES_DIR, _UPLOAD_DIR, SPEECHES_DIR
 from models import ParseRequest
 from services.outline_parser import (
     parse_outline_text, parse_outline_docx,
@@ -1117,12 +1117,10 @@ def preprocess_check_duplicates(req: dict):
     return {"duplicates": duplicates, "has_duplicates": len(duplicates) > 0}
 
 
-_SPEECHES_DIR = os.path.join(os.path.expanduser("~/jw-system"), "speeches")
-
 @router.post("/api/preprocess/save-original")
 def save_original(req: dict):
     """원문 파일 저장 — ~/jw-system/speeches/에 파일만 저장 (DB/임베딩 없음)"""
-    os.makedirs(_SPEECHES_DIR, exist_ok=True)
+    os.makedirs(SPEECHES_DIR, exist_ok=True)
     files = req.get("files", [])
     saved = 0
     existing = 0
@@ -1139,7 +1137,7 @@ def save_original(req: dict):
             speaker = meta.get("speaker", "")
             date = meta.get("date", "")
             filename = f"{ot}_{on}_{speaker}_{date}_원문.md"
-        fpath = os.path.join(_SPEECHES_DIR, filename)
+        fpath = os.path.join(SPEECHES_DIR, filename)
         if os.path.exists(fpath) and not req.get("overwrite", False):
             existing += 1
             continue

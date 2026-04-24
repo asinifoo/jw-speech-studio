@@ -153,6 +153,16 @@ export async function dbDelete(collection, docId) {
   return res.json();
 }
 
+export async function deleteTranscriptFile(filename) {
+  const res = await fetch(`${API}/transcript/file/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename }),
+  });
+  if (!res.ok) throw new Error(await _errMsg(res, '원문 파일 삭제 실패'));
+  return res.json();
+}
+
 export async function freeSearch(query, topK = 20) {
   const res = await fetch(`${API}/search/free`, {
     method: 'POST',

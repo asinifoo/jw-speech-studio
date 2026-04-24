@@ -26,6 +26,7 @@ _OUTLINES_DIR = os.path.join(os.path.expanduser("~/jw-system"), "outlines")
 _CATEGORIES_PATH = os.path.join(os.path.expanduser("~/jw-system"), "categories.json")
 _UPLOAD_DIR = os.path.join(os.path.expanduser("~/jw-system"), "uploads")
 _CHAT_SESSION_DIR = os.path.join(os.path.expanduser("~/jw-system"), "chat_sessions")
+SPEECHES_DIR = os.path.join(os.path.expanduser("~/jw-system"), "speeches")
 
 _config_lock = threading.Lock()
 
