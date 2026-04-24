@@ -9,6 +9,18 @@ const _aiInit = (() => {
   catch { return {}; }
 })();
 
+// 세션 5b 미니 확장: STT 프롬프트 변수 분류 (실시간 상태 + 저장 시 누락 경고)
+const STT_PROMPT_VARS = {
+  stt_correction:    { required: ['text'], optional: ['skip_words', 'verses'] },
+  stt_local_cleanup: { required: ['text'], optional: [] },
+};
+const _PROMPT_VAR_DESC = {
+  text: 'STT 원문 (반드시 포함)',
+  skip_words: '수정 제외 단어 목록',
+  verses: '골자 참고 성구 목록 (mode 선택 시)',
+};
+const _VAR_RE = /\{([a-z_]+)\}/g;
+
 export default function ManageAiTab() {
   const showConfirm = useConfirm();
   const showAlert = useAlert();
@@ -700,6 +712,18 @@ export default function ManageAiTab() {
                             }} disabled={promptEdits[key] === promptData.defaults[key]}
                               style={{ padding: '2px 8px', borderRadius: 4, border: '1px solid ' + (promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'var(--bd)'), background: promptEdits[key] !== promptData.defaults[key] ? 'var(--accent-orange)' : 'transparent', color: promptEdits[key] !== promptData.defaults[key] ? '#fff' : 'var(--c-dim)', fontSize: '0.643rem', cursor: 'pointer' }}>기본값 저장</button>
                             <button onClick={async () => {
+                              const cfg = STT_PROMPT_VARS[key];
+                              if (cfg) {
+                                const text = promptEdits[key] || '';
+                                const missing = cfg.required.filter(v => !text.includes(`{${v}}`));
+                                if (missing.length > 0) {
+                                  const ok = await showConfirm(
+                                    `필수 변수 ${missing.map(v => `{${v}}`).join(', ')} 가 프롬프트에 없습니다. 교정 동작이 깨질 수 있습니다. 그래도 저장할까요?`,
+                                    { confirmVariant: 'danger' }
+                                  );
+                                  if (!ok) return;
+                                }
+                              }
                               setPromptSaving(key);
                               try {
                                 await setPrompt(key, promptEdits[key]);
@@ -781,6 +805,39 @@ export default function ManageAiTab() {
                         {promptEdits[key] || ''}
                       </div>
                     )}
+                    {editing && STT_PROMPT_VARS[key] && (() => {
+                      const config = STT_PROMPT_VARS[key];
+                      const text = promptEdits[key] || '';
+                      const matches = [...text.matchAll(_VAR_RE)].map(m => m[1]);
+                      const has = (v) => matches.includes(v);
+                      const known = [...config.required, ...config.optional];
+                      const unknown = [...new Set(matches.filter(v => !known.includes(v)))];
+                      return (
+                        <div style={{
+                          marginTop: 6, padding: '6px 10px', borderRadius: 6,
+                          background: 'var(--bg-subtle)', border: '1px solid var(--bd-light)',
+                          fontSize: '0.643rem', lineHeight: 1.6,
+                        }}>
+                          <div style={{ fontWeight: 600, color: 'var(--c-muted)', marginBottom: 2 }}>현재 포함된 변수:</div>
+                          {config.required.map(v => (
+                            <div key={v} style={{ color: has(v) ? 'var(--accent)' : 'var(--c-danger)', marginLeft: 4 }}>
+                              {has(v) ? '✅' : '❌'} <code>{`{${v}}`}</code> — {_PROMPT_VAR_DESC[v] || ''} <span style={{ color: 'var(--c-dim)' }}>(필수)</span>
+                            </div>
+                          ))}
+                          {config.optional.map(v => (
+                            <div key={v} style={{ color: has(v) ? 'var(--accent)' : 'var(--c-dim)', marginLeft: 4 }}>
+                              {has(v) ? '✅' : '○'} <code>{`{${v}}`}</code> — {_PROMPT_VAR_DESC[v] || ''} <span style={{ color: 'var(--c-dim)' }}>(선택)</span>
+                            </div>
+                          ))}
+                          {unknown.length > 0 && (
+                            <div style={{ marginTop: 4, color: 'var(--accent-orange)', marginLeft: 4 }}>
+                              ⚠️ 알 수 없는 변수: {unknown.map(v => `{${v}}`).join(', ')}
+                              {key === 'stt_local_cleanup' && ' — 로컬 교정은 {text} 만 사용'}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {isModified && <div style={{ fontSize: '0.643rem', color, marginTop: 2 }}>수정됨 (기본값과 다름)</div>}
                   </div>
                   );
