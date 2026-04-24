@@ -87,29 +87,32 @@ _TYPE_META = {
         "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "7/26 (개최 월/년)",
     },
+    # JWBC 는 시리즈가 아닌 개별 연설 모음. 날짜 미상(0000) 인 경우 많음.
+    # 동일 연사의 여러 연설 식별을 위해 num 위치에 제목키워드 사용 (예: 적은무리).
+    # S-31/S-123 의 '001 통일' 체계와 다른 이유 (세션 5d 확정).
     "JWBC": {
         "aliases": [],
-        "num_pattern": "(5d 설계 예정)",
+        "num_pattern": "제목키워드 (파일명 2번째 필드)",
         "version_example": "",
     },
     "JWBC-SP": {
         "aliases": [],
-        "num_pattern": "(5d 설계 예정)",
+        "num_pattern": "제목키워드 (예: 근심, 거룩함)",
         "version_example": "",
     },
     "JWBC-MW": {
         "aliases": [],
-        "num_pattern": "(5d 설계 예정)",
+        "num_pattern": "제목키워드 (예: 적은무리, 연합)",
         "version_example": "",
     },
     "JWBC-PG": {
         "aliases": [],
-        "num_pattern": "(5d 설계 예정)",
+        "num_pattern": "제목키워드 (예: 충절)",
         "version_example": "",
     },
     "JWBC-AM": {
         "aliases": [],
-        "num_pattern": "(5d 설계 예정)",
+        "num_pattern": "제목키워드 (예: 왕국)",
         "version_example": "",
     },
     "ETC": {
