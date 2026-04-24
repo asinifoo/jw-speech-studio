@@ -218,7 +218,7 @@ def complete_draft(req: dict):
         pts = []
         for pt in (points if isinstance(points, list) else []):
             pt_num = pt.get("point_num", "")
-            pt_key = f"{st_key.split('.')[0]}_{pt_num}"
+            pt_key = f"{(st_key or '0').split('.')[0]}_{pt_num}"
 
             if mode == "quick":
                 note_text = (notes.get(st_key) or "").strip()

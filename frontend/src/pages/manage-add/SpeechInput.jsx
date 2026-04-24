@@ -171,7 +171,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                   Object.entries(r.subtopics || {}).forEach(([stKey, pts]) => {
                     const note = (dr.notes[stKey] || '').trim();
                     if (note && pts.length) {
-                      const ptKey = `${stKey.split('.')[0]}_${pts[0].point_num}`;
+                      const ptKey = `${(stKey || '0').split('.')[0]}_${pts[0].point_num}`;
                       if (!(mergedDetails[ptKey]?.text || '').trim()) mergedDetails[ptKey] = { ...mergedDetails[ptKey], text: note };
                     }
                   });
@@ -190,7 +190,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                 Object.entries(r.subtopics || {}).forEach(([stKey, pts]) => {
                   if ((dr.notes?.[stKey] || '').trim()) { exp[stKey] = true; return; }
                   const hasDetail = (pts || []).some(pt => {
-                    const ptKey = `${stKey.split('.')[0]}_${pt.point_num}`;
+                    const ptKey = `${(stKey || '0').split('.')[0]}_${pt.point_num}`;
                     const d = dr.details?.[ptKey];
                     return d && ((d.text || '').trim() || (d.tags || '').trim());
                   });
@@ -238,7 +238,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       const exp = {};
       Object.entries(siSubtopics).forEach(([stKey, pts]) => {
         if ((r.notes?.[stKey] || '').trim()) { exp[stKey] = true; return; }
-        if ((pts || []).some(pt => { const d = r.details?.[`${stKey.split('.')[0]}_${pt.point_num}`]; return d && ((d.text || '').trim() || (d.tags || '').trim()); })) exp[stKey] = true;
+        if ((pts || []).some(pt => { const d = r.details?.[`${(stKey || '0').split('.')[0]}_${pt.point_num}`]; return d && ((d.text || '').trim() || (d.tags || '').trim()); })) exp[stKey] = true;
       });
       setSiExpanded(exp);
       setSiDraftInfo(null);
@@ -557,7 +557,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                     Object.entries(siSubtopics).forEach(([stKey, points]) => {
                       const note = (siNotes[stKey] || '').trim();
                       if (note && points.length) {
-                        const ptKey = `${stKey.split('.')[0]}_${points[0].point_num}`;
+                        const ptKey = `${(stKey || '0').split('.')[0]}_${points[0].point_num}`;
                         if (!(newDetails[ptKey]?.text || '').trim()) newDetails[ptKey] = { ...newDetails[ptKey], text: note };
                       }
                     });
