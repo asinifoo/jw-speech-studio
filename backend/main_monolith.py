@@ -2924,8 +2924,9 @@ _CATEGORIES_PATH = os.path.join(os.path.expanduser("~/jw-system"), "categories.j
 # 유형코드 → 유형이름 매핑
 _TYPE_NAMES = {
     "S-34": "공개강연", "S-31": "기념식", "S-123": "특별강연", "S-211": "RP모임",
-    "SB": "생활과봉사", "CO": "대회", "CO_순회": "대회(순회)", "CO_지역": "대회(지역)",
-    "JWBC": "JW방송", "JWBC-SP": "JW방송(연설)", "JWBC-MW": "JW방송(중간주)", "JWBC-PG": "JW방송(프로그램)", "JWBC-AM": "JW방송(아침예배)",
+    "SB": "생활과봉사",
+    "CO": "대회", "CO_C": "대회(순회)", "CO_R": "대회(지역)",
+    "JWBC": "JW방송", "JWBC-SP": "JW방송(연설)", "JWBC-MW": "JW방송(아침숭배)", "JWBC-PG": "JW방송(월간프로그램)", "JWBC-AM": "JW방송(연례총회)",
     "ETC": "기타",
 }
 
