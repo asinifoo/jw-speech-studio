@@ -124,23 +124,17 @@
 | `speech_expressions` | 연설/메모/봉사/방문 | ✅ (speaker_memo 제외) | bge-m3 1024차원 |
 | `publications` | 출판물 본문 | ✅ | bge-m3 1024차원 |
 
-### speech_points 저장 규칙 (version + year 병렬 보관)
+### speech_points 저장 규칙 (version 단독 식별)
 
-- **document ID 패턴**: `{type}_{num}[_y{year}]_v{version-safe}_{point_num}`
-  - 예: `S-34_005_v9-15_2.2.1` (year 없음)
-  - 예: `S-123_001_y26_v10-21_1.1` (year 있음, Phase 2)
-  - year 있는 유형(S-123/S-211/CO/SB)만 `_y{year}` 포함
-- **JSON 파일명 패턴**: `{type}_{num}[_y{year}]_v{version-safe}.json`
-  - year 있을 때만 `_y{year}` 추가 (예: `S-123_001_y26_v10-21.json`)
-  - year 없으면 기존 패턴 유지 (예: `S-34_005_v9-15.json`) — 호환
-- **메타 필드**: `outline_type`, `outline_num`, `outline_year` (신규), `outline_title`, `version`, `source="outline"`, ...
-- **중복 판정**: `outline_type + outline_num + outline_year + version` 4-tuple (version/year 빈 값끼리도 매치)
-  - where 절엔 type/num/version, **outline_year는 후처리 메타 필터** (신규 필드 부재한 기존 레코드 호환)
-- **삭제 규칙** (DELETE `/api/preprocess/outline/{id}?year=`):
-  - outline_id에서 `_y{숫자}` 태그를 `re.sub`으로 제거 후 DB doc_id prefix 매치 (document ID엔 year 없음)
-  - JSON glob은 원본 outline_id (파일명엔 year 있음)
-  - year 파라미터로 메타 후필터
-- **버전별/년도별 병렬 보관**: 같은 type+num이라도 version 또는 year 다르면 별개 레코드로 공존
+- **document ID 패턴**: `{type}_{num}_v{version-safe}_{point_num}`
+  - 예: `S-34_005_v9-15_2.2.1`, `S-123_001_v10-26_1.1`
+- **JSON 파일명 패턴**: `{type}_{num}_v{version-safe}.json`
+  - 예: `S-34_005_v9-15.json`, `S-123_001_v10-26.json`
+- **메타 필드**: `outline_type`, `outline_num`, `outline_title`, `version`, `source="outline"`, ...
+- **중복 판정**: `outline_type + outline_num + version` 3-tuple (version 빈 값끼리도 매치)
+- **삭제 규칙** (DELETE `/api/preprocess/outline/{id}`):
+  - outline_id 로 DB doc_id prefix 매치 + 동일 prefix JSON glob 삭제
+- **버전별 병렬 보관**: 같은 type+num이라도 version 다르면 별개 레코드로 공존 (version MM/YY 가 년도 정보 흡수 — Doc-45)
 
 ## 전처리 시스템
 
@@ -151,26 +145,23 @@
 
 ### 메타데이터 키
 - `outline_*` 사용 (`golza_*` 사용 금지)
-- outline_type, outline_type_name, outline_num, outline_title, outline_year, version
+- outline_type, outline_type_name, outline_num, outline_title, version
 
-### 유형 코드 (번호/년도 규칙)
+### 유형 코드 (번호 규칙)
 
-| 유형 | code | 번호 | outline_year | 비고 |
-|---|---|---|---|---|
-| 공개 강연 | S-34 | 001~196 | null | version으로 연도 구분 |
-| 생활과 봉사 | SB | MMW (예: 041) | 있음 | 수동 입력 전용 |
-| 기념식 | S-31 | 001 (고정) | null | version으로 연도 구분 |
-| 특별 강연 | S-123 | 001 (고정) | 2자리 (예: "26") | 파일명 `S-123-26_KO.docx` |
-| RP 모임 | S-211 | 001 (고정) | 2자리 | 파일명 `S-211-26_KO.docx` |
-| 순회 대회 | CO_C | 001(상)/002(하) | 있음 | 수동 입력 |
-| 지역 대회 | CO_R | 001 | 있음 | 수동 입력 |
-| JW 방송 | JWBC-SP/MW/PG/AM | 자유 | 선택 | 연설/아침숭배/프로그램/연례총회 |
-| 기타 | ETC | 자유 | 선택 | 코드 자유입력 |
+모든 유형에서 년도는 version (MM/YY) 에 포함. 별도 year 필드 없음 (Doc-45).
 
-**outline_year 저장 규칙**:
-- 파일명 파서가 `S-XXX-YY` 패턴에서 YY 추출 (1단계)
-- 특별강연/RP 외 유형은 year=null
-- 프론트 [골자 입력] 탭: 유형이 S-123/S-211일 때만 "년도" 입력란 표시
+| 유형 | code | 번호 | version 예시 |
+|---|---|---|---|
+| 공개 강연 | S-34 | 001~196 | 10/24 |
+| 생활과 봉사 | SB | MMW (예: 041) | 4/26 |
+| 기념식 | S-31 | 001 (고정) | 8/19 |
+| 특별 강연 | S-123 | 001 (고정) | 5/26 |
+| RP 모임 | S-211 | 001 (고정) | 6/26 |
+| 순회 대회 | CO_C | 001(상)/002(하) | 3/26 |
+| 지역 대회 | CO_R | 001 | 7/26 |
+| JW 방송 | JWBC-SP/MW/PG/AM | 자유 | — (5d 설계) |
+| 기타 | ETC | 자유 | — |
 
 **outline_type 영문 통일 원칙 (필수, Phase 3.1)**:
 - DB 저장 시 outline_type은 항상 영문 코드 사용 ("S-34" / "S-31" / "S-123" / "CO_C" / "CO_R" / "SB" / "ETC" 등)
@@ -222,8 +213,8 @@
 
 - `parse_outline_docx(bytes) → dict` — python-docx로 들여쓰기 + 스타일 기반 계층 분류 (raw_lines + subtopics)
 - `_lines_to_indented_text(raw_lines) → str` — raw_lines를 프론트 [골자 입력] 파서와 호환되는 들여쓰기 plain text로 변환 (L1=0칸, L2=1칸, L3=2칸...)
-- `_extract_meta_from_docx(parsed, filename) → dict` — title/note/version/total_time/outline_year 추출
-- `parse_outline_filename(filename) → dict` — `S-XXX-YY_KO_NNN_v**-**.docx` 패턴 파싱, outline_year 별도 필드
+- `_extract_meta_from_docx(parsed, filename) → dict` — title/note/version/total_time 추출
+- `parse_outline_filename(filename) → dict` — `{type}_KO_{num}_v**-**.docx` 패턴 파싱 (year 추출 제거 — Doc-45)
 
 **엔드포인트**: `POST /api/preprocess/docx-to-text` → `{text, meta}` (저장 안 함, 프론트 textarea로 주입)
 
@@ -297,7 +288,7 @@
 - discForm (토의): sub_source, pub_code, topic, date, subtopic, keywords, scriptures, content
 - svcForm (봉사): service_type, date, scriptures, pub_code, keywords, content, rating, favorite
 - visitForm (방문): visit_target, situation, date, keywords, scriptures, pub_code, content, rating, favorite
-- pubForm (출판물): pub_code, reference, pub_title, pub_type, point_summary, keywords, scriptures, content, outline_title, outline_type, outline_num, outline_year, version, point_id, subtopic
+- pubForm (출판물): pub_code, reference, pub_title, pub_type, point_summary, keywords, scriptures, content, outline_title, outline_type, outline_num, version, point_id, subtopic
 - linked_outlines 필드 폐기 (Phase 3, referenced_by_json으로 대체)
 - 탭 전환해도 각자 입력값 유지, 저장 시 해당 탭만 초기화
 
@@ -316,13 +307,13 @@
   - 같은 출판물 + 같은 참조면 단일 레코드로 통합 (업서트)
 - **referenced_by 배열**: 한 출판물이 여러 골자에서 참조되는 관계를 배열로 표현
   - 기존 linked_outlines 문자열 방식 폐기
-  - 각 항목 필드: outline_type, outline_num, outline_year, version, point_num, outline_title, subtopic_title, point_text
+  - 각 항목 필드: outline_type, outline_num, version, point_num, outline_title, subtopic_title, point_text
 - **ChromaDB 메타 저장**: `referenced_by_json` (JSON 문자열, ChromaDB primitive 제약 대응)
 - **keywords 메타 저장**: JSON 배열 문자열 → 프론트에서 `parseKeywords()` 헬퍼로 파싱
 
 ### 업서트 동작
 - 같은 pub_code + reference 재저장 시:
-  - 동일한 reference_info(outline_type+num+year+version+point_num) → 갱신 (`updated`)
+  - 동일한 reference_info(outline_type+num+version+point_num) → 갱신 (`updated`)
   - 다른 reference_info → 추가 (`appended`)
   - reference_info 빈 값 → 변화 없음 (`no_ref_change`)
 - content 충돌: 기존 content 보존 (이미 임베딩된 것 유지)
@@ -479,27 +470,25 @@
 ### 전처리
 - `POST /api/preprocess/parse-md` — md 파일 파싱 (본문 메타 우선, 파일명 폴백)
 - `POST /api/preprocess/docx-to-text` — **DOCX → 들여쓰기 텍스트 + meta** (결정론적, LLM 미사용)
-  - 응답: `{text, meta: {outline_type, outline_type_name, outline_num, outline_year, version, title, note, total_time}}`
+  - 응답: `{text, meta: {outline_type, outline_type_name, outline_num, version, title, note, total_time}}`
   - 프론트 [골자 입력] textarea로 주입 후 사용자가 [파싱] 버튼 수동 클릭
-- `POST /api/preprocess/check-duplicates` — 중복 체크 (type+num+year+version 4-tuple 매칭)
-  - where 절은 type+num+version, outline_year는 후처리 메타 필터 (신규 필드 부재 레코드 호환)
-  - 응답: `{duplicates: [{type, outline_num, outline_year, version, count, message}], has_duplicates}`
+- `POST /api/preprocess/check-duplicates` — 중복 체크 (type+num+version 3-tuple 매칭)
+  - 응답: `{duplicates: [{type, outline_num, version, count, message}], has_duplicates}`
 - `POST /api/preprocess/save-outline` — speech_points만
-  - body: `{files:[{meta:{..., outline_year}, subtopics}], overwrite}`
-  - JSON 파일명: `{prefix}[_y{year}]_v{version}.json`
-  - overwrite 시 type+num+version 매치 + outline_year 후필터로 정확 삭제 후 재저장
+  - body: `{files:[{meta:{...}, subtopics}], overwrite}`
+  - JSON 파일명: `{prefix}_v{version}.json`
+  - overwrite 시 type+num+version 매치로 기존 삭제 후 재저장
 - `POST /api/preprocess/save-speech` — speech_expressions만
 - `POST /api/preprocess/save-publication` — publications만
-- `POST /api/preprocess/save-original` — ~/jw-system/speeches/ 파일 저장
-- `DELETE /api/preprocess/outline/{id}?year=YY` — speech_points + JSON 삭제
-  - DB 매치: outline_id에서 `_y{숫자}` 정규식 제거 후 doc_id startswith + year 메타 후필터
-  - JSON: 원본 outline_id로 glob + 파일 내용 outline_year 확인
+- `POST /api/preprocess/save-original` — ~/jw-system/speeches/ 파일 저장 (path traversal 방어 — Doc-52)
+- `DELETE /api/preprocess/outline/{id}` — speech_points + JSON 삭제
+  - outline_id 로 doc_id startswith + 동일 prefix JSON glob 삭제
   - 응답: `{deleted, json_deleted}` — 프론트는 `deleted === 0` 검증 필수
 
 ### 조회
-- `GET /api/outline/list` — 골자 목록 (JSON 파일 기반, outline_year 필드 포함)
-- `GET /api/outline/{id}?outline_type=&version=&year=` — 골자 상세
-  - version/year는 선택, 명시 시 후필터. 빈 값이면 하위 호환 (기존 동작)
+- `GET /api/outline/list` — 골자 목록 (JSON 파일 기반)
+- `GET /api/outline/{id}?outline_type=&version=` — 골자 상세
+  - version 선택, 명시 시 후필터. 빈 값이면 하위 호환 (기존 동작)
 - `GET /api/db/collection/{col}?source=` — 컬렉션별 조회 (쉼표 구분 source 필터)
 - `GET /api/db/speaker-memos` — 연사메모 전체 목록
 - `GET /api/bible/lookup?ref=` — 성구 본문 조회
@@ -567,7 +556,7 @@
 - 연설 입력 state: localStorage 저장 (jw-si-state), subtopics/expanded 제외
 - 골자 저장 성공 시 outlineList() 재호출 → outlines 갱신
 - **삭제 API 호출 후 응답 `deleted` 값 검증 필수** — 0이면 캐시 업데이트 취소 + 사용자 알림
-- **outline_id 생성 시 year_tag 포함**: `{type}_{num}[_y{year}]_v{version}` — 백엔드가 DB prefix용으로 `_y{숫자}` 자동 제거
+- **outline_id 생성**: `{type}_{num}_v{version}` (Doc-45: year 태그 제거)
 
 ## 주의사항
 
@@ -699,13 +688,12 @@ const matched = outlines.find(g =>
 - [x] 골자 DOCX 업로드 자동 텍스트 변환 (Phase 1-A) — 완료
 - [x] 골자 후처리 개선 (마커/낭독 성구/책명 확장) — 완료
 - [x] 번호 재정렬 버튼 — 완료
-- [x] 중복 덮어쓰기 (type+num+year+version 4-tuple) — 완료
-- [x] outline_year 필드 + 버전별 병렬 보관 — 완료
-- [x] Phase 2: `_outline_prefix` year 포함 — 완료
+- [x] 중복 덮어쓰기 (type+num+version 3-tuple) — 완료
 - [x] Phase 2.5: save_outline JSON points 저장 누락 — 완료
 - [x] Phase 3: 출판물 referenced_by 모델 (linked_outlines/pub_abbr 폐기, subtopic_title/point_text/요점 메타 추가) — 완료
 - [x] Phase 3.1: outline_type 영문 정규화 (normalize_outline_type 헬퍼) — 완료
 - [x] Phase 4 Build-1~5D-2: STT 파이프라인 + 흐름 1/2 지원 — 완료
+- [x] Doc-45: outline_year 필드 완전 제거 (version MM/YY 가 년도 흡수) — 완료
 - [ ] Phase 4 Build-5D-3: 자유 입력 UI 확장 (흐름 3)
 - [ ] Phase 4 Build-6: e2e 안정화
 - [ ] Phase 4.6: STT 성구 참조 교정 + AI 자동 분류
