@@ -6,111 +6,62 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from services.outline_parser import parse_outline_filename, _outline_prefix, normalize_outline_type
 
 
-# ─── 신규: CO 패턴 ─────────────────────────────────────
-
-def test_co_c_default_num():
-    r = parse_outline_filename("CO-26-C_KO.docx")
-    assert r["outline_type"] == "CO_C"
-    assert r["outline_num"] == "001"
-    assert r["outline_year"] == "26"
-    assert r["version"] is None
-
-
-def test_co_c_explicit_num():
-    r = parse_outline_filename("CO-26-C_002_KO.docx")
-    assert r["outline_type"] == "CO_C"
-    assert r["outline_num"] == "002"
-    assert r["outline_year"] == "26"
-
-
-def test_co_r_default_num():
-    r = parse_outline_filename("CO-26-R_KO.docx")
-    assert r["outline_type"] == "CO_R"
-    assert r["outline_num"] == "001"
-    assert r["outline_year"] == "26"
-
-
-def test_co_year_27():
-    r = parse_outline_filename("CO-27-C_KO.docx")
-    assert r["outline_type"] == "CO_C"
-    assert r["outline_year"] == "27"
-
-
-def test_co_with_version():
-    r = parse_outline_filename("CO-26-C_KO_v01-26.docx")
-    assert r["outline_type"] == "CO_C"
-    assert r["outline_num"] == "001"
-    assert r["outline_year"] == "26"
-    assert r["version"] == "01/26"
-
-
-def test_co_invalid_subtype_falls_back():
-    # CO-YY-X (잘못된 서브타입): 매치 실패, 모든 필드 None
-    r = parse_outline_filename("CO-26-X_KO.docx")
-    assert r["outline_type"] is None
-    assert r["outline_num"] is None
-    assert r["outline_year"] is None
-
-
-# ─── 회귀: 기존 동작 ────────────────────────────────────
+# ─── parse_outline_filename 회귀 (Doc-45: outline_year 키 없음) ──
 
 def test_regression_s34_no_year():
     r = parse_outline_filename("S-34_KO.docx")
     assert r["outline_type"] == "S-34"
     assert r["outline_num"] == "001"
-    assert r["outline_year"] is None
 
 
 def test_regression_s34_explicit_num():
     r = parse_outline_filename("S-34_KO_001_v09-15.docx")
     assert r["outline_type"] == "S-34"
     assert r["outline_num"] == "001"
-    assert r["outline_year"] is None
     assert r["version"] == "09/15"
-
-
-def test_regression_s123_year():
-    r = parse_outline_filename("S-123-26_KO.docx")
-    assert r["outline_type"] == "S-123"
-    assert r["outline_num"] == "001"
-    assert r["outline_year"] == "26"
-
-
-def test_regression_s211_year():
-    r = parse_outline_filename("S-211-26_KO.docx")
-    assert r["outline_type"] == "S-211"
-    assert r["outline_num"] == "001"
-    assert r["outline_year"] == "26"
 
 
 def test_regression_s31():
     r = parse_outline_filename("S-31_KO.docx")
     assert r["outline_type"] == "S-31"
     assert r["outline_num"] == "001"
-    assert r["outline_year"] is None
 
 
 def test_regression_jwbc_sp():
     r = parse_outline_filename("JWBC-SP_KO_123.docx")
     assert r["outline_type"] == "JWBC-SP"
     assert r["outline_num"] == "123"
-    assert r["outline_year"] is None
 
 
 def test_regression_unknown_filename():
-    # 순수 숫자/일반 파일명 → 모든 필드 None
     r = parse_outline_filename("random_001.docx")
     assert r["outline_type"] is None
     assert r["outline_num"] is None
-    assert r["outline_year"] is None
 
 
 def test_regression_empty():
     r = parse_outline_filename("")
-    assert r == {"outline_type": None, "outline_num": None, "outline_year": None, "version": None}
+    assert r == {"outline_type": None, "outline_num": None, "version": None}
 
 
-# ─── _outline_prefix: 기존 동작 (year="" 기본값) ──────────
+# ─── Doc-45 회귀 방지: 레거시 YY 파일명 주어도 outline_year 키 부재 ──
+
+def test_parse_outline_filename_ignores_year_in_filename():
+    """Doc-45: 파서가 파일명에서 YY 추출하지 않음. outline_year 키 부재 검증."""
+    legacy_patterns = [
+        "S-123-26_KO.docx",
+        "S-211-24_KO.docx",
+        "CO-24-C.docx",
+        "CO-25-R.docx",
+    ]
+    for fname in legacy_patterns:
+        result = parse_outline_filename(fname)
+        assert "outline_year" not in result, (
+            f"Doc-45 회귀: {fname} 에서 outline_year 키가 반환됨."
+        )
+
+
+# ─── _outline_prefix (Doc-45: year 파라미터 제거됨) ──
 
 def test_prefix_s34_num_padding():
     assert _outline_prefix("S-34", "5") == "S-34_005"
@@ -146,40 +97,6 @@ def test_prefix_etc_passthrough():
 
 def test_prefix_empty_type_passthrough():
     assert _outline_prefix("", "001") == "001"
-
-
-# ─── _outline_prefix: 신규 year 인자 ──────────────────────
-
-def test_prefix_s123_with_year():
-    assert _outline_prefix("S-123", "1", "26") == "S-123_001_y26"
-
-
-def test_prefix_s211_with_year():
-    assert _outline_prefix("S-211", "1", "27") == "S-211_001_y27"
-
-
-def test_prefix_co_c_with_year():
-    assert _outline_prefix("CO_C", "1", "26") == "CO_C_001_y26"
-
-
-def test_prefix_co_r_with_year():
-    assert _outline_prefix("CO_R", "2", "26") == "CO_R_002_y26"
-
-
-def test_prefix_sb_with_year():
-    assert _outline_prefix("SB", "41", "24") == "SB_041_y24"
-
-
-def test_prefix_s34_empty_year_same_as_default():
-    assert _outline_prefix("S-34", "5", "") == "S-34_005"
-
-
-def test_prefix_etc_ignores_year():
-    assert _outline_prefix("ETC", "abc", "26") == "abc"
-
-
-def test_prefix_empty_type_ignores_year():
-    assert _outline_prefix("", "001", "26") == "001"
 
 
 # ─── normalize_outline_type: 한글 매핑 ─────────────────

@@ -603,7 +603,6 @@ def save_outline(req: dict):
         subtopics = item.get("subtopics", [])
         ot = normalize_outline_type(meta.get("outline_type", ""))
         on = meta.get("outline_num", "")
-        oy = meta.get("outline_year", "") or ""
         ot_name = meta.get("outline_type_name", "") or _TYPE_NAMES.get(ot, ot)
         title = meta.get("title", "")
         version = meta.get("version", "")
@@ -613,7 +612,7 @@ def save_outline(req: dict):
             results.append({"outline_num": on, "status": "error", "message": "번호 없음", "saved": 0})
             continue
 
-        prefix = _outline_prefix(ot, on, oy)
+        prefix = _outline_prefix(ot, on)
         fname = f"{prefix}_v{vs}.json" if vs else f"{prefix}.json"
         fpath = os.path.join(_OUTLINES_DIR, fname)
 
@@ -621,8 +620,7 @@ def save_outline(req: dict):
             results.append({"outline_num": on, "status": "exists", "message": f"골자 {on}번 (v{version})이 이미 존재합니다", "saved": 0})
             continue
 
-        # 덮어쓰기 시 기존 삭제 — type + num + version 일치, outline_year는 후처리 필터
-        # (outline_year는 신규 필드라 기존 레코드엔 부재. where 절에 넣으면 기존 데이터 매칭 실패)
+        # 덮어쓰기 시 기존 삭제 — type + num + version 일치
         if overwrite:
             try:
                 wc = {"$and": [
@@ -631,12 +629,8 @@ def save_outline(req: dict):
                     {"source": "outline"},
                     {"version": version or ""},
                 ]}
-                ex = col.get(where=wc, include=["metadatas"])
-                target_ids = []
-                for i, mid in enumerate(ex.get("ids", []) or []):
-                    m = ex["metadatas"][i] if ex.get("metadatas") else {}
-                    if (m.get("outline_year", "") or "") == oy:
-                        target_ids.append(mid)
+                ex = col.get(where=wc)
+                target_ids = list(ex.get("ids", []) or [])
                 if target_ids:
                     col.delete(ids=target_ids)
             except Exception:
@@ -681,7 +675,7 @@ def save_outline(req: dict):
                 doc_text = "\n".join(doc_parts)
 
                 doc_meta = {
-                    "outline_type": ot, "outline_type_name": ot_name, "outline_num": on, "outline_year": oy, "outline_title": title,
+                    "outline_type": ot, "outline_type_name": ot_name, "outline_num": on, "outline_title": title,
                     "version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
                     "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "", "sub_topic_num": sub_num, "sub_topic_time": sub_time,
                     "point_num": pt_num, "level": pt_level, "point_content": pt_text,
@@ -705,7 +699,7 @@ def save_outline(req: dict):
 
         # JSON 저장
         outline_data = {
-            "outline_type": ot, "outline_type_name": ot_name, "outline_num": on, "outline_year": oy or None,
+            "outline_type": ot, "outline_type_name": ot_name, "outline_num": on,
             "title": title, "version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
             "subtopics": saved_subtopics,
             "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -738,7 +732,6 @@ def save_speech(req: dict):
         ot = normalize_outline_type(meta.get("outline_type", ""))
         ot_name = meta.get("outline_type_name", "") or _TYPE_NAMES.get(ot, ot)
         on = meta.get("outline_num", "")
-        oy = meta.get("outline_year", "") or ""
         title = meta.get("title", "")
         version = meta.get("version", "")
         vs = _ver_safe(version)
@@ -746,7 +739,7 @@ def save_speech(req: dict):
         date = meta.get("date", "")
         source = meta.get("source", "speech")
         theme_scripture = meta.get("theme_scripture", "")
-        prefix = _outline_prefix(ot, on, oy) if on else ""
+        prefix = _outline_prefix(ot, on) if on else ""
 
         saved = 0
         updated = 0
@@ -955,7 +948,6 @@ def save_publication(body: dict):
         meta = f.get("meta", {})
         ot = normalize_outline_type(meta.get("outline_type", ""))
         on = meta.get("outline_num", "")
-        oy = meta.get("outline_year", "") or ""
         ver = meta.get("version", "")
         outline_title = meta.get("title", "")
 
@@ -975,7 +967,6 @@ def save_publication(body: dict):
                     "reference_info": {
                         "outline_type": ot,
                         "outline_num": on,
-                        "outline_year": oy,
                         "version": ver,
                         "point_num": pn,
                         "outline_title": outline_title,
@@ -1071,11 +1062,9 @@ def preprocess_check_duplicates(req: dict):
             except Exception:
                 pass
 
-        # 골자 중복 — type + num + version 일치, outline_year는 후처리 필터
-        # (outline_year는 신규 필드. 기존 레코드엔 부재 → where에서 제외하고 메타 필터)
+        # 골자 중복 — type + num + version 일치
         if fmt == "outline":
             ot = meta.get("outline_type", "")
-            oy = meta.get("outline_year", "") or ""
             try:
                 wc = {"$and": [
                     {"outline_type": ot},
@@ -1083,17 +1072,11 @@ def preprocess_check_duplicates(req: dict):
                     {"source": "outline"},
                     {"version": version or ""},
                 ]}
-                ex = sp_col.get(where=wc, include=["metadatas"])
-                year_matched = 0
-                if ex and ex.get("ids"):
-                    for i, mid in enumerate(ex["ids"]):
-                        m = ex["metadatas"][i] if ex.get("metadatas") else {}
-                        if (m.get("outline_year", "") or "") == oy:
-                            year_matched += 1
-                if year_matched > 0:
+                ex = sp_col.get(where=wc)
+                matched = len(ex.get("ids", []) or [])
+                if matched > 0:
                     ver_disp = f"v{version}" if version else "버전 미지정"
-                    year_disp = f" {oy}년" if oy else ""
-                    duplicates.append({"type": "outline", "outline_num": on, "outline_year": oy, "version": version, "count": year_matched, "message": f"골자{year_disp} {on}번 ({ver_disp})이 이미 등록되어 있습니다. 덮어쓰시겠습니까?"})
+                    duplicates.append({"type": "outline", "outline_num": on, "version": version, "count": matched, "message": f"골자 {on}번 ({ver_disp})이 이미 등록되어 있습니다. 덮어쓰시겠습니까?"})
             except Exception:
                 pass
 
@@ -1304,31 +1287,21 @@ def reprocess_memos():
 
 
 @router.delete("/api/preprocess/outline/{outline_id:path}")
-def delete_outline(outline_id: str, year: str = ""):
+def delete_outline(outline_id: str):
     """골자 단위 삭제 — speech_points에서 해당 골자 전부 + JSON 삭제.
-    year 쿼리 주면 outline_year가 일치하는 레코드만 삭제 (빈 값끼리도 매치).
+
+    Doc-45: year 쿼리 파라미터 제거. outline_id 자체로 식별 충분.
     """
     client = get_db()
     col = client.get_or_create_collection("speech_points", metadata={"hnsw:space": "cosine"})
 
-    year_filter_on = year is not None and year != ""
-
-    # document ID도 year 포함하므로 outline_id 그대로 startswith 매치
-    # 예: "S-123_001_y26_v10-21" → 그대로 사용
-    db_prefix = outline_id
-
-    # outline_id = S-34_001_v09-15 형태. ID prefix 매치 + outline_year 후필터
-    all_docs = col.get(include=["metadatas"])
+    # outline_id = S-34_001_v09-15 형태. ID prefix 매치
+    all_docs = col.get()
     ids_to_delete = []
     if all_docs and all_docs["ids"]:
-        for i, did in enumerate(all_docs["ids"]):
-            if not did.startswith(db_prefix):
-                continue
-            if year_filter_on:
-                m = all_docs["metadatas"][i] if all_docs.get("metadatas") else {}
-                if (m.get("outline_year", "") or "") != year:
-                    continue
-            ids_to_delete.append(did)
+        for did in all_docs["ids"]:
+            if did.startswith(outline_id):
+                ids_to_delete.append(did)
 
     deleted = 0
     if ids_to_delete:
@@ -1340,18 +1313,8 @@ def delete_outline(outline_id: str, year: str = ""):
     json_deleted = 0
     outlines_abs = os.path.abspath(_OUTLINES_DIR)
     for jp in glob.glob(os.path.join(_OUTLINES_DIR, f"{outline_id}*.json")):
-        # 경로 검증: _OUTLINES_DIR 하위만 삭제 허용
         if not os.path.abspath(jp).startswith(outlines_abs + os.sep):
             continue
-        # year 필터: 파일 내용의 outline_year 확인
-        if year_filter_on:
-            try:
-                with open(jp, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                if (data.get("outline_year") or "") != year:
-                    continue
-            except Exception:
-                continue
         os.remove(jp)
         json_deleted += 1
 

@@ -58,10 +58,17 @@ def test_drift_type_names_minus_excluded_equals_meta_keys():
 
 def test_all_entries_have_required_fields():
     for entry in get_outline_types():
-        for field in ("code", "name", "aliases", "num_pattern", "version_example", "year_required"):
+        for field in ("code", "name", "aliases", "num_pattern", "version_example"):
             assert field in entry, f"{entry['code']} missing field {field}"
         assert isinstance(entry["aliases"], list)
-        assert isinstance(entry["year_required"], bool)
+
+
+def test_outline_types_no_year_required_field():
+    """Doc-45: /api/outline/types 응답에 year_required 필드 부재 검증."""
+    for entry in get_outline_types():
+        assert "year_required" not in entry, (
+            f"Doc-45 회귀: outline_type {entry.get('code')} 응답에 year_required 필드 존재."
+        )
 
 
 def test_aliases_exist_in_ko_to_en_map():
@@ -96,12 +103,6 @@ def test_jwbc_all_5_subtypes_included():
     codes = {entry["code"] for entry in get_outline_types()}
     for code in ("JWBC", "JWBC-SP", "JWBC-MW", "JWBC-PG", "JWBC-AM"):
         assert code in codes
-
-
-def test_year_required_all_false():
-    """확정 스펙: year 를 version (vMM/YY) 에 녹임 → 별도 year 필드 불필요."""
-    for entry in get_outline_types():
-        assert entry["year_required"] is False
 
 
 # ─── 엔드포인트 (FastAPI TestClient) ───────────────────────

@@ -424,7 +424,6 @@ def db_delete(req: DbDeleteRequest):
             if meta and meta.get("source") == "outline":
                 gn = meta.get("outline_num", "")
                 gt = meta.get("outline_type", "")
-                gy = meta.get("outline_year", "") or ""
                 ver = meta.get("version", "")
                 if gn:
                     # 같은 골자+버전의 다른 항목이 있는지 확인
@@ -435,7 +434,7 @@ def db_delete(req: DbDeleteRequest):
                     remaining = [i for i in (others.get("ids") or []) if i != req.doc_id]
                     if not remaining:
                         # 마지막 항목이면 JSON 삭제
-                        prefix = _outline_prefix(gt, gn, gy)
+                        prefix = _outline_prefix(gt, gn)
                         ver_safe = ver.replace("/", "-").replace(" ", "").strip()
                         fname = f"{prefix}_v{ver_safe}.json" if ver_safe else f"{prefix}.json"
                         fpath = os.path.join(_OUTLINES_DIR, fname)
@@ -468,7 +467,6 @@ def outline_list():
                     "outline_type": data.get("outline_type", ""),
                     "outline_type_name": data.get("outline_type_name", ""),
                     "outline_num": data.get("outline_num", ""),
-                    "outline_year": data.get("outline_year") or "",
                     "title": data.get("title", ""),
                     "version": data.get("version", ""),
                     "subtopics": len(data.get("subtopics", [])),
@@ -489,8 +487,8 @@ def api_outline_types():
 
 
 @router.get("/api/outline/{outline_id}")
-def outline_detail(outline_id: str, outline_type: str = "", version: str = "", year: str = ""):
-    """골자 상세 (speech_points에서 조회). version/year 쿼리 주면 해당 버전만."""
+def outline_detail(outline_id: str, outline_type: str = "", version: str = ""):
+    """골자 상세 (speech_points에서 조회). version 쿼리 주면 해당 버전만."""
     client = get_db()
     col = client.get_or_create_collection("speech_points", metadata={"hnsw:space": "cosine"})
 
@@ -518,9 +516,6 @@ def outline_detail(outline_id: str, outline_type: str = "", version: str = "", y
                 continue
         # version 필터: 명시된 경우 정확히 일치만 (빈 문자열끼리도 매치)
         if version is not None and version != "" and m_i.get("version", "") != version:
-            continue
-        # year 필터: 명시된 경우 정확히 일치만. 기존 레코드(필드 부재)는 "" 취급
-        if year is not None and year != "" and (m_i.get("outline_year", "") or "") != year:
             continue
         meta = m_i
         st = meta.get("sub_topic", "기타")
@@ -626,7 +621,6 @@ def db_add(req: DbAddRequest):
             "reference_info": {
                 "outline_type": normalize_outline_type(req.outline_type),
                 "outline_num": req.outline_num,
-                "outline_year": req.outline_year,
                 "version": req.version,
                 "point_num": req.point_id,
                 "outline_title": req.outline_title or req.topic,
@@ -1128,10 +1122,9 @@ def batch_delete(req: BatchDeleteRequest):
                     if meta and meta.get("source") == "outline":
                         gn = meta.get("outline_num", "")
                         gt = meta.get("outline_type", "")
-                        gy = meta.get("outline_year", "") or ""
                         ver = meta.get("version", "")
                         if gn:
-                            outline_deleted.add((gt, gn, gy, ver))
+                            outline_deleted.add((gt, gn, ver))
             except Exception:
                 pass
             col.delete(ids=doc_ids)
@@ -1139,8 +1132,8 @@ def batch_delete(req: BatchDeleteRequest):
         except Exception:
             pass
     # 골자 JSON 파일 삭제
-    for gt, gn, gy, ver in outline_deleted:
-        prefix = _outline_prefix(gt, gn, gy)
+    for gt, gn, ver in outline_deleted:
+        prefix = _outline_prefix(gt, gn)
         ver_safe = ver.replace("/", "-").replace(" ", "").strip()
         fname = f"{prefix}_v{ver_safe}.json" if ver_safe else f"{prefix}.json"
         fpath = os.path.join(_OUTLINES_DIR, fname)

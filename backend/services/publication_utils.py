@@ -26,14 +26,14 @@ def _pub_id(pub_code: str, reference: str) -> str:
     return f"pub_{code_safe}_{ref_safe}"
 
 
-def _ref_key_str(ot: str, on: str, oy: str, ver: str, pn: str) -> str:
+def _ref_key_str(ot: str, on: str, ver: str, pn: str) -> str:
     """referenced_by 항목 사람 가독용 문자열: {outline_id}:{point_num}."""
-    prefix = _outline_prefix(ot, on, oy)
+    prefix = _outline_prefix(ot, on)
     ver_safe = f"_v{ver.replace('/', '-')}" if ver else ""
     return f"{prefix}{ver_safe}:{pn}"
 
 
-_REF_KEY_FIELDS = ("outline_type", "outline_num", "outline_year", "version", "point_num")
+_REF_KEY_FIELDS = ("outline_type", "outline_num", "version", "point_num")
 
 
 def _is_meaningful_ref(ref: dict) -> bool:
@@ -52,7 +52,7 @@ def _is_meaningful_ref(ref: dict) -> bool:
 def _upsert_referenced_by(existing: list, new_ref: dict):
     """기존 referenced_by 배열에 새 참조 항목 병합.
 
-    유일 키: outline_type + outline_num + outline_year + version + point_num
+    유일 키: outline_type + outline_num + version + point_num
     반환: (갱신된 배열, "updated"|"appended")
     """
     new_key = tuple(new_ref.get(f, "") for f in _REF_KEY_FIELDS)
@@ -189,7 +189,6 @@ def _delete_reference(col, pub_id: str, ref_key: str) -> dict:
             item_key = _ref_key_str(
                 item.get("outline_type", ""),
                 item.get("outline_num", ""),
-                item.get("outline_year", ""),
                 item.get("version", ""),
                 item.get("point_num", ""),
             )

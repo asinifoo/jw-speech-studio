@@ -104,16 +104,18 @@ def _safe_filename(name: str) -> str:
 
 
 def _parse_outline_id(outline_id: str):
-    """outline_id → (outline_type, outline_num, outline_year, version).
+    """outline_id → (outline_type, outline_num, version).
+
+    Doc-45: year 토큰 추출 제거.
 
     예:
-      ""                   → ("ETC", "", "", "")
-      "S-34_150"           → ("S-34", "150", "", "")
-      "S-34_150_y26_v3-18" → ("S-34", "150", "26", "3-18")
-      "CO_C_001_y26"       → ("CO_C", "001", "26", "")  (type 자체에 _ 포함)
+      ""                   → ("ETC", "", "")
+      "S-34_150"           → ("S-34", "150", "")
+      "S-34_150_v3-18"     → ("S-34", "150", "3-18")
+      "CO_C_001"           → ("CO_C", "001", "")  (type 자체에 _ 포함)
     """
     if not outline_id or not outline_id.strip():
-        return ("ETC", "", "", "")
+        return ("ETC", "", "")
 
     parts = outline_id.split("_")
     # CO_C / CO_R 등 type 자체에 _ 포함 — 첫 2토큰 결합 처리
@@ -125,19 +127,16 @@ def _parse_outline_id(outline_id: str):
         rest = parts[1:]
 
     if not rest:
-        return (outline_type, "", "", "")
+        return (outline_type, "", "")
 
     outline_num = rest[0]
-    outline_year = ""
     version = ""
 
     for p in rest[1:]:
-        if p.startswith("y") and len(p) > 1 and p[1:].isdigit():
-            outline_year = p[1:]
-        elif p.startswith("v") and len(p) > 1:
+        if p.startswith("v") and len(p) > 1:
             version = p[1:]
 
-    return (outline_type, outline_num, outline_year, version)
+    return (outline_type, outline_num, version)
 
 
 # ─── 자동 정리 (Build-3) ───

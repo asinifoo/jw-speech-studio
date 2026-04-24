@@ -56,79 +56,66 @@ _TYPE_META = {
         "aliases": ["공개 강연"],
         "num_pattern": "001~194+ (시리즈 번호)",
         "version_example": "10/24 (발행 월/년)",
-        "year_required": False,
     },
     "S-31": {
         "aliases": [],
         "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "8/19 (개정 월/년)",
-        "year_required": False,
     },
     "S-123": {
         "aliases": ["특별 강연"],
         "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "5/26 (발표 월/년)",
-        "year_required": False,
     },
     "S-211": {
         "aliases": ["RP 모임"],
         "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "6/26 (개최 월/년)",
-        "year_required": False,
     },
     "SB": {
         "aliases": ["생활과 봉사"],
         "num_pattern": "MMW (월+주차, 예: 041 = 4월 1주차)",
         "version_example": "4/26 (사용 월/년)",
-        "year_required": False,
     },
     "CO_C": {
         "aliases": ["순회대회", "순회 대회"],
         "num_pattern": "001 시작 (상/하반기 또는 추가)",
         "version_example": "3/26 (개최 월/년)",
-        "year_required": False,
     },
     "CO_R": {
         "aliases": ["지역대회", "지역 대회"],
         "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "7/26 (개최 월/년)",
-        "year_required": False,
     },
     "JWBC": {
         "aliases": [],
         "num_pattern": "(5d 설계 예정)",
         "version_example": "",
-        "year_required": False,
     },
     "JWBC-SP": {
         "aliases": [],
         "num_pattern": "(5d 설계 예정)",
         "version_example": "",
-        "year_required": False,
     },
     "JWBC-MW": {
         "aliases": [],
         "num_pattern": "(5d 설계 예정)",
         "version_example": "",
-        "year_required": False,
     },
     "JWBC-PG": {
         "aliases": [],
         "num_pattern": "(5d 설계 예정)",
         "version_example": "",
-        "year_required": False,
     },
     "JWBC-AM": {
         "aliases": [],
         "num_pattern": "(5d 설계 예정)",
         "version_example": "",
-        "year_required": False,
     },
     "ETC": {
         "aliases": [],
         "num_pattern": "",
         "version_example": "",
-        "year_required": False,
     },
 }
 
@@ -154,7 +141,6 @@ def get_outline_types() -> list:
             "aliases": list(meta.get("aliases", [])),
             "num_pattern": meta.get("num_pattern", ""),
             "version_example": meta.get("version_example", ""),
-            "year_required": bool(meta.get("year_required", False)),
         })
     return result
 
@@ -177,29 +163,26 @@ def normalize_outline_type(value: str) -> str:
     return v
 
 
-def _outline_prefix(otype: str, onum: str, year: str = "") -> str:
-    """유형코드+번호+year → 파일/ID용 prefix
+def _outline_prefix(otype: str, onum: str) -> str:
+    """유형코드+번호 → 파일/ID용 prefix ('{code}_{num}').
 
-    year 있으면 '{code}_{num}_y{year}' 형태, 없으면 '{code}_{num}'.
-    year="" 기본값으로 기존 호출처 무수정 호환.
-    ETC/빈 type은 year 무시 (기존 동작 유지).
+    ETC/빈 type은 번호 그대로 반환.
+    Doc-45: year 파라미터 제거 (version MM/YY 가 년도 정보 흡수).
     """
-    # 숫자 번호면 3자리 패딩
     num = onum.zfill(3) if onum.isdigit() else onum
-    year_tag = f"_y{year}" if year else ""
 
     if otype in ("공개강연",) or otype.startswith("S-34"):
-        return f"S-34_{num}{year_tag}"
+        return f"S-34_{num}"
     elif otype in ("기념식",) or otype.startswith("S-31"):
-        return f"S-31_{num}{year_tag}"
+        return f"S-31_{num}"
     elif otype.startswith("JWBC"):
-        return f"{otype}_{num}{year_tag}"
+        return f"{otype}_{num}"
     elif otype.startswith("S-") or otype.startswith("CO") or otype.startswith("SB"):
-        return f"{otype}_{num}{year_tag}"
+        return f"{otype}_{num}"
     elif otype == "ETC" or not otype:
         return onum
     else:
-        return f"{otype}_{num}{year_tag}"
+        return f"{otype}_{num}"
 
 
 def _ver_safe(version: str) -> str:
@@ -756,11 +739,10 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
       3) 폴백: [하단] 줄 전수에서 M/YY 패턴 (구버전 포맷 호환)
     """
     fn_meta = parse_outline_filename(filename) if filename else {
-        "outline_type": None, "outline_num": None, "outline_year": None, "version": None,
+        "outline_type": None, "outline_num": None, "version": None,
     }
     ot = parsed.get("outline_type") or fn_meta.get("outline_type") or ""
     on = parsed.get("outline_num") or fn_meta.get("outline_num") or ""
-    oy = parsed.get("outline_year") or fn_meta.get("outline_year") or ""
     version = parsed.get("version") or fn_meta.get("version") or ""
     title = parsed.get("title") or ""
     note = parsed.get("note") or ""
@@ -806,7 +788,6 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
         "outline_type": ot or None,
         "outline_type_name": (_TYPE_NAMES.get(ot) if ot else None),
         "outline_num": on or None,
-        "outline_year": oy or None,
         "version": version or None,
         "title": title or None,
         "note": note or None,
@@ -818,22 +799,21 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
 
 def parse_outline_filename(filename: str) -> dict:
     """
-    골자 DOCX 파일명에서 outline_type, outline_num, outline_year, version 추출.
+    골자 DOCX 파일명에서 outline_type, outline_num, version 추출.
     매칭 실패 시 값은 None.
 
+    Doc-45: YY 추출 제거. version MM/YY 가 년도 정보 흡수.
+
     파일명 규칙:
-      S-34_KO_001.docx              → type=S-34,  num=001, year=None
+      S-34_KO_001.docx              → type=S-34,  num=001
       S-34_KO_001_v09-15.docx       → + version=09/15
-      S-31_KO.docx                  → type=S-31,  num=001, year=None
-      S-123-26_KO.docx              → type=S-123, num=001, year=26
-      S-123-26_KO_v01-26.docx       → + version=01/26
-      S-211-26_KO.docx              → type=S-211, num=001, year=26
-      CO-26-C_KO.docx               → type=CO_C,  num=001, year=26
-      CO-26-C_002_KO.docx           → type=CO_C,  num=002, year=26
-      CO-26-R_KO.docx               → type=CO_R,  num=001, year=26
+      S-31_KO.docx                  → type=S-31,  num=001
+      S-123_KO.docx                 → type=S-123, num=001
+      S-123_KO_v01-26.docx          → + version=01/26
+      CO_C_001_KO.docx              → type=CO_C,  num=001
       JWBC-SP_KO_123.docx           → type=JWBC-SP, num=123
     """
-    result = {"outline_type": None, "outline_num": None, "outline_year": None, "version": None}
+    result = {"outline_type": None, "outline_num": None, "version": None}
     if not filename:
         return result
     base = os.path.splitext(os.path.basename(filename))[0]
@@ -858,24 +838,20 @@ def parse_outline_filename(filename: str) -> dict:
 
     first = kept[0]
 
-    # S-XXX 또는 S-XXX-YY (2자리 년도) 형태
-    m = re.match(r'^(S-\d+)(?:-(\d{2}))?$', first)
+    # S-XXX 형태 (Doc-45: S-XXX-YY 의 YY 추출 제거. version MM/YY 가 년도 흡수)
+    m = re.match(r'^(S-\d+)$', first)
     if m:
         result["outline_type"] = m.group(1)
-        if m.group(2):
-            result["outline_year"] = m.group(2)
-        # num: kept[1:] 에서 첫 숫자 또는 기본값 "001"
         num = None
         for p in kept[1:]:
             if p.isdigit():
                 num = p.zfill(3)
                 break
         result["outline_num"] = num or "001"
-    elif re.match(r'^CO-\d{2}-[CR]$', first):
-        # CO-YY-C (순회) 또는 CO-YY-R (지역)
-        cm = re.match(r'^CO-(\d{2})-([CR])$', first)
-        result["outline_type"] = f"CO_{cm.group(2)}"
-        result["outline_year"] = cm.group(1)
+    elif re.match(r'^CO_[CR]$', first):
+        # CO_C (순회) / CO_R (지역). Doc-45: CO-YY-C 레거시 패턴 제거.
+        cm = re.match(r'^CO_([CR])$', first)
+        result["outline_type"] = f"CO_{cm.group(1)}"
         num = None
         for p in kept[1:]:
             if p.isdigit():

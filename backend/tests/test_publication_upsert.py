@@ -71,22 +71,18 @@ def test_pub_id_hangul_only():
     assert _pub_id("실쉬", "54-55면 10-11항") == "pub_실쉬_54-55면_10-11항"
 
 
-# ─── _ref_key_str ─────────────────────────────────────
+# ─── _ref_key_str (Doc-45: year 인수 제거) ─────────────
 
-def test_ref_key_no_year():
-    assert _ref_key_str("S-34", "035", "", "1/20", "1.1.1") == "S-34_035_v1-20:1.1.1"
-
-
-def test_ref_key_with_year():
-    assert _ref_key_str("S-123", "001", "26", "10/21", "1.1") == "S-123_001_y26_v10-21:1.1"
+def test_ref_key_basic():
+    assert _ref_key_str("S-34", "035", "1/20", "1.1.1") == "S-34_035_v1-20:1.1.1"
 
 
 # ─── _upsert_referenced_by ────────────────────────────
 
 def test_ref_arr_updated_when_same_key():
-    arr = [{"outline_type": "S-34", "outline_num": "001", "outline_year": "", "version": "9/15",
+    arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
             "point_num": "1.1", "point_text": "old"}]
-    new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_year": "", "version": "9/15",
+    new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
                "point_num": "1.1", "point_text": "new"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "updated"
@@ -95,20 +91,10 @@ def test_ref_arr_updated_when_same_key():
 
 
 def test_ref_arr_appended_when_different_point():
-    arr = [{"outline_type": "S-34", "outline_num": "001", "outline_year": "", "version": "9/15",
+    arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
             "point_num": "1.1", "point_text": "first"}]
-    new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_year": "", "version": "9/15",
+    new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
                "point_num": "1.2", "point_text": "second"}
-    out, action = _upsert_referenced_by(arr, new_ref)
-    assert action == "appended"
-    assert len(out) == 2
-
-
-def test_ref_arr_appended_when_different_year():
-    arr = [{"outline_type": "S-123", "outline_num": "001", "outline_year": "26", "version": "10/21",
-            "point_num": "1.1"}]
-    new_ref = {"outline_type": "S-123", "outline_num": "001", "outline_year": "27", "version": "10/21",
-               "point_num": "1.1"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
     assert len(out) == 2
@@ -120,7 +106,6 @@ def _ref_info(point_num="1.1.1", text="요점 본문"):
     return {
         "outline_type": "S-34",
         "outline_num": "001",
-        "outline_year": "",
         "version": "9/15",
         "point_num": point_num,
         "outline_title": "제목",
@@ -370,7 +355,7 @@ def test_empty_ref_info_new_record():
     col = FakeCollection()
     payload = _pub_payload()
     payload["reference_info"] = {
-        "outline_type": "", "outline_num": "", "outline_year": "",
+        "outline_type": "", "outline_num": "",
         "version": "", "point_num": "",
         "outline_title": "", "subtopic_title": "", "point_text": "",
     }
@@ -388,7 +373,7 @@ def test_empty_ref_info_existing_record():
 
     empty_payload = _pub_payload()
     empty_payload["reference_info"] = {
-        "outline_type": "", "outline_num": "", "outline_year": "",
+        "outline_type": "", "outline_num": "",
         "version": "", "point_num": "",
     }
     r2 = _upsert_publication(col, empty_payload)
@@ -417,7 +402,7 @@ def test_meaningful_ref_by_title_only():
     col = FakeCollection()
     payload = _pub_payload()
     payload["reference_info"] = {
-        "outline_type": "", "outline_num": "", "outline_year": "",
+        "outline_type": "", "outline_num": "",
         "version": "", "point_num": "",
         "outline_title": "테스트 주제", "subtopic_title": "", "point_text": "",
     }
@@ -433,7 +418,7 @@ def test_meaningful_ref_by_point_text():
     col = FakeCollection()
     payload = _pub_payload()
     payload["reference_info"] = {
-        "outline_type": "", "outline_num": "", "outline_year": "",
+        "outline_type": "", "outline_num": "",
         "version": "", "point_num": "",
         "outline_title": "", "subtopic_title": "", "point_text": "요점 내용",
     }
