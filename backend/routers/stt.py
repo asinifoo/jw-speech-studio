@@ -17,6 +17,7 @@ from services.stt_service import (
     transcribe_file,
     ALL_EXTS,
 )
+from services.file_utils import validate_transcript_filename, ALLOWED_TEXT_UPLOAD_EXT
 from services.stt_corrections_service import (
     apply_local_corrections,
     load_data,
@@ -40,6 +41,7 @@ _DRAFTS_DIR = _HOME / "stt_drafts"
 _SAVED_DIR = _HOME / "stt_saved"
 _JOBS_FILE = _HOME / "stt_jobs.json"
 _MAX_STT_FILE_SIZE = 300 * 1024 * 1024  # 300MB
+_MAX_STT_TEXT_FILE_SIZE = 10 * 1024 * 1024  # 10MB (txt 전용 상한)
 
 _jobs_lock = threading.Lock()
 
@@ -307,6 +309,7 @@ async def stt_upload(file: UploadFile = File(...)):
         "saved_path": "",
         "duration_seconds": duration,
         "estimated_transcribe_seconds": estimated,
+        "source_type": "audio",
         "created_at": now,
         "updated_at": now,
         "transcribe_started_at": "",
@@ -327,6 +330,112 @@ async def stt_upload(file: UploadFile = File(...)):
         "status": "uploaded",
         "duration_seconds": duration,
         "estimated_transcribe_seconds": estimated,
+        "source_type": "audio",
+    }
+
+
+@router.post("/api/stt/upload-text")
+async def stt_upload_text(file: UploadFile = File(...)):
+    """외부 변환 txt 파일 업로드 — Whisper 단계 생략, transcribed 직행.
+
+    외부 STT (Clova/OpenAI/Google) 또는 타이핑 결과물 대상.
+    교정 파이프라인 (파서 → 로컬 LLM → 클라우드 LLM) 은 음성과 동일 재활용.
+    """
+    try:
+        _cleanup_uploads(10)
+        _cleanup_drafts_aged(60)
+    except Exception:
+        pass
+
+    if not file.filename:
+        raise HTTPException(400, "파일이 없습니다")
+
+    original_filename = file.filename
+
+    # path traversal + 확장자 검증 (원본 filename 기준 — 저장 경로 조립 전)
+    validate_transcript_filename(
+        original_filename,
+        allowed_ext=ALLOWED_TEXT_UPLOAD_EXT,
+        base_dir=_UPLOADS_DIR,
+    )
+
+    # 저장 파일명 — 특수문자 sanitize (이중 방어)
+    safe_name = _safe_filename(original_filename)
+
+    content = await file.read()
+    if len(content) > _MAX_STT_TEXT_FILE_SIZE:
+        size_mb = len(content) / (1024 * 1024)
+        raise HTTPException(
+            400,
+            f"파일이 너무 큽니다. {size_mb:.1f}MB (최대 {_MAX_STT_TEXT_FILE_SIZE // (1024*1024)}MB)",
+        )
+
+    # UTF-8 디코드 (BOM 자동 제거)
+    try:
+        raw_text = content.decode("utf-8-sig")
+    except UnicodeDecodeError as e:
+        raise HTTPException(400, f"UTF-8 인코딩 파일만 허용됩니다. ({e})")
+
+    if not raw_text.strip():
+        raise HTTPException(400, "빈 파일입니다.")
+
+    job_id = _gen_job_id()
+    upload_path = _UPLOADS_DIR / f"{job_id}_{safe_name}"
+    upload_path.write_bytes(content)
+
+    # draft JSON 즉시 생성 (Whisper 없이 raw_text 주입)
+    draft_path = _DRAFTS_DIR / f"{job_id}.json"
+    now = _now_iso()
+    draft_data = {
+        "job_id": job_id,
+        "raw_text": raw_text,
+        "raw_chunks": [],
+        "corrected_text": "",
+        "correction_method": "",
+        "correction_model": "",
+        "created_at": now,
+    }
+    draft_path.write_text(
+        json.dumps(draft_data, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    # job 레코드 — transcribed 직행
+    jobs = _load_jobs()
+    jobs[job_id] = {
+        "job_id": job_id,
+        "original_filename": original_filename,
+        "file_size_bytes": len(content),
+        "status": "transcribed",
+        "progress": 1.0,
+        "upload_path": str(upload_path),
+        "draft_path": str(draft_path),
+        "saved_path": "",
+        "duration_seconds": 0,
+        "estimated_transcribe_seconds": 0,
+        "source_type": "text",
+        "created_at": now,
+        "updated_at": now,
+        "transcribe_started_at": now,
+        "transcribe_completed_at": now,
+        "error_message": "",
+        "raw_text": raw_text,
+        "raw_chunks": [],
+        "corrected_text": "",
+        "correction_method": "",
+        "correction_model": "",
+        "final_text": "",
+        "final_meta": {},
+    }
+    _save_jobs(jobs)
+
+    return {
+        "job_id": job_id,
+        "status": "transcribed",
+        "duration_seconds": 0,
+        "estimated_transcribe_seconds": 0,
+        "source_type": "text",
+        "char_count": len(raw_text),
     }
 
 
