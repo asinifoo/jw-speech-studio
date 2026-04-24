@@ -507,7 +507,7 @@ def hybrid_search(client, collection_name, query_text, query_embedding, top_k=10
                 sources.append(f"의미#{semantic_rank[doc_id]+1}")
             if doc_id in bm25_rank:
                 sources.append(f"키워드#{bm25_rank[doc_id]+1}")
-            item["metadata"] = dict(item.get("metadata", {}))
+            item["metadata"] = dict(item.get("metadata") or {})
             item["metadata"]["search_source"] = " + ".join(sources)
             results.append(item)
 
