@@ -750,6 +750,13 @@ export async function sttUpload(file) {
   if (!res.ok) throw new Error(await _errMsg(res, '업로드 실패'));
   return res.json();
 }
+export async function sttUploadText(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(`${API}/stt/upload-text`, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error(await _errMsg(res, 'STT txt 업로드 실패'));
+  return res.json();
+}
 export async function sttTranscribe(jobId) {
   const res = await fetch(`${API}/stt/jobs/${jobId}/transcribe`, { method: 'POST' });
   if (!res.ok) throw new Error(await _errMsg(res, '변환 시작 실패'));

@@ -14,7 +14,7 @@ import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
 import { Modal } from '../../components/Modal';
 import { collectScripturesFromOutline } from '../../utils/scriptureHelpers';
 import { getOutlinePrefix } from '../../utils/outlineFormat';
-import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
+import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttUploadText, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
   const parts = [];
@@ -278,15 +278,23 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
 
   const handleSttUpload = async (file) => {
     if (!file) return;
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    const isText = ext === 'txt';
+    const maxSize = isText ? 10 * 1024 * 1024 : 300 * 1024 * 1024;
+    const maxLabel = isText ? '10MB' : '300MB';
     const sizeMb = (file.size / 1024 / 1024).toFixed(1);
-    if (file.size > 300 * 1024 * 1024) {
-      setSttUploadStatus(`파일이 너무 큽니다 (${sizeMb}MB, 최대 300MB)`);
+    if (file.size > maxSize) {
+      setSttUploadStatus(`파일이 너무 큽니다 (${sizeMb}MB, 최대 ${maxLabel})`);
       return;
     }
     setSttUploading(true);
     setSttUploadStatus(`업로드 중: ${file.name} (${sizeMb}MB)`);
     try {
-      await sttUpload(file);
+      if (isText) {
+        await sttUploadText(file);
+      } else {
+        await sttUpload(file);
+      }
       setSttUploadStatus(`✓ 업로드 완료: ${file.name}`);
       await sttLoadJobs();
       setTimeout(() => setSttUploadStatus(''), 3000);
@@ -336,16 +344,22 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     return m > 0 ? `${m}분 ${s}초` : `${s}초`;
   };
 
-  const sttStatusLabel = (status) => ({
-    uploaded: '업로드 완료',
-    transcribing: '변환 중',
-    transcribed: '변환 완료',
-    correcting: '교정 중',
-    reviewing: '검토 대기',
-    draft_sent: '임시저장 중',
-    saved: '저장 완료',
-    failed: '실패',
-  }[status] || status);
+  const sttStatusLabel = (job) => {
+    const status = (job && job.status) || job;  // 호환: string 직접 전달도 허용
+    const sourceType = job && typeof job === 'object' ? job.source_type : '';
+    // txt 업로드: Whisper 미경유 → "변환 완료" 대신 "준비됨"
+    if (sourceType === 'text' && status === 'transcribed') return '준비됨';
+    return ({
+      uploaded: '업로드 완료',
+      transcribing: '변환 중',
+      transcribed: '변환 완료',
+      correcting: '교정 중',
+      reviewing: '검토 대기',
+      draft_sent: '임시저장 중',
+      saved: '저장 완료',
+      failed: '실패',
+    }[status] || status);
+  };
 
   const sttStatusColor = (status) => ({
     uploaded: 'var(--accent-blue)',
@@ -1333,15 +1347,15 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     }}
                   >
                     <div style={{ fontSize: '0.929rem', marginBottom: 8, color: 'var(--c-text-dark)' }}>
-                      음성/영상 파일을 드래그하거나 선택하세요
+                      음성/영상/텍스트 파일을 드래그하거나 선택하세요
                     </div>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-dim)', marginBottom: 12 }}>
-                      mp4, m4a, mp3, wav 등 · 최대 300MB
+                      mp4, mp3, wav, txt 등 · 음성/영상 300MB · 텍스트 10MB
                     </div>
                     <input
                       ref={sttFileInputRef}
                       type="file"
-                      accept=".mp4,.mkv,.avi,.mov,.webm,.flv,.wmv,.mp3,.wav,.m4a,.flac,.ogg,.aac"
+                      accept=".mp4,.mkv,.avi,.mov,.webm,.flv,.wmv,.mp3,.wav,.m4a,.flac,.ogg,.aac,.txt"
                       onChange={handleSttFileSelect}
                       disabled={sttUploading}
                       style={{ display: 'none' }}
@@ -1406,13 +1420,15 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                             color: sttStatusColor(job.status),
                             fontWeight: 600,
                           }}>
-                            {sttStatusLabel(job.status)}
+                            {sttStatusLabel(job)}
                           </div>
                         </div>
 
                         <div style={{ fontSize: '0.714rem', color: 'var(--c-dim)', marginBottom: 6 }}>
                           {(job.file_size_bytes / 1024 / 1024).toFixed(1)}MB
-                          {job.duration_seconds > 0 && ` · ${formatSttDuration(job.duration_seconds)}`}
+                          {job.source_type === 'text'
+                            ? ' · —'
+                            : job.duration_seconds > 0 && ` · ${formatSttDuration(job.duration_seconds)}`}
                           {job.estimated_transcribe_seconds > 0 && job.status === 'uploaded' && ` · 예상 변환 ${formatSttDuration(job.estimated_transcribe_seconds)}`}
                         </div>
 
@@ -1504,7 +1520,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         {sttReviewJob.original_filename}
                       </div>
                       <div style={{ fontSize: '0.714rem', color: 'var(--c-dim)' }}>
-                        {formatSttDuration(sttReviewJob.duration_seconds || 0)} · {((sttReviewJob.file_size_bytes || 0) / 1024 / 1024).toFixed(1)}MB
+                        {sttReviewJob.source_type === 'text' ? '—' : formatSttDuration(sttReviewJob.duration_seconds || 0)} · {((sttReviewJob.file_size_bytes || 0) / 1024 / 1024).toFixed(1)}MB
                       </div>
                     </div>
                   </div>
