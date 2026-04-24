@@ -5,6 +5,7 @@ import json
 import time
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from config import _OUTLINES_DIR, _UPLOAD_DIR, SPEECHES_DIR
+from services.file_utils import validate_transcript_filename
 from models import ParseRequest
 from services.outline_parser import (
     parse_outline_text, parse_outline_docx,
@@ -1137,11 +1138,14 @@ def save_original(req: dict):
             speaker = meta.get("speaker", "")
             date = meta.get("date", "")
             filename = f"{ot}_{on}_{speaker}_{date}_원문.md"
-        fpath = os.path.join(SPEECHES_DIR, filename)
-        if os.path.exists(fpath) and not req.get("overwrite", False):
+
+        # Doc-52: path traversal 방어 (fallback 조립 filename 도 동일 검증)
+        validated_path = validate_transcript_filename(filename)
+
+        if validated_path.exists() and not req.get("overwrite", False):
             existing += 1
             continue
-        with open(fpath, "w", encoding="utf-8") as f:
+        with open(validated_path, "w", encoding="utf-8") as f:
             f.write(content)
         saved += 1
     parts = []
