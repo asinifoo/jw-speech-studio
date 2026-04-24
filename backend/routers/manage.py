@@ -393,42 +393,61 @@ def db_update(req: DbUpdateRequest):
 
 @router.post("/api/db/delete")
 def db_delete(req: DbDeleteRequest):
-    """DB 문서 삭제 + 골자 JSON 삭제"""
+    """DB 문서 삭제 + 골자 JSON 삭제.
+
+    Doc-50: ChromaDB col.delete 는 ID 존재 여부 무관 silent success.
+    존재 검증 후 없으면 404 반환 (프론트가 삭제 오동작 인지).
+    """
     client = get_db()
     try:
         col = client.get_collection(req.collection)
-        # 골자 항목이면 JSON도 삭제
-        try:
-            existing = col.get(ids=[req.doc_id], include=["metadatas"])
-            if existing and existing["metadatas"]:
-                meta = existing["metadatas"][0]
-                if meta and meta.get("source") == "outline":
-                    gn = meta.get("outline_num", "")
-                    gt = meta.get("outline_type", "")
-                    gy = meta.get("outline_year", "") or ""
-                    ver = meta.get("version", "")
-                    if gn:
-                        # 같은 골자+버전의 다른 항목이 있는지 확인
-                        where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}]}
-                        if ver:
-                            where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}, {"version": ver}]}
-                        others = col.get(where=where_cond)
-                        remaining = [i for i in (others.get("ids") or []) if i != req.doc_id]
-                        if not remaining:
-                            # 마지막 항목이면 JSON 삭제
-                            prefix = _outline_prefix(gt, gn, gy)
-                            ver_safe = ver.replace("/", "-").replace(" ", "").strip()
-                            fname = f"{prefix}_v{ver_safe}.json" if ver_safe else f"{prefix}.json"
-                            fpath = os.path.join(_OUTLINES_DIR, fname)
-                            if os.path.exists(fpath):
-                                os.remove(fpath)
-        except Exception:
-            pass
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    # 존재 검증 (Doc-50): silent success 차단
+    try:
+        existing = col.get(ids=[req.doc_id], include=["metadatas"])
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    if not existing.get("ids"):
+        raise HTTPException(
+            status_code=404,
+            detail=f"ID not found in collection '{req.collection}': {req.doc_id}"
+        )
+
+    # 골자 항목이면 JSON도 삭제
+    try:
+        if existing.get("metadatas"):
+            meta = existing["metadatas"][0]
+            if meta and meta.get("source") == "outline":
+                gn = meta.get("outline_num", "")
+                gt = meta.get("outline_type", "")
+                gy = meta.get("outline_year", "") or ""
+                ver = meta.get("version", "")
+                if gn:
+                    # 같은 골자+버전의 다른 항목이 있는지 확인
+                    where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}]}
+                    if ver:
+                        where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}, {"version": ver}]}
+                    others = col.get(where=where_cond)
+                    remaining = [i for i in (others.get("ids") or []) if i != req.doc_id]
+                    if not remaining:
+                        # 마지막 항목이면 JSON 삭제
+                        prefix = _outline_prefix(gt, gn, gy)
+                        ver_safe = ver.replace("/", "-").replace(" ", "").strip()
+                        fname = f"{prefix}_v{ver_safe}.json" if ver_safe else f"{prefix}.json"
+                        fpath = os.path.join(_OUTLINES_DIR, fname)
+                        if os.path.exists(fpath):
+                            os.remove(fpath)
+    except Exception:
+        pass
+
+    try:
         col.delete(ids=[req.doc_id])
         _bm25_cache.clear()
         return {"status": "삭제 완료", "id": req.doc_id}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/api/outline/list")
 def outline_list():
