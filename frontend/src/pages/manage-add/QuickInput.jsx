@@ -39,7 +39,7 @@ export default function ManageQuickInput() {
             <select value={qiForm.speech_type} onChange={e => setQiForm(p => ({ ...p, speech_type: e.target.value }))}
               style={{ ...S.inputField, width: '100%', cursor: 'pointer', appearance: 'none' }}>
               <option>공개강연</option>
-              <option>생활과 봉사</option>
+              <option>생활과봉사</option>
               <option>JW방송</option>
               <option>대회</option>
               <option>기타</option>

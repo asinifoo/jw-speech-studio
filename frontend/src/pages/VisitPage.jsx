@@ -8,6 +8,7 @@ import RefinePanel from '../components/RefinePanel';
 import GenerateButton from '../components/GenerateButton';
 import WolFiltersPanel from '../components/WolFiltersPanel';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
+import { getOutlinePrefix } from '../utils/outlineFormat';
 import { getBody } from '../utils/textHelpers';
 import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
 import { useAlert } from '../providers/AlertProvider';
@@ -413,10 +414,7 @@ export default function VisitPage({ fontSize, ai }) {
                 {(() => {
                   const cColor = { speech_points: 'var(--accent)', speech_expressions: 'var(--accent-orange)', publications: 'var(--accent-purple)' }[col] || 'var(--c-muted)';
                   const gt = meta.outline_type || '', gn = meta.outline_num || '';
-                  let prefix = '';
-                  if ((gt === '공개강연' || gt.startsWith('S-34')) && gn) prefix = 'S-34_' + gn.replace(/^0+/, '').padStart(3, '0');
-                  else if (gt === '기념식' || gt.startsWith('S-31')) prefix = 'S-31_기념식';
-                  else if (gn) prefix = gn;
+                  const prefix = getOutlinePrefix(gt, gn);
                   const isPub = col === 'publications';
                   const title = isPub ? (meta.outline_title || '') : (meta.outline_title || '');
                   const metaRows = [

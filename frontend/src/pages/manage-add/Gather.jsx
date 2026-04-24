@@ -34,16 +34,16 @@ function _splitCommaRefs(text) {
 }
 
 const OUTLINE_TYPES = [
-  { name: '공개 강연', code: 'S-34', numPh: '001~196', verPh: '10/24' },
-  { name: '생활과 봉사', code: 'SB', numPh: '041 (4월 1주차)', verPh: '2604 (년월)', timePh: '10분' },
-  { name: '특별 행사', code: 'S-31', numPh: '001', verPh: '2026', sub: [
-    { name: '기념식', code: 'S-31' },
-    { name: '특별 강연', code: 'S-123' },
-    { name: 'RP 모임', code: 'S-211' },
+  { name: '공개강연', code: 'S-34', numPh: '001~196', verPh: '10/24' },
+  { name: '생활과봉사', code: 'SB', numPh: '041 (4월 1주차)', verPh: '4/26 (월/년)', timePh: '10분' },
+  { name: '특별행사', code: 'S-31', numPh: '001', sub: [
+    { name: '기념식', code: 'S-31', numPh: '001', verPh: '8/19 (개정 월/년)' },
+    { name: '특별강연', code: 'S-123', numPh: '001', verPh: '5/26 (발표 월/년)' },
+    { name: 'RP모임', code: 'S-211', numPh: '001', verPh: '6/26 (개최 월/년)' },
   ]},
-  { name: '대회', code: 'CO', numPh: '001~ (순서)', verPh: '2026', sub: [
-    { name: '순회 대회', code: 'CO_C', numPh: '001 (상반기) / 002 (하반기)' },
-    { name: '지역 대회', code: 'CO_R', numPh: '001' },
+  { name: '대회', code: 'CO', numPh: '001', sub: [
+    { name: '순회대회', code: 'CO_C', numPh: '001', verPh: '3/26 (개최 월/년)' },
+    { name: '지역대회', code: 'CO_R', numPh: '001', verPh: '7/26 (개최 월/년)' },
   ]},
   { name: '기타', code: 'ETC', numPh: '자유', verPh: '자유' },
 ];
@@ -526,7 +526,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           free_topic: full.free_topic || full.outline_title || '',
           free_subtopics: full.free_subtopics || [],
           free_mode: full.free_mode || 'subtopic',
-          free_type: full.free_type || '생활과 봉사',
+          free_type: full.free_type || '생활과봉사',
           source_stt_job_id: full.source_stt_job_id || dr.source_stt_job_id || '',
           stt_original_text: full.stt_original_text || full.free_text || dr.stt_original_text || dr.free_text || '',
         }));
@@ -601,7 +601,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           free_topic: full.outline_title || '',
           free_subtopics: [],
           free_mode: 'subtopic',
-          free_type: full.speech_type || '생활과 봉사',
+          free_type: full.speech_type || '생활과봉사',
           free_text: content,
           stt_original_text: content,
           source_stt_job_id: '',
@@ -628,7 +628,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           free_text: full.free_text || '',
           free_subtopics: full.free_subtopics || [],
           free_mode: full.free_mode || 'subtopic',
-          free_type: full.free_type || '생활과 봉사',
+          free_type: full.free_type || '생활과봉사',
           stt_original_text: full.stt_original_text || '',
           source_stt_job_id: full.source_stt_job_id || '',
         }));
@@ -2043,20 +2043,16 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         const { text, meta } = await docxToText(f);
                         setTxtContent(text || '');
                         setTxtParsed([]);
-                        setTxtMeta(p => {
-                          const newType = meta.outline_type || p.outlineType;
-                          const needYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(newType);
-                          return {
-                            ...p,
-                            outlineType: newType,
-                            outlineNum: meta.outline_num || p.outlineNum,
-                            version: meta.version || p.version,
-                            outlineTitle: meta.title || p.outlineTitle,
-                            note: meta.note || '',
-                            duration: meta.total_time != null ? `${meta.total_time}분` : p.duration,
-                            year: needYear ? (meta.outline_year || p.year || '') : '',
-                          };
-                        });
+                        setTxtMeta(p => ({
+                          ...p,
+                          outlineType: meta.outline_type || p.outlineType,
+                          outlineNum: meta.outline_num || p.outlineNum,
+                          version: meta.version || p.version,
+                          outlineTitle: meta.title || p.outlineTitle,
+                          note: meta.note || '',
+                          duration: meta.total_time != null ? `${meta.total_time}분` : p.duration,
+                          year: '',
+                        }));
                         setTxtResult('✓ DOCX 변환 완료. 들여쓰기를 검수한 후 [파싱] 버튼을 눌러주세요.');
                       } catch (err) {
                         setTxtResult('오류: ' + err.message);
@@ -2084,8 +2080,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           const active = mainType.code === t.code;
                           return <button key={t.code} onClick={() => {
                             const code = t.sub ? t.sub[0].code : t.code;
-                            const needYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(code);
-                            setTxtMeta(p => ({ ...p, outlineType: code, year: needYear ? p.year : '' }));
+                            setTxtMeta(p => ({ ...p, outlineType: code, year: '' }));
                           }} style={{
                             flex: 1, padding: '5px 0', border: 'none', borderRadius: 8, fontSize: '0.786rem', fontWeight: active ? 700 : 500,
                             background: active ? 'var(--bg-card, #fff)' : 'transparent', color: active ? 'var(--accent)' : 'var(--c-muted)',
@@ -2099,8 +2094,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           {mainType.sub.map(s => {
                             const active = txtMeta.outlineType === s.code;
                             return <button key={s.code} onClick={() => {
-                              const needYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(s.code);
-                              setTxtMeta(p => ({ ...p, outlineType: s.code, year: needYear ? p.year : '' }));
+                              setTxtMeta(p => ({ ...p, outlineType: s.code, year: '' }));
                             }} style={{
                               flex: 1, padding: '5px 0', border: 'none', borderRadius: 8, fontSize: '0.786rem', fontWeight: active ? 700 : 500,
                               background: active ? 'var(--bg-card, #fff)' : 'transparent', color: active ? 'var(--accent-orange)' : 'var(--c-muted)',
@@ -2111,9 +2105,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         </div>
                       )}
                       {/* 메타 입력 */}
-                      {(() => {
-                        const showYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(txtMeta.outlineType);
-                        return (
                       <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
                         {isEtc && (
                           <div style={{ flex: 1 }}>
@@ -2125,19 +2116,11 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2, paddingLeft: 2 }}>번호</div>
                           <input value={txtMeta.outlineNum} onChange={e => setTxtMeta(p => ({ ...p, outlineNum: e.target.value }))} placeholder={typeInfo.numPh || '001'} style={{ ...iF, width: '100%' }} />
                         </div>
-                        {showYear && (
-                          <div style={{ width: 60, flexShrink: 0 }}>
-                            <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2, paddingLeft: 2 }}>년도</div>
-                            <input value={txtMeta.year || ''} onChange={e => setTxtMeta(p => ({ ...p, year: e.target.value }))} placeholder="26" style={{ ...iF, width: '100%', textAlign: 'center' }} />
-                          </div>
-                        )}
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2, paddingLeft: 2 }}>버전</div>
                           <input value={txtMeta.version} onChange={e => setTxtMeta(p => ({ ...p, version: e.target.value }))} placeholder={typeInfo.verPh || '10/24'} style={{ ...iF, width: '100%' }} />
                         </div>
                       </div>
-                        );
-                      })()}
                       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                         <div style={{ flex: 1 }}>
                           <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2, paddingLeft: 2 }}>제목</div>
@@ -2553,16 +2536,15 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     <span style={{ marginLeft: 'auto', fontSize: '0.643rem', color: 'var(--c-dim)' }}>{pubRefOpen ? '▲' : '▼'}</span>
                   </div>
                   {pubRefOpen && (() => {
-                    const showYear = ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(pubForm.outline_type);
                     const typeOpts = [
                       { code: '', name: '(선택 안 함)' },
-                      { code: 'S-34', name: '공개 강연 (S-34)' },
-                      { code: 'SB', name: '생활과 봉사 (SB)' },
+                      { code: 'S-34', name: '공개강연 (S-34)' },
+                      { code: 'SB', name: '생활과봉사 (SB)' },
                       { code: 'S-31', name: '기념식 (S-31)' },
-                      { code: 'S-123', name: '특별 강연 (S-123)' },
-                      { code: 'S-211', name: 'RP 모임 (S-211)' },
-                      { code: 'CO_C', name: '순회 대회 (CO_C)' },
-                      { code: 'CO_R', name: '지역 대회 (CO_R)' },
+                      { code: 'S-123', name: '특별강연 (S-123)' },
+                      { code: 'S-211', name: 'RP모임 (S-211)' },
+                      { code: 'CO_C', name: '순회대회 (CO_C)' },
+                      { code: 'CO_R', name: '지역대회 (CO_R)' },
                       { code: 'ETC', name: '기타 (ETC)' },
                     ];
                     return (
@@ -2570,7 +2552,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>유형</div>
-                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: ['S-123', 'S-211', 'CO_C', 'CO_R', 'SB'].includes(e.target.value) ? p.outline_year : '' }))} style={{ ...S.inputField, width: '100%' }}>
+                            <select value={pubForm.outline_type} onChange={e => setPubForm(p => ({ ...p, outline_type: e.target.value, outline_year: '' }))} style={{ ...S.inputField, width: '100%' }}>
                               {typeOpts.map(o => <option key={o.code} value={o.code}>{o.name}</option>)}
                             </select>
                           </div>
@@ -2578,12 +2560,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>번호</div>
                             <input value={pubForm.outline_num} onChange={e => setPubForm(p => ({ ...p, outline_num: e.target.value }))} placeholder="001" style={{ ...S.inputField, width: '100%' }} />
                           </div>
-                          {showYear && (
-                            <div style={{ width: 60, flexShrink: 0 }}>
-                              <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>년도</div>
-                              <input value={pubForm.outline_year} onChange={e => setPubForm(p => ({ ...p, outline_year: e.target.value }))} placeholder="26" style={{ ...S.inputField, width: '100%', textAlign: 'center' }} />
-                            </div>
-                          )}
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>버전</div>
                             <input value={pubForm.version} onChange={e => setPubForm(p => ({ ...p, version: e.target.value }))} placeholder="10/24" style={{ ...S.inputField, width: '100%' }} />
@@ -2968,8 +2944,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
             const sub = gatherForm.sub_source;
             if (src === '봉사 모임' || src === '원문' || src === '전처리' || sub === '원문') return null;
 
-            const showOutline = src === '연설' && sub === '공개 강연';
-            const showSubtopic = src === '연설' && (sub === '공개 강연' || sub === '대회 연설');
+            const showOutline = src === '연설' && sub === '공개강연';
+            const showSubtopic = src === '연설' && (sub === '공개강연' || sub === '대회 연설');
             const showPoint = showSubtopic;
             const isDiscussion = src === '토의';
             const showFreePoint = src === 'JW 방송' || (src === '연설' && sub === '기타 연설');

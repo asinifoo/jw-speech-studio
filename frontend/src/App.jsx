@@ -12,6 +12,7 @@ import GenerateButton from './components/GenerateButton';
 import RefinePanel from './components/RefinePanel';
 import useAiModel from './hooks/useAiModel';
 import { useConfirm } from './providers/ConfirmProvider';
+import { useOutlineTypes } from './utils/outlineTypes';
 const BibleSearchPage = lazy(() => import('./pages/BibleSearchPage'));
 const TranscriptPage = lazy(() => import('./pages/TranscriptPage'));
 const FreeSearchPage = lazy(() => import('./pages/FreeSearchPage'));
@@ -22,6 +23,8 @@ const ManagePage = lazy(() => import('./pages/ManagePage'));
 
 export default function App() {
   const showConfirm = useConfirm();
+  // outline types 캐시 워밍 (Phase 1 Step 3c) — 자식 컴포넌트 렌더 시 즉시 사용 가능
+  useOutlineTypes();
   // 마운트 완료 시 페이드인 + 스크롤 복원
   useEffect(() => {
     requestAnimationFrame(() => document.getElementById('root')?.classList.add('ready'));

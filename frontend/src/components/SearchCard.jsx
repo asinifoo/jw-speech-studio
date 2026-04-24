@@ -5,6 +5,7 @@ import KoreanTextarea from './KoreanTextarea';
 import { parseDocument, tagColor, tagLabel, sourceLabel, cleanMd, parseKeywords } from './utils';
 import { dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
+import { getOutlinePrefix } from '../utils/outlineFormat';
 
 const PRESETS = {
   default:  { actionBtn: S.btnXsAccent,  dangerBtn: S.btnXsDanger },
@@ -179,11 +180,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
           const gt = meta.outline_type || '';
           const gn = meta.outline_num || '';
           const isPub = col === 'publications';
-          let prefix = '';
-          if ((gt === '공개강연' || gt.startsWith('S-34')) && gn) prefix = 'S-34_' + gn.replace(/^0+/, '').padStart(3, '0');
-          else if (gt === '기념식' || gt.startsWith('S-31')) prefix = 'S-31_기념식';
-          else if (gt.startsWith('JWBC-')) prefix = gn ? gt + '_' + gn : gt;
-          else if (gn) prefix = gn;
+          const prefix = getOutlinePrefix(gt, gn);
           const title = isPub ? (meta.outline_title || '') : (meta.outline_title || '');
           const subTopic = parsed?.subtopic || meta.sub_topic || meta.subtopic || '';
           const scripture = cleanMd(parsed?.scripture || meta.scriptures || '');

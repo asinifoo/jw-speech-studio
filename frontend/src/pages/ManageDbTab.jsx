@@ -6,32 +6,18 @@ import { S } from '../styles';
 import { dbDelete, dbUpdate, deleteOutline, listManualEntries, listCollection, listOriginals, listSpeakerMemos } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
+import { formatSbMmw, matchOutlineType } from '../utils/outlineFormat';
+import { resolveOutlineCode } from '../utils/outlineTypes';
 
-const OUTLINE_TYPE_CODES = {
-  '공개강연': 'S-34',
-  '기념식': 'S-31',
-  '특별강연': 'S-123',
-  'RP모임': 'S-211',
-  '순회대회': 'CO_C',
-  '지역대회': 'CO_R',
-  '생활과 봉사': 'SB',
-  '기타': 'ETC',
-};
-
+// App preload 로 useOutlineTypes 캐시가 마운트 시점에 채워짐 → cache 기반 resolve 우선.
+// 캐시 미로드 (preload 실패) 시 prefix passthrough 로 fail-soft.
 function normalizeOutlineCode(type) {
   if (!type) return '';
-  if (OUTLINE_TYPE_CODES[type]) return OUTLINE_TYPE_CODES[type];
+  const resolved = resolveOutlineCode(type);
+  if (resolved) return resolved;
   if (type.startsWith('S-') || type.startsWith('CO') || type.startsWith('SB')
       || type.startsWith('JWBC') || type.startsWith('ETC')) return type;
   return '';
-}
-
-function formatSbMmw(num) {
-  if (!num || !/^\d{3}$/.test(num)) return num || '';
-  const mm = parseInt(num.slice(0, 2), 10);
-  const w = parseInt(num.slice(2), 10);
-  if (mm < 1 || mm > 12 || w < 1 || w > 5) return num;
-  return `${mm}월 ${w}주`;
 }
 
 export default function ManageDbTab({ mode }) {
@@ -222,7 +208,7 @@ export default function ManageDbTab({ mode }) {
                           const items = dbEntries.filter(r => `${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_year || ''}_${r.metadata?.version || ''}` === gKey);
                           if (items.length) {
                             const m = items[0].metadata || {};
-                            const code = m.outline_type === '공개강연' ? 'S-34' : m.outline_type === '기념식' ? 'S-31' : m.outline_type === '특별강연' ? 'S-123' : m.outline_type || '';
+                            const code = normalizeOutlineCode(m.outline_type) || m.outline_type || '';
                             const num = m.outline_num || '';
                             const ver = m.version || '';
                             const year = m.outline_year || '';

@@ -76,7 +76,7 @@ export default function OutlineSelectorBar({
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
             <select value={freeType} onChange={e => onFreeTypeChange(e.target.value)}
               style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', outline: 'none', boxSizing: 'border-box', appearance: 'none', cursor: 'pointer' }}>
-              {['생활과 봉사', 'JW방송', '대회', '기타'].map(v => (
+              {['생활과봉사', 'JW방송', '대회', '기타'].map(v => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>

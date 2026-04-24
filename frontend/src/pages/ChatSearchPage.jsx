@@ -5,6 +5,7 @@ import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../component
 import { chatStream, abortGeneration, getChatSessions, getChatSession, saveChatSession, deleteChatSession, getWolStatus, uploadFile } from '../api';
 import WolFiltersPanel from '../components/WolFiltersPanel';
 import { useAlert } from '../providers/AlertProvider';
+import { getOutlinePrefix } from '../utils/outlineFormat';
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -480,11 +481,7 @@ export default function ChatSearchPage({ fontSize, ai }) {
                       const cColor = tagColor[col] || 'var(--c-muted)';
                       const gt = meta.outline_type || '';
                       const gn = meta.outline_num || '';
-                      let prefix = '';
-                      if ((gt === '공개강연' || gt.startsWith('S-34')) && gn) prefix = 'S-34_' + gn.padStart(3, '0');
-                      else if (gt === '기념식' || gt.startsWith('S-31')) prefix = 'S-31_기념식';
-                      else if (gt.startsWith('JWBC')) prefix = gn ? gt + '_' + gn : gt;
-                      else if (gn) prefix = gn;
+                      const prefix = getOutlinePrefix(gt, gn);
                       const isPub = col === 'publications';
                       const title = meta.outline_title || '';
                       const subTopic = parsed?.subtopic || meta.sub_topic || meta.subtopic || '';

@@ -8,6 +8,7 @@ import RefinePanel from '../components/RefinePanel';
 import GenerateButton from '../components/GenerateButton';
 import WolFiltersPanel from '../components/WolFiltersPanel';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
+import { getOutlinePrefix } from '../utils/outlineFormat';
 import { getBody } from '../utils/textHelpers';
 import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getServiceTypes, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
 import { useAlert } from '../providers/AlertProvider';
@@ -372,10 +373,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
             const score = Math.round((r.score || 0) / 0.035 * 100);
             const isPub = col === 'publications';
             const gt = meta.outline_type || '', gn = meta.outline_num || '';
-            let prefix = '';
-            if (gt === '공개강연' || gt.startsWith('S-34')) prefix = 'S-34_' + (gn || '').replace(/^0+/, '').padStart(3, '0');
-            else if (gt === '기념식' || gt.startsWith('S-31')) prefix = 'S-31_기념식';
-            else if (gn) prefix = gn;
+            const prefix = getOutlinePrefix(gt, gn);
             return (
               <div key={i}
                 style={{ borderRadius: 8, border: r.filtered ? '1px solid var(--tint-red-bd)' : '1px solid var(--bd-soft)', background: r.filtered ? 'var(--tint-red-soft)' : 'var(--bg-card)', marginBottom: 6, overflow: 'hidden', opacity: sel ? 1 : 0.5 }}>

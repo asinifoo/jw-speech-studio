@@ -6,6 +6,7 @@ import { BIBLE_ABBR, BIBLE_FULL } from '../utils/bible';
 import { getBody } from '../utils/textHelpers';
 import { freeSearch, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
+import { getOutlinePrefix } from '../utils/outlineFormat';
 import { useAlert } from '../providers/AlertProvider';
 
 export default function FreeSearchPage({ fontSize }) {
@@ -137,11 +138,7 @@ export default function FreeSearchPage({ fontSize }) {
         const body = getBody(r.text || '');
         const score = Math.round((r.score || 0) / 0.035 * 100);
         const gt = meta.outline_type || '', gn = meta.outline_num || '';
-        let prefix = '';
-        if (gt === '공개강연' || gt.startsWith('S-34')) prefix = 'S-34_' + (gn || '').replace(/^0+/, '').padStart(3, '0');
-        else if (gt === '기념식' || gt.startsWith('S-31')) prefix = 'S-31_기념식';
-        else if (gt.startsWith('JWBC-')) prefix = gn ? gt + '_' + gn : gt;
-        else if (gn) prefix = gn;
+        const prefix = getOutlinePrefix(gt, gn);
         const isPub = col === 'publications';
         return (
           <div key={i} style={{

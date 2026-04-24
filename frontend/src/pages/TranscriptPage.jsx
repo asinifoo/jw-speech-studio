@@ -5,6 +5,7 @@ import { getTranscriptBody } from '../utils/textHelpers';
 import { listTranscripts, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
+import { matchOutlineType, getOutlinePrefix } from '../utils/outlineFormat';
 
 export default function TranscriptPage({ fontSize }) {
   const showConfirm = useConfirm();
@@ -29,10 +30,10 @@ export default function TranscriptPage({ fontSize }) {
     const gt = t.outline_type || t.outline_type || '';
     const gn = t.outline_num || t.outline_num || '';
     const src = t.source || '';
-    if (gt === '공개강연' || gt.startsWith('S-34')) return '공개 강연';
+    if (matchOutlineType(gt, 'S-34')) return '공개 강연';
     if (gt.startsWith('JWBC') || src === 'JW 방송') return 'JW 방송';
-    if (gt === '대회' || gt === '대회연설' || gt === '순회대회' || gt === '지역대회') return '대회';
-    if (gt.startsWith('S-123') || gt === '특별강연' || gt === '기념식' || gt.startsWith('S-31') || gt === '특별 행사') return '특별 행사';
+    if (gt === '대회' || gt === '대회연설' || matchOutlineType(gt, 'CO_C') || matchOutlineType(gt, 'CO_R')) return '대회';
+    if (matchOutlineType(gt, 'S-123') || matchOutlineType(gt, 'S-31') || gt === '특별 행사') return '특별 행사';
     if (!gt && gn) {
       if (/^\d{1,3}$/.test(gn)) return '공개 강연';
       if (gn === '기념식' || gn.startsWith('S-31')) return '특별 행사';
@@ -41,13 +42,8 @@ export default function TranscriptPage({ fontSize }) {
   };
 
   const getPrefix = (t) => {
-    const gt = t?.outline_type || t?.outline_type || ''; const gn = t?.outline_num || t?.outline_num || '';
-    if (gt === '공개강연' || gt.startsWith('S-34')) return 'S-34_' + gn.padStart(3, '0');
-    if (gt === '기념식' || gt.startsWith('S-31')) return 'S-31_기념식';
-    if (gt.startsWith('JWBC')) return gn ? gt + '_' + gn : gt;
-    if (gt.startsWith('S-123')) return gt + (gn ? '_' + gn : '');
-    if (!gt && gn && /^\d{1,3}$/.test(gn)) return 'S-34_' + gn.padStart(3, '0');
-    return gn || '';
+    const gt = t?.outline_type || ''; const gn = t?.outline_num || '';
+    return getOutlinePrefix(gt, gn);
   };
 
   const categories = ['공개 강연', 'JW 방송', '대회', '특별 행사', '기타'];

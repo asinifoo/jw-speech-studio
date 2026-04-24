@@ -1,7 +1,41 @@
 // outline version/num 포맷 유틸 (세션 5c Phase 1 Step 2b).
 // fail-soft — 알 수 없는 포맷은 raw 문자열 그대로 반환.
 
-import { getOutlineTypeName } from './outlineTypes';
+import { getOutlineType, getOutlineTypeName } from './outlineTypes';
+
+// outline_type (code/한글/prefix) vs code 비교. fail-soft.
+// cache 미로드 시 code/prefix 직접 비교만 통과 (검색 편의). alias 호환은 App preload 전제.
+export function matchOutlineType(value, code) {
+  if (!value || !code) return false;
+  if (value === code) return true;
+  if (typeof value === 'string' && value.startsWith(code + '_')) return true;
+  const t = getOutlineType(code);
+  if (t) {
+    if (value === t.name) return true;
+    if (Array.isArray(t.aliases) && t.aliases.includes(value)) return true;
+  }
+  return false;
+}
+
+// 공통 prefix 생성. type+num → "S-34_001" / "SB_041" / "S-31_기념식" 등.
+// 삼항 연쇄 (`gt === '공개강연' || gt.startsWith('S-34')`) 흡수.
+export function getOutlinePrefix(type, num) {
+  if (matchOutlineType(type, 'S-34')) {
+    if (!num) return 'S-34';
+    const clean = String(num).replace(/^0+/, '');
+    return 'S-34_' + (clean || '0').padStart(3, '0');
+  }
+  if (matchOutlineType(type, 'S-31')) return 'S-31_기념식';
+  if (matchOutlineType(type, 'S-123')) return num ? `S-123_${String(num).padStart(3, '0')}` : 'S-123';
+  if (matchOutlineType(type, 'S-211')) return num ? `S-211_${String(num).padStart(3, '0')}` : 'S-211';
+  if (matchOutlineType(type, 'SB')) return num ? `SB_${String(num).padStart(3, '0')}` : 'SB';
+  if (matchOutlineType(type, 'CO_C')) return num ? `CO_C_${String(num).padStart(3, '0')}` : 'CO_C';
+  if (matchOutlineType(type, 'CO_R')) return num ? `CO_R_${String(num).padStart(3, '0')}` : 'CO_R';
+  if (typeof type === 'string' && type.startsWith('JWBC')) return num ? `${type}_${num}` : type;
+  // fallback: type+num 직접 조립
+  if (!type && num && /^\d{1,3}$/.test(num)) return 'S-34_' + String(num).padStart(3, '0');
+  return num ? `${type || ''}_${num}` : (type || '');
+}
 
 // "9/15" → "2015년 9월", "10/24" → "2024년 10월"
 // 포맷 불일치 / 빈값 → raw 그대로.
