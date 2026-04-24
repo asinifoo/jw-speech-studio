@@ -217,15 +217,27 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   }, [siTransferTick]);
 
   // ── useEffect 4: draft/note 체크 ──
+  // 세션 5b B2 fix: cancelled 플래그 + cleanup — mount 직후 localStorage 잔재 siOutline 기반
+  // draftCheck 가 in-flight 인 상태로 transfer 가 siOutline 을 바꾸면, stale 응답이
+  // 새 outline 의 siDraftInfo 를 덮어쓰던 race 차단.
   useEffect(() => {
     if (!siOutline || !siSpeaker.trim() || !siDate.trim()) { setSiDraftInfo(null); setSiNoteInfo(null); return; }
+    let cancelled = false;
     // transfer로 draft를 이미 로드한 경우 draftCheck 스킵 (한 번만)
-    if (siDraftLoadedRef.current) { siDraftLoadedRef.current = false; setSiDraftInfo(null); }
-    else draftCheck({ outline_num: siOutline.outline_num, speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline.outline_type || 'S-34' }).then(r => setSiDraftInfo(r.exists ? r : null)).catch(() => setSiDraftInfo(null));
+    if (siDraftLoadedRef.current) {
+      siDraftLoadedRef.current = false;
+      setSiDraftInfo(null);
+    } else {
+      draftCheck({ outline_num: siOutline.outline_num, speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline.outline_type || 'S-34' })
+        .then(r => { if (!cancelled) setSiDraftInfo(r.exists ? r : null); })
+        .catch(() => { if (!cancelled) setSiDraftInfo(null); });
+    }
     listBySource('note', 10, '').then(r => {
+      if (cancelled) return;
       const match = (r.entries || []).find(e => e.metadata?.outline_num === siOutline.outline_num && e.metadata?.speaker === siSpeaker.trim() && e.metadata?.date === siDate.trim());
       setSiNoteInfo(match || null);
-    }).catch(() => setSiNoteInfo(null));
+    }).catch(() => { if (!cancelled) setSiNoteInfo(null); });
+    return () => { cancelled = true; };
   }, [siOutline?.outline_num, siSpeaker, siDate]);
 
   // ── 핸들러 (JSX 인라인 추출) ──
