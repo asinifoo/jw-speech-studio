@@ -6,7 +6,7 @@ import time
 from fastapi import APIRouter, HTTPException
 from config import _OUTLINES_DIR, normalize_source
 from models import DbAddRequest, DbUpdateRequest, DbDeleteRequest, BatchItem, BatchAddRequest, BatchDeleteRequest
-from services.outline_parser import _outline_prefix, _ver_safe, normalize_outline_type
+from services.outline_parser import _outline_prefix, _ver_safe, normalize_outline_type, get_outline_types
 from db import get_db, get_embedding, _bm25_cache
 
 router = APIRouter()
@@ -456,6 +456,15 @@ def outline_list():
             except Exception:
                 continue
     return {"outlines": items}
+
+
+@router.get("/api/outline/types")
+def api_outline_types():
+    """골자 유형 목록 + 메타 (세션 5c Phase 1 Step 2a).
+
+    프론트가 outlineTypes.js / useOutlineTypes 훅으로 캐시하여 사용.
+    """
+    return {"types": get_outline_types()}
 
 
 @router.get("/api/outline/{outline_id}")

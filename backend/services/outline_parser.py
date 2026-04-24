@@ -30,8 +30,9 @@ def _split_comma_refs(text):
 
 _TYPE_NAMES = {
     "S-34": "공개강연", "S-31": "기념식", "S-123": "특별강연", "S-211": "RP모임",
-    "SB": "생활과봉사", "CO": "대회", "CO_순회": "대회(순회)", "CO_지역": "대회(지역)",
-    "JWBC": "JW방송", "JWBC-SP": "JW방송(연설)", "JWBC-MW": "JW방송(아침숭배)", "JWBC-PG": "JW방송(프로그램)", "JWBC-AM": "JW방송(연례총회)",
+    "SB": "생활과봉사",
+    "CO": "대회", "CO_C": "대회(순회)", "CO_R": "대회(지역)",
+    "JWBC": "JW방송", "JWBC-SP": "JW방송(연설)", "JWBC-MW": "JW방송(아침숭배)", "JWBC-PG": "JW방송(월간프로그램)", "JWBC-AM": "JW방송(연례총회)",
     "ETC": "기타",
 }
 
@@ -45,6 +46,117 @@ _OUTLINE_TYPE_KO_TO_EN = {
     "생활과봉사": "SB", "생활과 봉사": "SB",
     "기타": "ETC",
 }
+
+# /api/outline/types 응답 메타 (Phase 1 Step 2a).
+# _TYPE_NAMES 는 name 단일 소스 (영→한글). _TYPE_META 는 나머지 메타 (aliases/패턴/예시).
+# _TYPE_NAMES "CO" 는 Gather.jsx OUTLINE_TYPES 의 wrapper(code='CO', sub=[CO_C,CO_R]) 용
+# fallback 으로 유지되나, 저장용 코드는 아니므로 get_outline_types() 응답에서 제외.
+_TYPE_META = {
+    "S-34": {
+        "aliases": ["공개 강연"],
+        "num_pattern": "001~194+ (시리즈 번호)",
+        "version_example": "10/24 (발행 월/년)",
+        "year_required": False,
+    },
+    "S-31": {
+        "aliases": [],
+        "num_pattern": "001 고정 (단일 골자)",
+        "version_example": "8/19 (개정 월/년)",
+        "year_required": False,
+    },
+    "S-123": {
+        "aliases": ["특별 강연"],
+        "num_pattern": "001 고정 (단일 골자)",
+        "version_example": "5/26 (발표 월/년)",
+        "year_required": False,
+    },
+    "S-211": {
+        "aliases": ["RP 모임"],
+        "num_pattern": "001 고정 (단일 골자)",
+        "version_example": "6/26 (개최 월/년)",
+        "year_required": False,
+    },
+    "SB": {
+        "aliases": ["생활과 봉사"],
+        "num_pattern": "MMW (월+주차, 예: 041 = 4월 1주차)",
+        "version_example": "4/26 (사용 월/년)",
+        "year_required": False,
+    },
+    "CO_C": {
+        "aliases": ["순회대회", "순회 대회"],
+        "num_pattern": "001 고정 (단일 골자)",
+        "version_example": "3/26 또는 11/26 (개최 월/년, 유동)",
+        "year_required": False,
+    },
+    "CO_R": {
+        "aliases": ["지역대회", "지역 대회"],
+        "num_pattern": "001 고정 (단일 골자)",
+        "version_example": "7/26 또는 8/26 (개최 월/년)",
+        "year_required": False,
+    },
+    "JWBC": {
+        "aliases": [],
+        "num_pattern": "(5d 설계 예정)",
+        "version_example": "",
+        "year_required": False,
+    },
+    "JWBC-SP": {
+        "aliases": [],
+        "num_pattern": "(5d 설계 예정)",
+        "version_example": "",
+        "year_required": False,
+    },
+    "JWBC-MW": {
+        "aliases": [],
+        "num_pattern": "(5d 설계 예정)",
+        "version_example": "",
+        "year_required": False,
+    },
+    "JWBC-PG": {
+        "aliases": [],
+        "num_pattern": "(5d 설계 예정)",
+        "version_example": "",
+        "year_required": False,
+    },
+    "JWBC-AM": {
+        "aliases": [],
+        "num_pattern": "(5d 설계 예정)",
+        "version_example": "",
+        "year_required": False,
+    },
+    "ETC": {
+        "aliases": [],
+        "num_pattern": "",
+        "version_example": "",
+        "year_required": False,
+    },
+}
+
+# `_TYPE_NAMES` 에는 있지만 `_TYPE_META` 에는 의도적으로 제외된 코드.
+# Gather.jsx OUTLINE_TYPES 의 wrapper 용 fallback (저장 경로엔 안 씀).
+_TYPE_META_EXCLUDED = {"CO"}
+
+
+def get_outline_types() -> list:
+    """GET /api/outline/types 응답 데이터.
+
+    _TYPE_NAMES (name 단일 소스) + _TYPE_META (aliases/패턴/예시) 병합.
+    _TYPE_META_EXCLUDED 의 코드는 응답에서 제외 (Gather wrapper 용).
+    """
+    result = []
+    for code, name in _TYPE_NAMES.items():
+        if code in _TYPE_META_EXCLUDED:
+            continue
+        meta = _TYPE_META.get(code, {})
+        result.append({
+            "code": code,
+            "name": name,
+            "aliases": list(meta.get("aliases", [])),
+            "num_pattern": meta.get("num_pattern", ""),
+            "version_example": meta.get("version_example", ""),
+            "year_required": bool(meta.get("year_required", False)),
+        })
+    return result
 
 
 def normalize_outline_type(value: str) -> str:
