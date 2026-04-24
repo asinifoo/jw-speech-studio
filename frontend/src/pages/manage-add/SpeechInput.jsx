@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import KoreanTextarea from '../../components/KoreanTextarea';
 import { S } from '../../styles';
 import { bibleLookup, draftSave, draftLoad, draftComplete, draftDelete, draftCheck, dbDelete, saveSpeech, outlineDetail, listBySource } from '../../api';
@@ -13,13 +13,19 @@ import OutlineQuickEditor from './speech-input/OutlineQuickEditor';
 import OutlineDetailEditor from './speech-input/OutlineDetailEditor';
 import FreeStructureEditor from './speech-input/FreeStructureEditor';
 
-// si* state 초기값 복원
-const _siInit = (() => { try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; } catch { return {}; } })();
+// si* state 초기값 복원 — 매 mount 마다 localStorage 최신 반영 (B4 fix: 모듈 상수 stale 회피)
+const _readSiInit = () => {
+  try { return JSON.parse(localStorage.getItem('jw-speech-state')) || {}; }
+  catch { return {}; }
+};
 const _siDateDefault = (() => { const d = new Date(); return String(d.getFullYear()).slice(2) + String(d.getMonth() + 1).padStart(2, '0'); })();
 
 export default function ManageSpeechInput({ siTransferTick, outlines }) {
   const showConfirm = useConfirm();
   const showAlert = useAlert();
+
+  // B4 fix: mount 시 1회 localStorage 신규 읽기 (unmount→remount 시 최신 반영)
+  const _siInit = useMemo(_readSiInit, []);
 
   // ── si* state (33개) ──
   const [siOutline, setSiOutline] = useState(_siInit.outline || null);
