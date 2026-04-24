@@ -85,13 +85,13 @@ _TYPE_META = {
     "CO_C": {
         "aliases": ["순회대회", "순회 대회"],
         "num_pattern": "001 고정 (단일 골자)",
-        "version_example": "3/26 또는 11/26 (개최 월/년, 유동)",
+        "version_example": "3/26 (개최 월/년)",
         "year_required": False,
     },
     "CO_R": {
         "aliases": ["지역대회", "지역 대회"],
         "num_pattern": "001 고정 (단일 골자)",
-        "version_example": "7/26 또는 8/26 (개최 월/년)",
+        "version_example": "7/26 (개최 월/년)",
         "year_required": False,
     },
     "JWBC": {
