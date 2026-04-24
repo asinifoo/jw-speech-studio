@@ -60,19 +60,19 @@ _TYPE_META = {
     },
     "S-31": {
         "aliases": [],
-        "num_pattern": "001 고정 (단일 골자)",
+        "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "8/19 (개정 월/년)",
         "year_required": False,
     },
     "S-123": {
         "aliases": ["특별 강연"],
-        "num_pattern": "001 고정 (단일 골자)",
+        "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "5/26 (발표 월/년)",
         "year_required": False,
     },
     "S-211": {
         "aliases": ["RP 모임"],
-        "num_pattern": "001 고정 (단일 골자)",
+        "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "6/26 (개최 월/년)",
         "year_required": False,
     },
@@ -84,13 +84,13 @@ _TYPE_META = {
     },
     "CO_C": {
         "aliases": ["순회대회", "순회 대회"],
-        "num_pattern": "001 고정 (단일 골자)",
+        "num_pattern": "001 시작 (상/하반기 또는 추가)",
         "version_example": "3/26 (개최 월/년)",
         "year_required": False,
     },
     "CO_R": {
         "aliases": ["지역대회", "지역 대회"],
-        "num_pattern": "001 고정 (단일 골자)",
+        "num_pattern": "001 시작 (필요 시 002, 003)",
         "version_example": "7/26 (개최 월/년)",
         "year_required": False,
     },
