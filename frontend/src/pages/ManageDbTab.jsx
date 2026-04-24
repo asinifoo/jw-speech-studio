@@ -222,22 +222,28 @@ export default function ManageDbTab({ mode }) {
                         if (failedKeys.length) {
                           showAlert(`삭제 실패 ${failedKeys.length}건: 매칭 레코드 없음\n(${failedKeys.slice(0, 3).join(', ')}${failedKeys.length > 3 ? ' 등' : ''})`, { variant: 'error' });
                         }
-                      } else if (viewSource === '연설' && speechFilter === '그룹') {
-                        // 연설 그룹 삭제: gKey로 매칭된 항목 개별 삭제
-                        for (const gKey of dbSelected) {
-                          const items = dbEntries.filter(r => { const m = r.metadata || {}; return `${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}` === gKey; });
-                          for (const item of items) await dbDelete(item.collection, item.id);
-                        }
-                      } else if (viewSource === '연설' && speechFilter === '목록') {
-                        // 목록 삭제: 개별 id로 삭제
-                        for (const id of dbSelected) {
-                          const entry = dbEntries.find(r => r.id === id);
-                          if (entry) await dbDelete(entry.collection || 'speech_expressions', entry.id);
-                        }
                       } else {
-                        for (const id of dbSelected) {
-                          const entry = dbEntries.find(r => r.id === id);
-                          if (entry) await dbDelete(entry.collection, entry.id);
+                        // Doc-50: bulk 삭제 실패 집계 (404 silent success 차단)
+                        const bulkFailed = [];
+                        let targets = [];
+                        if (viewSource === '연설' && speechFilter === '그룹') {
+                          for (const gKey of dbSelected) {
+                            const items = dbEntries.filter(r => { const m = r.metadata || {}; return `${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}` === gKey; });
+                            for (const item of items) targets.push({ collection: item.collection, id: item.id });
+                          }
+                        } else {
+                          const defaultCol = (viewSource === '연설' && speechFilter === '목록') ? 'speech_expressions' : null;
+                          for (const id of dbSelected) {
+                            const entry = dbEntries.find(r => r.id === id);
+                            if (entry) targets.push({ collection: entry.collection || defaultCol, id: entry.id });
+                          }
+                        }
+                        for (const t of targets) {
+                          try { await dbDelete(t.collection, t.id); }
+                          catch (e) { bulkFailed.push(`${t.id}: ${e.message}`); }
+                        }
+                        if (bulkFailed.length) {
+                          showAlert(`삭제 실패 ${bulkFailed.length}건:\n${bulkFailed.slice(0, 3).join('\n')}${bulkFailed.length > 3 ? '\n...' : ''}`, { variant: 'error' });
                         }
                       }
                       setDbCache(p => ({ ...p, [viewSource]: (p[viewSource] || []).filter(r => {
@@ -667,7 +673,14 @@ export default function ManageDbTab({ mode }) {
                     if (!await showConfirm(`선택한 ${dbSelected.size}개 연사메모를 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                     setDbDeleting(true);
                     try {
-                      for (const id of dbSelected) { await dbDelete('speech_expressions', id); }
+                      const bulkFailed = [];
+                      for (const id of dbSelected) {
+                        try { await dbDelete('speech_expressions', id); }
+                        catch (e) { bulkFailed.push(`${id}: ${e.message}`); }
+                      }
+                      if (bulkFailed.length) {
+                        showAlert(`삭제 실패 ${bulkFailed.length}건:\n${bulkFailed.slice(0, 3).join('\n')}`, { variant: 'error' });
+                      }
                       setSpeakerMemos(p => p.filter(m => !dbSelected.has(m.id)));
                       setDbTabCounts(p => ({ ...p, '연사메모': Math.max(0, (p['연사메모'] || 0) - dbSelected.size) }));
                       setDbSelected(new Set());
