@@ -13,6 +13,7 @@ import ManageDrafts from './Drafts';
 import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
 import { Modal } from '../../components/Modal';
 import { collectScripturesFromOutline } from '../../utils/scriptureHelpers';
+import { getOutlinePrefix } from '../../utils/outlineFormat';
 import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
@@ -113,8 +114,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [subtopics, setSubtopics] = useState({});
   const [saving, setSaving] = useState(false);
   const [fromPub, setFromPub] = useState(false);
-  const [outlineQuery, setOutlineQuery] = useState('');
-  const [outlineFocus, setOutlineFocus] = useState(false);
   const [batchEntries, setBatchEntries] = useState([]);
   const [batchInfo, setBatchInfo] = useState('');
   const [batchLog, setBatchLog] = useState([]);
@@ -955,12 +954,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     if (clearPendingPub) clearPendingPub();
   }, [pendingPub]);
 
-  const selectOutline = async (g) => {
-    if (!g) { setGatherForm(p => ({ ...p, outline_num: '', outline_type: '', outline_title: '', subtopic: '', point_id: '', point_summary: '' })); setSubtopics({}); return; }
-    setGatherForm(p => ({ ...p, outline_num: g.num, outline_type: g.type, outline_title: g.title, topic: g.title, subtopic: '', point_id: '', point_summary: '' }));
-    try { const r = await outlineDetail(g.num); setSubtopics(r.subtopics || {}); } catch(e) { setSubtopics({}); }
-  };
-
   const handleSave = async () => {
     if (!gatherForm.content.trim()) { setSaveMsg('내용을 입력하세요'); return; }
     if (gatherForm.entry_type === 'publication' && !gatherForm.pub_code.trim() && gatherForm.sub_source !== '원문') { setSaveMsg('출판물 코드를 입력하세요'); return; }
@@ -1793,8 +1786,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                               {sttReviewOutlineFocus && sttReviewOutlineQuery.trim() && sttReviewOutlines.length > 0 && (
                                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', marginTop: 2 }}>
                                   {sttReviewOutlines.map((g, gi) => {
-                                    const num = g.outline_num || g.num || '';
-                                    const pfx = `${g.outline_type || ''}_${num}`;
+                                    const pfx = getOutlinePrefix(g.outline_type, g.outline_num || g.num);
                                     const year = g.year || g.outline_year || '';
                                     const ver = g.version || '';
                                     return (
@@ -1805,6 +1797,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                         {year && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-orange, #fef3ec)', color: 'var(--accent-orange)', flexShrink: 0 }}>{year}년</span>}
                                         {ver && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)', flexShrink: 0 }}>v{ver}</span>}
                                         <span style={{ flex: 1, fontSize: '0.714rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title || ''}</span>
+                                        <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.outline_type_name || g.outline_type}</span>
                                       </div>
                                     );
                                   })}
@@ -2944,36 +2937,14 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
             const sub = gatherForm.sub_source;
             if (src === '봉사 모임' || src === '원문' || src === '전처리' || sub === '원문') return null;
 
-            const showOutline = src === '연설' && sub === '공개강연';
-            const showSubtopic = src === '연설' && (sub === '공개강연' || sub === '대회 연설');
+            const showSubtopic = src === '연설' && sub === '대회 연설';
             const showPoint = showSubtopic;
             const isDiscussion = src === '토의';
             const showFreePoint = src === 'JW 방송' || (src === '연설' && sub === '기타 연설');
             const isPubType = gatherForm.entry_type === 'publication';
 
             return (<>
-              {showOutline && !isPubType && (
-                <div style={{ marginBottom: 8, position: 'relative' }}>
-                  <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>골자 (번호 또는 제목 검색)</div>
-                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <input value={outlineQuery} onChange={e => { setOutlineQuery(e.target.value); setOutlineFocus(true); if (gatherForm.outline_num) { selectOutline(null); } }}
-                      onFocus={() => setOutlineFocus(true)} onBlur={() => setTimeout(() => setOutlineFocus(false), 200)}
-                      placeholder="007, 기념식, 자비..." style={{ ...S.inputField, flex: 1 }} />
-                    {gatherForm.outline_num && <button onClick={() => { selectOutline(null); setOutlineQuery(''); }} style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0 }}>초기화</button>}
-                  </div>
-                  {gatherForm.outline_num && <div style={{ marginTop: 4, fontSize: '0.786rem', color: 'var(--accent)', fontWeight: 600 }}>✅ {gatherForm.outline_type === '공개강연' || gatherForm.outline_type?.startsWith('S-34') ? 'S-34_' + gatherForm.outline_num.padStart(3, '0') : gatherForm.outline_type === '기념식' ? 'S-31_기념식' : gatherForm.outline_type?.startsWith('JWBC') ? gatherForm.outline_type + '_' + gatherForm.outline_num : gatherForm.outline_num} - {gatherForm.outline_title}</div>}
-                  {outlineFocus && outlineQuery && !gatherForm.outline_num && (() => {
-                    const q = outlineQuery.toLowerCase();
-                    const filtered = outlines.filter(g => !g.type.startsWith('JWBC')).filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || g.prefix.toLowerCase().includes(q)).slice(0, 10);
-                    if (filtered.length === 0) return <div style={{ position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 10, background: 'var(--bg-card)', border: '1px solid var(--bd)', borderRadius: 8, padding: 8, fontSize: '0.786rem', color: 'var(--c-muted)' }}>결과 없음</div>;
-                    return (<div style={{ position: 'absolute', left: 0, right: 0, top: '100%', zIndex: 10, background: 'var(--bg-card)', border: '1px solid var(--bd)', borderRadius: 8, maxHeight: 200, overflowY: 'auto', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
-                      {filtered.map((g, gi) => (<div key={gi} onClick={() => { selectOutline(g); setOutlineQuery(g.prefix + ' - ' + g.title); setOutlineFocus(false); }} style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', fontSize: '0.857rem', color: 'var(--c-text)' }} onMouseEnter={e => e.target.style.background = 'var(--bg-subtle)'} onMouseLeave={e => e.target.style.background = ''}><span style={{ fontWeight: 700, marginRight: 6 }}>{g.prefix}</span>{g.title}</div>))}
-                    </div>);
-                  })()}
-                </div>
-              )}
-
-              {!gatherForm.outline_num && !(src === '토의' && sub === '영적 보물') && !showFreePoint && !(isPubType && (showOutline || showSubtopic)) && (
+              {!gatherForm.outline_num && !(src === '토의' && sub === '영적 보물') && !showFreePoint && !(isPubType && showSubtopic) && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
@@ -3007,7 +2978,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                 )}
               </>)}
 
-              {(showOutline || showSubtopic) && isPubType && (<>
+              {showSubtopic && isPubType && (<>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 2 }}>주제</div>
                   <input value={gatherForm.topic} onChange={e => setGatherForm(p => ({ ...p, topic: e.target.value, outline_title: e.target.value }))} placeholder="연설 주제" style={{ ...S.inputField, width: '100%' }} />
@@ -3108,7 +3079,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
               flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent)', color: '#fff',
               fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
             }}>{saving ? '저장 중...' : movingMemo ? '이동 저장' : 'DB에 저장'}</button>
-            <button onClick={() => { setGatherForm(p => ({...gatherFormDefault, source: p.source, sub_source: p.sub_source})); setOutlineQuery(''); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
+            <button onClick={() => { setGatherForm(p => ({...gatherFormDefault, source: p.source, sub_source: p.sub_source})); setSubtopics({}); setSaveMsg(''); setMovingMemo(null); }} style={{
               padding: '10px 16px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.929rem', cursor: 'pointer',
             }}>초기화</button>
           </div>

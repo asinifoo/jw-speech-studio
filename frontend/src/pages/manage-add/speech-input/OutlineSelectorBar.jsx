@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { S } from '../../../styles';
+import { getOutlinePrefix } from '../../../utils/outlineFormat';
 
 export default function OutlineSelectorBar({
   outline,
@@ -36,7 +37,7 @@ export default function OutlineSelectorBar({
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} className="chat-input">
                 {matched.map(g => (
                   <div key={g.filename} onMouseDown={() => { setQueryFocus(false); onSelectOutline(g); }} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{g.outline_num}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{getOutlinePrefix(g.outline_type, g.outline_num)}</span>
                     {g.outline_year && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
