@@ -88,3 +88,36 @@ export function formatOutlineTitle(type, num, version) {
   // 단일 골자 (num=001 고정) — num 표기 생략
   return `${name}${ver ? ` (${ver})` : ''}`;
 }
+
+// outline_id ({type}_{num}_v{version}) → 4-tuple 분해.
+// 백엔드 _parse_outline_id (stt.py:108) 와 일관.
+// version 없으면 ''. CO_C/CO_R 특수 분기 (type 자체에 _ 포함).
+// 분해 실패 (빈/단일토큰/type또는num 빠짐) → null.
+export function parseOutlineId(outlineId) {
+  if (!outlineId || typeof outlineId !== 'string') return null;
+  const trimmed = outlineId.trim();
+  if (!trimmed) return null;
+
+  let beforeVersion = trimmed;
+  let version = '';
+  const m = trimmed.match(/_v([^_]+)$/);
+  if (m) {
+    version = m[1];
+    beforeVersion = trimmed.slice(0, m.index);
+  }
+
+  const parts = beforeVersion.split('_');
+  if (parts.length < 2) return null;
+
+  let outline_type, outline_num;
+  if (parts[0] === 'CO' && (parts[1] === 'C' || parts[1] === 'R') && parts.length >= 3) {
+    outline_type = `CO_${parts[1]}`;
+    outline_num = parts.slice(2).join('_');
+  } else {
+    outline_type = parts[0];
+    outline_num = parts.slice(1).join('_');
+  }
+
+  if (!outline_type || !outline_num) return null;
+  return { outline_type, outline_num, version };
+}
