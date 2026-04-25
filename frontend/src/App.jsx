@@ -602,9 +602,10 @@ textarea { resize: vertical; }
         {searchMode === 'free' && <FreeSearchPage fontSize={fontSize} />}
       </>)}
       {page === 'input' && <ManagePage pageType="input" key={'input-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={(savedPubData) => {
-        setPage('speech');
         const ref = pendingPubRef.current;
         pendingPubRef.current = null;
+        setPendingPub(null);  // state도 cleanup (잔여 state 회귀 방지)
+        setPage('speech');
         const pi = ref?.pointIndex;
         if (pi !== undefined && savedPubData) {
           setPoints(prev => prev.map((pt, i) => i !== pi ? pt : {
@@ -621,9 +622,10 @@ textarea { resize: vertical; }
       {addVisited && (
         <div style={{ display: page === 'add' ? 'contents' : 'none' }}>
           <ManagePage pageType="add" key={'add-' + resetKey} fontSize={fontSize} pendingPub={pendingPub} clearPendingPub={() => setPendingPub(null)} onSaveReturn={(savedPubData) => {
-            setPage('speech');
             const ref = pendingPubRef.current;
             pendingPubRef.current = null;
+            setPendingPub(null);  // state도 cleanup (잔여 state 회귀 방지)
+            setPage('speech');
             const pi = ref?.pointIndex;
             if (pi !== undefined && savedPubData) {
               setPoints(prev => prev.map((pt, i) => i !== pi ? pt : {

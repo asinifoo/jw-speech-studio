@@ -2602,7 +2602,14 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                   }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
                 </div>
                 {fromPub && !saving && (
-                  <button onClick={() => { setFromPub(false); if (onSaveReturn) onSaveReturn(); }} style={{
+                  <button onClick={() => {
+                    // [돌아가기] 시 잔여 state cleanup (silent error 200 회귀 방지)
+                    setFromPub(false);
+                    setPubForm(pubFormDefault);
+                    setSaveMsg('');
+                    try { localStorage.removeItem('jw-gather-form'); } catch {}
+                    if (onSaveReturn) onSaveReturn();
+                  }} style={{
                     width: '100%', padding: '8px 0', marginTop: 6, borderRadius: 8,
                     border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)',
                     fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
