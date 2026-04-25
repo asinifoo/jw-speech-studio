@@ -19,7 +19,11 @@ export default function VisitPage({ fontSize, ai }) {
   const [ageGroup, setAgeGroup] = useState(_vs?.ageGroup || '');
   // 카테고리 = [구조화] 편집 (categories.json). 방문은 자동 발견 API 없음 — getCategories 만.
   // localStorage 'jw-cats-visit-sit' 의존 폐기.
-  const [situations, setSituations] = useState([]);
+  // jw-cats-cache-visit-sit 는 FOUC 방지 캐시 (mount 즉시 표시 + 백그라운드 갱신).
+  const [situations, setSituations] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('jw-cats-cache-visit-sit')) || []; }
+    catch { return []; }
+  });
   const [selSits, setSelSits] = useState(() => new Set(_vs?.selSits || []));
   const [scriptures, setScriptures] = useState(_vs?.scriptures || '');
   const [duration, setDuration] = useState(_vs?.duration || '');
@@ -52,9 +56,13 @@ export default function VisitPage({ fontSize, ai }) {
   const [autoScriptures, setAutoScriptures] = useState(_vs?.autoScriptures || []);
   const [script, setScript] = useState(() => { try { return localStorage.getItem('jw-visit-script') || ''; } catch(e) { return ''; } });
   useEffect(() => { try { if (script) localStorage.setItem('jw-visit-script', script); else localStorage.removeItem('jw-visit-script'); } catch(e) {} }, [script]);
-  // 카테고리 동기화: [구조화] 편집 결과 (categories.json) mount 시 1회 호출
+  // 카테고리 동기화: [구조화] 편집 결과 (categories.json) mount 시 1회 호출 + 캐시 업데이트
   useEffect(() => {
-    getCategories().then(r => setSituations(r.visit_situations || [])).catch(() => {});
+    getCategories().then(r => {
+      const next = r.visit_situations || [];
+      setSituations(next);
+      try { localStorage.setItem('jw-cats-cache-visit-sit', JSON.stringify(next)); } catch {}
+    }).catch(() => {});
   }, []);
   // 옛 localStorage 키 1회성 cleanup
   useEffect(() => {

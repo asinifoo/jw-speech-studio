@@ -69,7 +69,11 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
 
   // 카테고리 = [구조화] 편집 (categories.json) ∪ DB 자동 발견 (getServiceTypes).
   // localStorage 'jw-cats-service' 의존 폐기 (옛 default 5종 잔재 정리는 cleanup useEffect).
-  const [serviceTypes, setServiceTypes] = useState([]);
+  // jw-cats-cache-service 는 FOUC 방지 캐시 (mount 즉시 표시 + 백그라운드 갱신).
+  const [serviceTypes, setServiceTypes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('jw-cats-cache-service')) || []; }
+    catch { return []; }
+  });
   useEffect(() => {
     Promise.all([
       getCategories().then(r => r.service_types || []).catch(() => []),
@@ -78,6 +82,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
       const merged = [...cats];
       discovered.forEach(t => { if (!merged.includes(t)) merged.push(t); });
       setServiceTypes(merged);
+      try { localStorage.setItem('jw-cats-cache-service', JSON.stringify(merged)); } catch {}
     });
   }, []);
   // 옛 localStorage 키 1회성 cleanup
