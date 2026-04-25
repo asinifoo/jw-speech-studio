@@ -10,7 +10,7 @@ import WolFiltersPanel from '../components/WolFiltersPanel';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
 import { getOutlinePrefix } from '../utils/outlineFormat';
 import { getBody } from '../utils/textHelpers';
-import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getServiceTypes, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
+import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getServiceTypes, getCategories, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
 import { useAlert } from '../providers/AlertProvider';
 
 export default function ServiceMeetingPage({ fontSize, ai }) {
@@ -67,8 +67,25 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
     } catch(e) {}
   }, [selTypes, scriptures, duration, notes, searchQuery, searchResults, selectedSearch, selectedPast, pastMeetings, autoScriptures, phase]);
 
-  const [serviceTypes, setServiceTypes] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-service')) || ['일반', '재방문', '기념식', '지역대회', '특별활동']; } catch(e) { return ['일반', '재방문', '기념식', '지역대회', '특별활동']; } });
-  useEffect(() => { getServiceTypes().then(r => { const remote = r.service_types || []; if (remote.length) { setServiceTypes(prev => { const merged = [...prev]; remote.forEach(t => { if (!merged.includes(t)) merged.push(t); }); return merged; }); } }).catch(() => {}); }, []);
+  // 카테고리 = [구조화] 편집 (categories.json) ∪ DB 자동 발견 (getServiceTypes).
+  // localStorage 'jw-cats-service' 의존 폐기 (옛 default 5종 잔재 정리는 cleanup useEffect).
+  const [serviceTypes, setServiceTypes] = useState([]);
+  useEffect(() => {
+    Promise.all([
+      getCategories().then(r => r.service_types || []).catch(() => []),
+      getServiceTypes().then(r => r.service_types || []).catch(() => []),
+    ]).then(([cats, discovered]) => {
+      const merged = [...cats];
+      discovered.forEach(t => { if (!merged.includes(t)) merged.push(t); });
+      setServiceTypes(merged);
+    });
+  }, []);
+  // 옛 localStorage 키 1회성 cleanup
+  useEffect(() => {
+    ['jw-cats-service', 'jw-cats-visit-sit'].forEach(k => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+  }, []);
 
   const toggleType = (t) => setSelTypes(prev => { const next = new Set(prev); if (next.has(t)) next.delete(t); else next.add(t); return next; });
 

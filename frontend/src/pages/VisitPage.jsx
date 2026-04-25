@@ -10,14 +10,16 @@ import WolFiltersPanel from '../components/WolFiltersPanel';
 import { parseDocument, cleanMd, sourceLabel, parseKeywords } from '../components/utils';
 import { getOutlinePrefix } from '../utils/outlineFormat';
 import { getBody } from '../utils/textHelpers';
-import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
+import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getCategories, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
 import { useAlert } from '../providers/AlertProvider';
 
 export default function VisitPage({ fontSize, ai }) {
   const showAlert = useAlert();
   const _vs = (() => { try { return JSON.parse(localStorage.getItem('jw-visit-state')); } catch(e) { return null; } })();
   const [ageGroup, setAgeGroup] = useState(_vs?.ageGroup || '');
-  const [situations, setSituations] = useState(() => { try { return JSON.parse(localStorage.getItem('jw-cats-visit-sit')) || ['일반']; } catch(e) { return ['일반']; } });
+  // 카테고리 = [구조화] 편집 (categories.json). 방문은 자동 발견 API 없음 — getCategories 만.
+  // localStorage 'jw-cats-visit-sit' 의존 폐기.
+  const [situations, setSituations] = useState([]);
   const [selSits, setSelSits] = useState(() => new Set(_vs?.selSits || []));
   const [scriptures, setScriptures] = useState(_vs?.scriptures || '');
   const [duration, setDuration] = useState(_vs?.duration || '');
@@ -50,6 +52,16 @@ export default function VisitPage({ fontSize, ai }) {
   const [autoScriptures, setAutoScriptures] = useState(_vs?.autoScriptures || []);
   const [script, setScript] = useState(() => { try { return localStorage.getItem('jw-visit-script') || ''; } catch(e) { return ''; } });
   useEffect(() => { try { if (script) localStorage.setItem('jw-visit-script', script); else localStorage.removeItem('jw-visit-script'); } catch(e) {} }, [script]);
+  // 카테고리 동기화: [구조화] 편집 결과 (categories.json) mount 시 1회 호출
+  useEffect(() => {
+    getCategories().then(r => setSituations(r.visit_situations || [])).catch(() => {});
+  }, []);
+  // 옛 localStorage 키 1회성 cleanup
+  useEffect(() => {
+    ['jw-cats-service', 'jw-cats-visit-sit'].forEach(k => {
+      try { localStorage.removeItem(k); } catch {}
+    });
+  }, []);
   useEffect(() => {
     try {
       localStorage.setItem('jw-visit-state', JSON.stringify({
