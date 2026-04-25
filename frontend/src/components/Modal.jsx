@@ -6,8 +6,6 @@ export function Modal({
   actions,
   onClose,
   titleColor,
-  fullscreen = false,
-  maxWidth = 400,
   closeOnEsc = true,
 }) {
   const handleBackdropClick = (e) => {
@@ -16,8 +14,14 @@ export function Modal({
 
   useEffect(() => {
     const original = document.body.style.overflow;
+    const originalPad = document.body.style.paddingRight;
+    const sbWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = original; };
+    if (sbWidth > 0) document.body.style.paddingRight = `${sbWidth}px`;
+    return () => {
+      document.body.style.overflow = original;
+      document.body.style.paddingRight = originalPad;
+    };
   }, []);
 
   useEffect(() => {
@@ -27,28 +31,21 @@ export function Modal({
     return () => window.removeEventListener('keydown', handler);
   }, [closeOnEsc, onClose]);
 
-  const backdropStyle = {
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000,
-    background: 'rgba(0,0,0,0.5)', display: 'flex',
-    alignItems: fullscreen ? 'flex-start' : 'center',
-    justifyContent: 'center',
-    padding: fullscreen ? 8 : 20,
-  };
-
-  const contentStyle = fullscreen
-    ? {
-        background: 'var(--bg-card)', borderRadius: 12, padding: 20,
-        width: '100%', maxWidth: '100%',
-        maxHeight: 'calc(100vh - 16px)', overflowY: 'auto',
-      }
-    : {
-        background: 'var(--bg-card)', borderRadius: 12, padding: 24,
-        maxWidth, width: '100%',
-      };
-
   return (
-    <div style={backdropStyle} onClick={handleBackdropClick}>
-      <div style={contentStyle}>
+    <div
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.5)', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', padding: 20,
+      }}
+      onClick={handleBackdropClick}
+    >
+      <div
+        style={{
+          background: 'var(--bg-card)', borderRadius: 12, padding: 24,
+          maxWidth: 400, width: '100%',
+        }}
+      >
         {title && (
           <div style={{
             fontSize: '1rem', fontWeight: 700,
