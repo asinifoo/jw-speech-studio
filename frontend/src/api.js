@@ -191,7 +191,12 @@ export async function dbAdd(data) {
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(await _errMsg(res, '저장 실패'));
-  return res.json();
+  // Doc-50 fail-loud 안전장치: 200 OK 라도 body.status === 'error' 면 throw
+  const json = await res.json();
+  if (json && json.status === 'error') {
+    throw new Error(json.message || '저장 실패');
+  }
+  return json;
 }
 
 export async function listManualEntries() {

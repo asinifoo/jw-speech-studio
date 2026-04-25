@@ -961,6 +961,17 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       reference: '', pub_title: '', pub_type: '',
     }));
     setSaveMsg('');
+    // 같은 pub_code 재진입도 reference 자동 채움 (디바운스 useEffect 가 dep 변화 없으면 안 트리거)
+    // 사용자 이미 입력한 값(p.pub_title, p.reference) 보존
+    if (pendingPub.pub_code) {
+      lookupPubTitle(pendingPub.pub_code).then(r => {
+        if (r) setPubForm(p => ({
+          ...p,
+          pub_title: p.pub_title || r.pub_title || '',
+          reference: p.reference || r.reference || '',
+        }));
+      }).catch(() => {});
+    }
     if (clearPendingPub) clearPendingPub();
   }, [pendingPub]);
 

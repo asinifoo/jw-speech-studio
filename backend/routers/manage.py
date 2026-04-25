@@ -608,7 +608,8 @@ def db_add(req: DbAddRequest):
         pub_code = formatted_pub_code.strip()
         ref = (req.reference or "").strip()
         if not pub_code or not ref:
-            return {"status": "error", "message": "pub_code, reference는 필수", "collection": "publications"}
+            # Doc-50 fail-loud: silent error 200 → HTTP 400
+            raise HTTPException(status_code=400, detail="pub_code, reference는 필수")
 
         col = client.get_or_create_collection("publications", metadata={"hnsw:space": "cosine"})
         pub_data = {
