@@ -17,7 +17,7 @@ export function matchOutlineType(value, code) {
   return false;
 }
 
-// 공통 prefix 생성. type+num → "S-34_001" / "SB_041" / "S-31_기념식" 등.
+// 공통 prefix 생성. type+num → "S-34_001" / "SB_041" / "S-31_001" 등.
 // 삼항 연쇄 (`gt === '공개강연' || gt.startsWith('S-34')`) 흡수.
 export function getOutlinePrefix(type, num) {
   if (matchOutlineType(type, 'S-34')) {
@@ -25,7 +25,10 @@ export function getOutlinePrefix(type, num) {
     const clean = String(num).replace(/^0+/, '');
     return 'S-34_' + (clean || '0').padStart(3, '0');
   }
-  if (matchOutlineType(type, 'S-31')) return 'S-31_기념식';
+  if (matchOutlineType(type, 'S-31')) {
+    if (!num) return 'S-31';
+    return 'S-31_' + (/^\d+$/.test(num) ? String(num).replace(/^0+/, '').padStart(3, '0') : num);
+  }
   if (matchOutlineType(type, 'S-123')) return num ? `S-123_${String(num).padStart(3, '0')}` : 'S-123';
   if (matchOutlineType(type, 'S-211')) return num ? `S-211_${String(num).padStart(3, '0')}` : 'S-211';
   if (matchOutlineType(type, 'SB')) return num ? `SB_${String(num).padStart(3, '0')}` : 'SB';

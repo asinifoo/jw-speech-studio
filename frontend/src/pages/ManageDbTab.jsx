@@ -483,7 +483,6 @@ export default function ManageDbTab({ mode }) {
             const isNumeric = /^\d+$/.test(gn);
             let prefix = '';
             if (code === 'S-34' && gn) prefix = 'S-34_' + gn.replace(/^0+/, '').padStart(3, '0');
-            else if (code === 'S-31') prefix = 'S-31_기념식';
             else if (code.startsWith('JWBC-')) prefix = gn ? code + '_' + gn : code;
             else if (code && isNumeric && gn) prefix = code + '_' + gn.replace(/^0+/, '').padStart(3, '0');
             else if (code) prefix = code;
