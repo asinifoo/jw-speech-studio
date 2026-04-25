@@ -2405,7 +2405,35 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           {!isEditing && (pt.scriptures || pt.publications) && (
                             <div style={{ padding: '3px 10px 6px', borderTop: '1px solid var(--bd-light)' }}>
                               {pt.scriptures && <div style={{ fontSize: '0.857rem', color: '#2D8FC7' }}>📖 {pt.scriptures}</div>}
-                              {pt.publications && <div style={{ fontSize: '0.857rem', color: 'var(--accent-purple)', marginTop: 1 }}>📚 {pt.publications}</div>}
+                              {pt.publications && (() => {
+                                const tokens = pt.publications.split(';').map(s => s.trim()).filter(Boolean);
+                                if (!tokens.length) return null;
+                                return (
+                                  <div style={{ fontSize: '0.857rem', color: 'var(--accent-purple)', marginTop: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
+                                    <span style={{ flexShrink: 0 }}>📚</span>
+                                    {tokens.map((token, ti) => (
+                                      <span key={ti} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                                        <span>{token}</span>
+                                        <button
+                                          onClick={() => {
+                                            // Commit B 에서 pendingPub 4-tuple 주입 + 페이지 점프 연결 예정
+                                            console.log('TODO Commit B', { token, ptIdx: i, ptNum: pt.num });
+                                          }}
+                                          style={{
+                                            padding: '0px 3px', borderRadius: 3,
+                                            border: '1px solid var(--accent-purple)',
+                                            background: 'var(--bg-card)', color: 'var(--accent-purple)',
+                                            fontSize: '0.571rem', cursor: 'pointer', fontWeight: 800, lineHeight: '14px',
+                                            flexShrink: 0,
+                                          }}
+                                          aria-label={`${token} 출판물 추가`}
+                                        >+</button>
+                                        {ti < tokens.length - 1 && <span style={{ color: 'var(--c-dim)' }}>;</span>}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>;
