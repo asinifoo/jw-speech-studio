@@ -923,7 +923,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
 
   useEffect(() => {
     outlineList().then(r => setOutlines(r.outlines || [])).catch(() => {});
-    getServiceTypes().then(r => { const remote = r.service_types || []; if (remote.length) { setManageServiceTypes(prev => { const merged = [...prev]; remote.forEach(t => { if (!merged.includes(t)) merged.push(t); }); return merged; }); } }).catch(() => {});
   }, []);
 
   useEffect(() => {

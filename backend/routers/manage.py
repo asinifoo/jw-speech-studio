@@ -320,8 +320,13 @@ def list_collection(col_name: str, source: str = "", limit: int = 5000):
 
 @router.get("/api/db/service-types")
 def list_service_types():
-    """봉사 종류 목록 (DB에서 수집 - 봉사 모임 소스만)"""
-    defaults = ['일반', '재방문', '기념식', '지역대회', '특별활동']
+    """봉사 종류 목록 (DB에서 수집 - 봉사 모임 소스만).
+
+    세션 5f Commit E hotfix: 옛 하드코딩 defaults 제거.
+    카테고리 default 는 categories.json (getCategories) 단일 소스로,
+    이 endpoint 는 DB 에 실제 등록된 service_type 만 반환 (자동 발견 전용).
+    """
+    defaults = []
     client = get_db()
     found = set()
     for col_name in ["speech_points", "speech_expressions"]:
