@@ -404,7 +404,9 @@ export default function ManageDbTab({ mode }) {
                 const gt = g.type || '';
                 const code = normalizeOutlineCode(gt);
                 const num = g.num || '';
-                const pfx = code && /^\d+$/.test(num) ? code + '_' + num.replace(/^0+/, '').padStart(3, '0') : code || num;
+                const pfx = code && num
+                  ? code + '_' + (/^\d+$/.test(num) ? num.replace(/^0+/, '').padStart(3, '0') : num)
+                  : code || num;
                 return (
                   <div key={gKey} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 4 }}>
                     <div onClick={() => setExpandedDbEntry(p => ({ ...p, ['sg_' + gKey]: !p['sg_' + gKey] }))} style={{
