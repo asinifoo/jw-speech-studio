@@ -57,7 +57,7 @@ const getOutlineTypeInfo = (code) => {
   return OUTLINE_TYPES[0];
 };
 
-export default function ManageGather({ fontSize, pageType, pendingPub, clearPendingPub, onSaveReturn }) {
+export default function ManageGather({ fontSize, pageType, pendingPub, clearPendingPub, onSaveReturn, embedded = false, forcedMode = null }) {
   const showConfirm = useConfirm();
   const showAlert = useAlert();
   const _isAddPage = pageType === 'add' || pageType === 'input';
@@ -118,8 +118,12 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [batchInfo, setBatchInfo] = useState('');
   const [batchLog, setBatchLog] = useState([]);
   // ── 전처리 state ──
-  const [gatherMode, setGatherMode] = useState(() => { try { return localStorage.getItem('jw-gather-mode') || 'file'; } catch { return 'file'; } });
-  useEffect(() => { try { localStorage.setItem('jw-gather-mode', gatherMode); } catch {} }, [gatherMode]);
+  const [gatherMode, setGatherMode] = useState(() => {
+    if (forcedMode) return forcedMode;
+    try { return localStorage.getItem('jw-gather-mode') || 'file'; } catch { return 'file'; }
+  });
+  useEffect(() => { if (embedded) return; try { localStorage.setItem('jw-gather-mode', gatherMode); } catch {} }, [gatherMode, embedded]);
+  useEffect(() => { if (forcedMode && gatherMode !== forcedMode) setGatherMode(forcedMode); }, [forcedMode]);
   // 파일 업로드 모드
   const [mdParsed, setMdParsed] = useState(null);
   const [mdParsing, setMdParsing] = useState(false);
@@ -168,6 +172,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   // ── 연설 입력 state ──
   const [subTab, setSubTab] = useState(() => {
     // subTab 값 rename — 'input'→'structure', 'preprocess'→'gather'
+    if (embedded) return 'gather';
     if (pageType === 'input') return 'structure';
     try {
       const s = localStorage.getItem('jw-prep-subtab');
@@ -185,7 +190,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       return s;
     } catch { return 'speech_input'; }
   });
-  useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-prep-subtab', subTab); } catch {} }, [subTab, pageType]);
+  useEffect(() => { if (embedded || pageType === 'input') return; try { localStorage.setItem('jw-prep-subtab', subTab); } catch {} }, [subTab, pageType, embedded]);
   useEffect(() => { if (pageType === 'input') return; try { localStorage.setItem('jw-structure-mode', structureMode); } catch {} }, [structureMode, pageType]);
   // 빠른메모 → 연설 입력 전달 처리
   // transfer 데이터 처리 — subTab 변경 시 + 외부 트리거(si-transfer 이벤트) 시
@@ -1028,8 +1033,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
 
   // ── JSX ──
   return (<>
-        {/* 추가 탭 상단 세그먼트 — [입력] 탑레벨에선 숨김 */}
-        {pageType !== 'input' && (
+        {/* 추가 탭 상단 세그먼트 — [입력] 탑레벨에선 숨김. embedded 모드에서도 숨김. */}
+        {!embedded && pageType !== 'input' && (
         <div style={{ ...S.pillContainer, marginBottom: 16 }}>
           {[['gather', '가져오기'], ['structure', '구조화'], ['drafts', '임시저장']].map(([k, l]) => (
             <button key={k} onClick={() => { setSubTab(k); if (k === 'gather') setGatherForm(p => ({ ...p, source: '전처리' })); if (k === 'drafts') { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); if (memoEntries.length === 0) listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}); } }} style={S.pillL2(subTab === k)}>{l}</button>
@@ -1081,7 +1086,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         {/* ═══ 가져오기 탭 ═══ */}
         {subTab === 'gather' && (
         <div style={{ borderRadius: 12, border: '1px solid var(--bd)', background: 'var(--bg-card)', overflow: 'hidden' }}>
-          {/* 전처리 상위 탭 — 카드 헤더 언더라인 */}
+          {/* 전처리 상위 탭 — 카드 헤더 언더라인. embedded 모드에선 숨김 (forcedMode 잠금). */}
+            {!embedded && (
             <div style={S.underlineContainer}>
               {[['file', '파일 업로드', 'var(--accent)'], ['text', '골자 입력', 'var(--accent)'], ['stt', 'STT 업로드', 'var(--accent)'], ['pub_input', '출판물', 'var(--accent-purple)']].map(([k, l, c]) => {
                 const active = gatherMode === k;
@@ -1093,6 +1099,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                 );
               })}
             </div>
+            )}
           <div style={{ padding: 14 }}>
           {/* 기존 메모 출처 선택 — 제거됨 (입력 탭으로 이동) */}
           {false && (<>
