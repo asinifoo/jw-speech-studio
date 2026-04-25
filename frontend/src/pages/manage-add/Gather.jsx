@@ -114,6 +114,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const [subtopics, setSubtopics] = useState({});
   const [saving, setSaving] = useState(false);
   const [fromPub, setFromPub] = useState(false);
+  // text 모드 [+] 출처 마커. true 면 출판물 저장/취소 후 setSubTab('gather') + setGatherMode('text') 로 로컬 복귀
+  // (App.jsx onSaveReturn 의 setPage('speech') 우회). localStorage 미저장 — 잔여 회귀 방지.
+  const [siFromOutlineText, setSiFromOutlineText] = useState(false);
   const [batchEntries, setBatchEntries] = useState([]);
   const [batchInfo, setBatchInfo] = useState('');
   const [batchLog, setBatchLog] = useState([]);
@@ -951,6 +954,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     setGatherMode('pub_input');
     setFromPub(true);
     // pub_code 전체를 그대로 전달 (면/항 분리는 백엔드 lookup이 처리)
+    // Commit B: outline_type/outline_num/version/point_id 4-tuple 자동 주입 (parseOutlineId 결과)
     setPubForm(p => ({
       ...p, pub_code: pendingPub.pub_code || '',
       point_summary: pendingPub.point || '',
@@ -959,6 +963,10 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       scriptures: pendingPub.scriptures || '',
       linked_outlines: pendingPub.linked_outlines || '',
       reference: '', pub_title: '', pub_type: '',
+      outline_type: pendingPub.outline_type || '',
+      outline_num: pendingPub.outline_num || '',
+      version: pendingPub.version || '',
+      point_id: pendingPub.pointNum || '',
     }));
     setSaveMsg('');
     // 같은 pub_code 재진입도 reference 자동 채움 (디바운스 useEffect 가 dep 변화 없으면 안 트리거)
@@ -1026,11 +1034,22 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         setSaveMsg(`저장 완료 (${res.collection})${actionLabel}`);
       }
       resetFn(dflt);
-      // 출판물 저장 후 연설 준비로 자동 복귀 (저장 데이터 콜백 전달)
-      if (source === '출판물' && fromPub && onSaveReturn) {
-        const savedData = { pub_code: form.pub_code, pub_title: form.pub_title, reference: form.reference, content: form.content, point: form.point_summary };
-        setFromPub(false);
-        setTimeout(() => onSaveReturn(savedData), 800);
+      // 출판물 저장 후 자동 복귀
+      if (source === '출판물' && fromPub) {
+        if (siFromOutlineText) {
+          // text 모드 출처 — 로컬 복귀 (App.jsx onSaveReturn 우회)
+          setFromPub(false);
+          setSiFromOutlineText(false);
+          setTimeout(() => {
+            setSubTab('gather');
+            setGatherMode('text');
+          }, 800);
+        } else if (onSaveReturn) {
+          // [준비]>[연설] 출처 — 기존 흐름
+          const savedData = { pub_code: form.pub_code, pub_title: form.pub_title, reference: form.reference, content: form.content, point: form.point_summary };
+          setFromPub(false);
+          setTimeout(() => onSaveReturn(savedData), 800);
+        }
       }
     } catch (e) { setSaveMsg('오류: ' + e.message); }
     finally { setSaving(false); }
@@ -2416,8 +2435,52 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                         <span>{token}</span>
                                         <button
                                           onClick={() => {
-                                            // Commit B 에서 pendingPub 4-tuple 주입 + 페이지 점프 연결 예정
-                                            console.log('TODO Commit B', { token, ptIdx: i, ptNum: pt.num });
+                                            // Commit B: text 모드 [+] → pub_input 모드 직접 전환 + 4-tuple 자동 주입.
+                                            // App.jsx pendingPub 흐름 우회 (App.jsx 변경 0). useEffect[pendingPub]
+                                            // 매핑 로직을 직접 인라인으로 수행.
+                                            // Commit B-fix: 부모 소주제 자동 채움.
+                                            // (A) 케이스: 클릭한 row 자체가 isSubtopic=true 면 자기 자신 텍스트 사용.
+                                            let parentSubtopic = '';
+                                            if (pt.isSubtopic) {
+                                              parentSubtopic = pt.text || '';
+                                            } else {
+                                              for (let j = i - 1; j >= 0; j--) {
+                                                if (txtParsed[j].isSubtopic) {
+                                                  parentSubtopic = txtParsed[j].text || '';
+                                                  break;
+                                                }
+                                              }
+                                            }
+                                            setSubTab('gather');
+                                            setGatherMode('pub_input');
+                                            setFromPub(true);
+                                            setSiFromOutlineText(true);
+                                            setSaveMsg('');
+                                            setPubForm(prev => ({
+                                              ...prev,
+                                              pub_code: token,
+                                              point_summary: pt.text || '',
+                                              content: '',
+                                              outline_title: txtMeta.outlineTitle || '',
+                                              scriptures: pt.scriptures || '',
+                                              linked_outlines: '',
+                                              reference: '', pub_title: '', pub_type: '',
+                                              outline_type: txtMeta.outlineType || '',
+                                              outline_num: txtMeta.outlineNum || '',
+                                              version: txtMeta.version || '',
+                                              point_id: pt.num || '',
+                                              subtopic: parentSubtopic,
+                                            }));
+                                            // lookupPubTitle 강제 호출 (세션 5e 9'-3 패턴 — 같은 pub_code 재진입 안전)
+                                            if (token) {
+                                              lookupPubTitle(token).then(r => {
+                                                if (r) setPubForm(p => ({
+                                                  ...p,
+                                                  pub_title: p.pub_title || r.pub_title || '',
+                                                  reference: p.reference || r.reference || '',
+                                                }));
+                                              }).catch(() => {});
+                                            }
                                           }}
                                           style={{
                                             padding: '0px 3px', borderRadius: 3,
@@ -2643,11 +2706,19 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                 {fromPub && !saving && (
                   <button onClick={() => {
                     // [돌아가기] 시 잔여 state cleanup (silent error 200 회귀 방지)
+                    const wasFromOutlineText = siFromOutlineText;
                     setFromPub(false);
+                    setSiFromOutlineText(false);
                     setPubForm(pubFormDefault);
                     setSaveMsg('');
                     try { localStorage.removeItem('jw-gather-form'); } catch {}
-                    if (onSaveReturn) onSaveReturn();
+                    if (wasFromOutlineText) {
+                      // text 모드 출처 — 로컬 복귀 (App.jsx onSaveReturn 우회)
+                      setSubTab('gather');
+                      setGatherMode('text');
+                    } else if (onSaveReturn) {
+                      onSaveReturn();
+                    }
                   }} style={{
                     width: '100%', padding: '8px 0', marginTop: 6, borderRadius: 8,
                     border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)',
