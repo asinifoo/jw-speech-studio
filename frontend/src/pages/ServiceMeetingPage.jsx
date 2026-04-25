@@ -170,7 +170,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
         {/* 입력 영역 */}
         <div style={{ padding: '12px 14px 8px' }}>
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 종류</div>
+            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>봉사 유형</div>
             <div style={{ ...S.pillContainer, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }} className="chat-input">
               {serviceTypes.map(t => (
                 <button key={t} onClick={() => toggleType(t)} style={S.pillScroll(selTypes.has(t))}>{t}</button>
@@ -556,7 +556,7 @@ export default function ServiceMeetingPage({ fontSize, ai }) {
           </div>
 
           <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-subtle)', marginBottom: 12, fontSize: '0.857rem', color: 'var(--c-sub)', lineHeight: 1.8 }}>
-            <div>봉사 종류: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{[...selTypes].join(', ') || '(없음)'}</span></div>
+            <div>봉사 유형: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{[...selTypes].join(', ') || '(없음)'}</span></div>
             <div>성구: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{scriptures || '없음'}</span></div>
             <div>과거 참고: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedPast).filter(Boolean).length}건</span> | DB 자료: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedSearch).filter(Boolean).length}건</span></div>
             {extraMat && <div>추가 자료: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>있음</span></div>}

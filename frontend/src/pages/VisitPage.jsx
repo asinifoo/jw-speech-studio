@@ -149,7 +149,7 @@ export default function VisitPage({ fontSize, ai }) {
       const ac = new AbortController();
       abortRef.current = ac;
       await generateServiceMeetingStream(password, {
-        topic: `양치는 방문 (연령대: ${ageGroup || '미지정'}, 상황: ${[...selSits].join(', ') || '일반'})`,
+        topic: `양치는 방문 (대상: ${ageGroup || '미지정'}, 상황: ${[...selSits].join(', ') || '일반'})`,
         scriptures, notes: [duration ? `시간: ${/^\d+$/.test(duration.trim()) ? duration.trim() + '분' : duration}` : '', visitPreset, notes].filter(Boolean).join('\n'),
         past_meetings: selPast, search_results: selSearch, auto_scriptures: autoScriptures, visit_mode: true, model: ai.aiModel,
         extra_materials: extraMat,
@@ -172,7 +172,7 @@ export default function VisitPage({ fontSize, ai }) {
         {/* 입력 영역 */}
         <div style={{ padding: '12px 14px 8px' }}>
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>연령대</div>
+            <div style={{ fontSize: '0.786rem', color: 'var(--c-muted)', marginBottom: 4 }}>대상</div>
             <div style={S.pillContainer}>
               {['청소년', '청년', '중년', '장년'].map(s => (
                 <button key={s} onClick={() => setAgeGroup(ageGroup === s ? '' : s)} style={S.pillScroll(ageGroup === s, 'var(--accent-orange)')}>{s}</button>
@@ -553,7 +553,7 @@ export default function VisitPage({ fontSize, ai }) {
           </div>
 
           <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--bg-subtle)', marginBottom: 12, fontSize: '0.857rem', color: 'var(--c-sub)', lineHeight: 1.8 }}>
-            <div>연령대: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{ageGroup || '미지정'}</span> | 상황: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{[...selSits].join(', ') || '미지정'}</span></div>
+            <div>대상: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{ageGroup || '미지정'}</span> | 상황: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{[...selSits].join(', ') || '미지정'}</span></div>
             <div>성구: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{scriptures || '없음'}</span></div>
             <div>과거 참고: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedPast).filter(Boolean).length}건</span> | DB 자료: <span style={{ color: 'var(--c-text)', fontWeight: 600 }}>{Object.values(selectedSearch).filter(Boolean).length}건</span></div>
             {extraMat && <div>추가 자료: <span style={{ color: 'var(--accent)', fontWeight: 600 }}>있음</span></div>}
