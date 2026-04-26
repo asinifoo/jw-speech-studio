@@ -14,7 +14,7 @@ import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
 import { Modal } from '../../components/Modal';
 import { collectScripturesFromOutline } from '../../utils/scriptureHelpers';
 import { getOutlinePrefix } from '../../utils/outlineFormat';
-import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, getPublicationCodes, sttUpload, sttUploadText, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
+import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, sttUpload, sttUploadText, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
   const parts = [];
@@ -117,10 +117,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   // text 모드 [+] 출처 마커. true 면 출판물 저장/취소 후 setSubTab('gather') + setGatherMode('text') 로 로컬 복귀
   // (App.jsx onSaveReturn 의 setPage('speech') 우회). localStorage 미저장 — 잔여 회귀 방지.
   const [siFromOutlineText, setSiFromOutlineText] = useState(false);
-  // 세션 5f Commit F: text 모드 ✓ 매칭. 정규화된 pub_code Set.
-  const [txtPubMatched, setTxtPubMatched] = useState(() => new Set());
-  // 정규화 (백엔드 chat.py:109-110 동일 규칙 — 변경 시 함께 수정)
-  const _normPub = (s) => (s || '').replace(/[「」\s]/g, '').toLowerCase();
   const [batchEntries, setBatchEntries] = useState([]);
   const [batchInfo, setBatchInfo] = useState('');
   const [batchLog, setBatchLog] = useState([]);
@@ -1022,8 +1018,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           // text 모드 출처 — 로컬 복귀 (App.jsx onSaveReturn 우회)
           setFromPub(false);
           setSiFromOutlineText(false);
-          // 세션 5f Commit F-2: 방금 저장한 pub_code 매칭 Set 즉시 추가 (✓ 즉시 표시)
-          if (form.pub_code) setTxtPubMatched(s => new Set([...s, _normPub(form.pub_code)]));
           setTimeout(() => {
             setSubTab('gather');
             setGatherMode('text');
@@ -2169,7 +2163,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     </>;
                   })()}
                   <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
-                    <button onClick={async () => {
+                    <button onClick={() => {
                       if (!txtContent.trim()) return;
                       const rawLines = txtContent.split('\n');
                       const parsed = [];
@@ -2258,29 +2252,6 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         parsed.push({ num, level: isSubtopic ? 'L1' : `L${level + 1}`, text: text + trailingMarkers, scriptures, scripture_usage: '', publications: pubs, isSubtopic, time: isSubtopic ? (timeMatch[1] + '분') : '' });
                       }
                       setTxtParsed(parsed);
-                      // 세션 5f Commit F: 매칭 ✓ 표시. publications 컬렉션의 pub_code 평탄 목록 1회 호출 +
-                      // 클라이언트 정규화 + 양방향 부분 일치 (chat.py:113-119 동일 규칙).
-                      const allTokens = new Set();
-                      parsed.forEach(row => {
-                        if (row.publications) {
-                          row.publications.split(';').map(s => s.trim()).filter(Boolean).forEach(t => allTokens.add(t));
-                        }
-                      });
-                      if (allTokens.size === 0) {
-                        setTxtPubMatched(new Set());
-                      } else {
-                        let dbCodes = [];
-                        try { const r = await getPublicationCodes(); dbCodes = r.codes || []; } catch (e) {}
-                        const dbCodeNorms = dbCodes.map(_normPub).filter(Boolean);
-                        const matched = new Set();
-                        [...allTokens].forEach(token => {
-                          const tokenNorm = _normPub(token);
-                          if (!tokenNorm) return;
-                          const hit = dbCodeNorms.some(cn => tokenNorm === cn || tokenNorm.includes(cn) || cn.includes(tokenNorm));
-                          if (hit) matched.add(tokenNorm);
-                        });
-                        setTxtPubMatched(matched);
-                      }
                     }} style={{
                       flex: 1, padding: '8px 0', borderRadius: 8, border: 'none',
                       background: 'var(--accent)', color: '#fff', fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
@@ -2437,18 +2408,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                 return (
                                   <div style={{ fontSize: '0.857rem', color: 'var(--accent-purple)', marginTop: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
                                     <span style={{ flexShrink: 0 }}>📚</span>
-                                    {tokens.map((token, ti) => {
-                                      const isMatched = txtPubMatched.has(_normPub(token));
-                                      return (
+                                    {tokens.map((token, ti) => (
                                       <span key={ti} style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                                         <span>{token}</span>
-                                        {isMatched ? (
-                                          <span style={{
-                                            padding: '0px 3px', fontSize: '0.571rem',
-                                            color: 'var(--accent)', fontWeight: 800, lineHeight: '14px',
-                                            flexShrink: 0,
-                                          }}>✓</span>
-                                        ) : (
                                         <button
                                           onClick={async () => {
                                             // Commit B: text 모드 [+] → pub_input 모드 직접 전환 + 4-tuple 자동 주입.
@@ -2509,11 +2471,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                           }}
                                           aria-label={`${token} 출판물 추가`}
                                         >+</button>
-                                        )}
                                         {ti < tokens.length - 1 && <span style={{ color: 'var(--c-dim)' }}>;</span>}
                                       </span>
-                                      );
-                                    })}
+                                    ))}
                                   </div>
                                 );
                               })()}
