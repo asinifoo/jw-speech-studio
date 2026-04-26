@@ -6,6 +6,7 @@ import { listTranscripts, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
 import { matchOutlineType, getOutlinePrefix } from '../utils/outlineFormat';
+import { MSG, getStatusColor } from '../utils/messages';
 
 export default function TranscriptPage({ fontSize }) {
   const showConfirm = useConfirm();
@@ -23,7 +24,9 @@ export default function TranscriptPage({ fontSize }) {
   const [searchQ, setSearchQ] = useState('');
 
   useEffect(() => {
-    listTranscripts().then(r => setTranscripts(r.transcripts || {})).catch(() => {}).finally(() => setLoading(false));
+    listTranscripts().then(r => setTranscripts(r.transcripts || {}))
+      .catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' }))
+      .finally(() => setLoading(false));
   }, []);
 
   const getCategory = (t) => {
@@ -68,7 +71,10 @@ export default function TranscriptPage({ fontSize }) {
       {!loading && Object.keys(transcripts).length === 0 && (
         <div style={{ textAlign: 'center', padding: 20 }}>
           <div style={{ color: 'var(--c-dim)', fontSize: '0.857rem', marginBottom: 8 }}>저장된 원문이 없습니다. Manage {'>'} Add에서 원문을 추가하세요.</div>
-          <button onClick={() => { setLoading(true); listTranscripts().then(r => setTranscripts(r.transcripts || {})).catch(() => {}).finally(() => setLoading(false)); }}
+          <button onClick={() => { setLoading(true); listTranscripts()
+              .then(r => { setTranscripts(r.transcripts || {}); showAlert(MSG.success.reload, { variant: 'success' }); })
+              .catch(e => showAlert(MSG.fail.reload + e.message, { variant: 'error' }))
+              .finally(() => setLoading(false)); }}
             style={{ padding: '6px 14px', borderRadius: 8, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer' }}>새로고침</button>
         </div>
       )}
@@ -101,7 +107,10 @@ export default function TranscriptPage({ fontSize }) {
           }}>
             <span style={{ fontSize: '0.786rem', color: 'var(--c-muted)' }}>{filteredKeys.length}개 연설</span>
             <div style={{ flex: 1 }} />
-            <button onClick={() => { setLoading(true); listTranscripts().then(r => setTranscripts(r.transcripts || {})).catch(() => {}).finally(() => setLoading(false)); }}
+            <button onClick={() => { setLoading(true); listTranscripts()
+                .then(r => { setTranscripts(r.transcripts || {}); showAlert(MSG.success.reload, { variant: 'success' }); })
+                .catch(e => showAlert(MSG.fail.reload + e.message, { variant: 'error' }))
+                .finally(() => setLoading(false)); }}
               style={{ padding: '4px 10px', borderRadius: 8, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.786rem', cursor: 'pointer', transition: 'all 0.15s' }}>새로고침</button>
           </div>
           {filteredKeys.length > 0 && (

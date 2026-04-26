@@ -8,6 +8,7 @@ import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
 import { formatSbMmw, matchOutlineType } from '../utils/outlineFormat';
 import { resolveOutlineCode } from '../utils/outlineTypes';
+import { MSG } from '../utils/messages';
 
 // App preload 로 useOutlineTypes 캐시가 마운트 시점에 채워짐 → cache 기반 resolve 우선.
 // 캐시 미로드 (preload 실패) 시 prefix passthrough 로 fail-soft.
@@ -98,11 +99,11 @@ export default function ManageDbTab({ mode }) {
 
   const _loadDbTab = (tab) => {
     setDbLoading(true);
-    if (tab === '골자') listCollection('speech_points', 'outline').then(r => { setDbCache(p => ({ ...p, '골자': r.entries || [] })); setDbTabCounts(p => ({ ...p, '골자': r.total ?? (r.entries || []).length })); }).catch(() => {}).finally(() => setDbLoading(false));
-    else if (tab === '연설') listCollection('speech_expressions', 'speech,note,discussion,service,visit').then(r => { setDbCache(p => ({ ...p, '연설': r.entries || [] })); setDbTabCounts(p => ({ ...p, '연설': r.total ?? (r.entries || []).length })); }).catch(() => {}).finally(() => setDbLoading(false));
-    else if (tab === '출판물') listCollection('publications').then(r => { setDbCache(p => ({ ...p, '출판물': r.entries || [] })); setDbTabCounts(p => ({ ...p, '출판물': r.total ?? (r.entries || []).length })); }).catch(() => {}).finally(() => setDbLoading(false));
-    else if (tab === '원문') listOriginals().then(r => { const fe = []; for (const [, g] of Object.entries(r.originals || {})) for (const sp of (g.speakers || [])) fe.push({ id: sp.id, collection: sp.source_type === 'file' ? 'file' : 'speech_expressions', text: sp.text, metadata: { ...sp.metadata, source: '원문' } }); setDbCache(p => ({ ...p, '원문': fe })); setDbTabCounts(p => ({ ...p, '원문': fe.length })); }).catch(() => {}).finally(() => setDbLoading(false));
-    else if (tab === '연사메모') { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(() => {}).finally(() => { setSpMemoLoading(false); setDbLoading(false); }); }
+    if (tab === '골자') listCollection('speech_points', 'outline').then(r => { setDbCache(p => ({ ...p, '골자': r.entries || [] })); setDbTabCounts(p => ({ ...p, '골자': r.total ?? (r.entries || []).length })); }).catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' })).finally(() => setDbLoading(false));
+    else if (tab === '연설') listCollection('speech_expressions', 'speech,note,discussion,service,visit').then(r => { setDbCache(p => ({ ...p, '연설': r.entries || [] })); setDbTabCounts(p => ({ ...p, '연설': r.total ?? (r.entries || []).length })); }).catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' })).finally(() => setDbLoading(false));
+    else if (tab === '출판물') listCollection('publications').then(r => { setDbCache(p => ({ ...p, '출판물': r.entries || [] })); setDbTabCounts(p => ({ ...p, '출판물': r.total ?? (r.entries || []).length })); }).catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' })).finally(() => setDbLoading(false));
+    else if (tab === '원문') listOriginals().then(r => { const fe = []; for (const [, g] of Object.entries(r.originals || {})) for (const sp of (g.speakers || [])) fe.push({ id: sp.id, collection: sp.source_type === 'file' ? 'file' : 'speech_expressions', text: sp.text, metadata: { ...sp.metadata, source: '원문' } }); setDbCache(p => ({ ...p, '원문': fe })); setDbTabCounts(p => ({ ...p, '원문': fe.length })); }).catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' })).finally(() => setDbLoading(false));
+    else if (tab === '연사메모') { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' })).finally(() => { setSpMemoLoading(false); setDbLoading(false); }); }
     else setDbLoading(false);
   };
 
@@ -145,7 +146,7 @@ export default function ManageDbTab({ mode }) {
               <button key={t} onClick={() => {
                 if (t === viewSource) return;
                 setViewSource(t); setDbSearch(''); setExpandedDbEntry({}); setDbShowLimit(50); setDbSelected(new Set());
-                if (t === '연사메모') { if (!speakerMemos.length) { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(() => {}).finally(() => setSpMemoLoading(false)); } return; }
+                if (t === '연사메모') { if (!speakerMemos.length) { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(e => showAlert(MSG.fail.fetch + e.message, { variant: 'error' })).finally(() => setSpMemoLoading(false)); } return; }
                 if (dbCache[t]?.length) return;
                 _loadDbTab(t);
               }} style={S.underlineTab(active, tc)}>
@@ -666,7 +667,7 @@ export default function ManageDbTab({ mode }) {
                   }).length;
                   return `${cnt}건`;
                 })()}</span>
-                <button onClick={() => { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); }).catch(() => {}).finally(() => setSpMemoLoading(false)); }} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
+                <button onClick={() => { setSpMemoLoading(true); listSpeakerMemos().then(r => { setSpeakerMemos(r.memos || []); setDbTabCounts(p => ({ ...p, '연사메모': (r.memos || []).length })); showAlert(MSG.success.reload, { variant: 'success' }); }).catch(e => showAlert(MSG.fail.reload + e.message, { variant: 'error' })).finally(() => setSpMemoLoading(false)); }} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
               </>)}
               {dbSelected.size > 0 && (
                 <>

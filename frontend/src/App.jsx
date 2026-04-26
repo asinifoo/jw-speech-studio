@@ -13,6 +13,7 @@ import RefinePanel from './components/RefinePanel';
 import useAiModel from './hooks/useAiModel';
 import { useConfirm } from './providers/ConfirmProvider';
 import { useOutlineTypes } from './utils/outlineTypes';
+import { MSG, getStatusColor } from './utils/messages';
 const BibleSearchPage = lazy(() => import('./pages/BibleSearchPage'));
 const TranscriptPage = lazy(() => import('./pages/TranscriptPage'));
 const FreeSearchPage = lazy(() => import('./pages/FreeSearchPage'));
@@ -85,6 +86,7 @@ export default function App() {
   const [styleQuery, setStyleQuery] = useState('');
   const [styleResults, setStyleResults] = useState([]);
   const [styleLoading, setStyleLoading] = useState(false);
+  const [styleStatusMsg, setStyleStatusMsg] = useState('');
   const [selStyles, setSelStyles] = useState({});
   const [stylePrompts, setStylePrompts] = useState({});
 
@@ -1038,7 +1040,9 @@ textarea { resize: vertical; }
                         setStyleQuery(isFull ? '' : cat);
                         setStyleLoading(true);
                         searchSpeakerMemo({ query: isFull ? '연설' : '', category: isFull ? '' : cat, top_k: 20 })
-                          .then(r => setStyleResults(r.results || [])).catch(() => {}).finally(() => setStyleLoading(false));
+                          .then(r => { setStyleResults(r.results || []); setStyleStatusMsg(''); })
+                          .catch(e => { setStyleResults([]); setStyleStatusMsg(MSG.fail.search + e.message); })
+                          .finally(() => setStyleLoading(false));
                       }} style={{
                         padding: '4px 10px', borderRadius: 6, fontSize: '0.786rem', fontWeight: styleQuery === (cat === '전체' ? '' : cat) ? 700 : 500,
                         border: 'none', whiteSpace: 'nowrap', flexShrink: 0,
@@ -1051,9 +1055,15 @@ textarea { resize: vertical; }
                   </div>
                   <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
                     <input value={styleQuery} onChange={e => setStyleQuery(e.target.value)} placeholder="자유 검색 (비유, 감정 묘사...)"
-                      onKeyDown={e => { if (e.key === 'Enter' && styleQuery.trim()) { setStyleLoading(true); searchSpeakerMemo({ query: styleQuery, top_k: 20 }).then(r => setStyleResults(r.results || [])).catch(() => {}).finally(() => setStyleLoading(false)); } }}
+                      onKeyDown={e => { if (e.key === 'Enter' && styleQuery.trim()) { setStyleLoading(true); searchSpeakerMemo({ query: styleQuery, top_k: 20 })
+                        .then(r => { setStyleResults(r.results || []); setStyleStatusMsg(''); })
+                        .catch(err => { setStyleResults([]); setStyleStatusMsg(MSG.fail.search + err.message); })
+                        .finally(() => setStyleLoading(false)); } }}
                       style={{ flex: 1, padding: '5px 10px', borderRadius: 6, border: 'none', fontSize: '0.786rem', background: 'var(--bg-subtle)', outline: 'none', fontFamily: 'inherit', color: 'var(--c-text-dark)' }} />
-                    <button onClick={() => { if (!styleQuery.trim()) return; setStyleLoading(true); searchSpeakerMemo({ query: styleQuery, top_k: 20 }).then(r => setStyleResults(r.results || [])).catch(() => {}).finally(() => setStyleLoading(false)); }}
+                    <button onClick={() => { if (!styleQuery.trim()) return; setStyleLoading(true); searchSpeakerMemo({ query: styleQuery, top_k: 20 })
+                      .then(r => { setStyleResults(r.results || []); setStyleStatusMsg(''); })
+                      .catch(err => { setStyleResults([]); setStyleStatusMsg(MSG.fail.search + err.message); })
+                      .finally(() => setStyleLoading(false)); }}
                       disabled={styleLoading} style={{ padding: '4px 10px', borderRadius: 6, border: 'none', background: styleLoading ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>{styleLoading ? '...' : '🔍'}</button>
                   </div>
                 </div>
@@ -1088,6 +1098,10 @@ textarea { resize: vertical; }
                 )}
                 {styleResults.length === 0 && !styleLoading && styleQuery && (
                   <div style={{ fontSize: '0.786rem', color: 'var(--c-dim)', textAlign: 'center', padding: 8 }}>검색 결과가 없습니다</div>
+                )}
+                {styleStatusMsg && (
+                  <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center',
+                    color: getStatusColor(styleStatusMsg), fontWeight: 600 }}>{styleStatusMsg}</div>
                 )}
               </div>
             )}

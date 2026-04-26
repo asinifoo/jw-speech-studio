@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { S } from '../../styles';
 import { draftList, draftDelete, listBySource, dbDelete } from '../../api';
 import { useConfirm } from '../../providers/ConfirmProvider';
+import { MSG, getStatusColor } from '../../utils/messages';
 
 export default function ManageDrafts({
   dbDrafts, setDbDrafts,
@@ -13,6 +14,7 @@ export default function ManageDrafts({
   const [draftsFilter, setDraftsFilter] = useState('draft');
   const [memoMoveModal, setMemoMoveModal] = useState(null);
   const [memoLoading, setMemoLoading] = useState(false);
+  const [draftsListStatusMsg, setDraftsListStatusMsg] = useState('');
 
   return (
     <>
@@ -22,7 +24,10 @@ export default function ManageDrafts({
             {[['draft', '연설 draft', 'var(--accent-blue)'], ['memo', '메모', 'var(--accent-orange)']].map(([k, l, c]) => {
               const active = draftsFilter === k;
               return (
-                <button key={k} onClick={() => { setDraftsFilter(k); if (k === 'memo' && memoEntries.length === 0) { setMemoLoading(true); listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}).finally(() => setMemoLoading(false)); } }} style={S.underlineTab(active, c)}>
+                <button key={k} onClick={() => { setDraftsFilter(k); if (k === 'memo' && memoEntries.length === 0) { setMemoLoading(true); listBySource('memo', 100)
+                  .then(r => { setMemoEntries(r.entries || []); setDraftsListStatusMsg(''); })
+                  .catch(e => setDraftsListStatusMsg(MSG.fail.fetch + e.message))
+                  .finally(() => setMemoLoading(false)); } }} style={S.underlineTab(active, c)}>
                   <span style={S.underlineLabel(active, c)}>{l}</span>
                   <span style={{ fontSize: '0.571rem', visibility: 'hidden' }}>0</span>
                 </button>
@@ -36,8 +41,14 @@ export default function ManageDrafts({
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, minHeight: 28 }}>
               <div style={{ flex: 1 }} />
               <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', whiteSpace: 'nowrap' }}>{dbDrafts.length}건</span>
-              <button onClick={() => { draftList().then(r => setDbDrafts(r.drafts || [])).catch(() => {}); }} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
+              <button onClick={() => { draftList()
+                .then(r => { setDbDrafts(r.drafts || []); setDraftsListStatusMsg(MSG.success.reload); })
+                .catch(e => setDraftsListStatusMsg(MSG.fail.reload + e.message)); }} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
             </div>
+            {draftsListStatusMsg && (
+              <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center',
+                color: getStatusColor(draftsListStatusMsg), fontWeight: 600 }}>{draftsListStatusMsg}</div>
+            )}
             {dbDrafts.length === 0 && <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>임시저장된 데이터가 없습니다.</div>}
             {dbDrafts.map((dr, di) => {
               const isStt = !!dr.source_stt_job_id;
@@ -97,8 +108,15 @@ export default function ManageDrafts({
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, minHeight: 28 }}>
               <div style={{ flex: 1 }} />
               <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', whiteSpace: 'nowrap' }}>{memoEntries.length}건</span>
-              <button onClick={() => { setMemoLoading(true); listBySource('memo', 100).then(r => setMemoEntries(r.entries || [])).catch(() => {}).finally(() => setMemoLoading(false)); }} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
+              <button onClick={() => { setMemoLoading(true); listBySource('memo', 100)
+                .then(r => { setMemoEntries(r.entries || []); setDraftsListStatusMsg(MSG.success.reload); })
+                .catch(e => setDraftsListStatusMsg(MSG.fail.reload + e.message))
+                .finally(() => setMemoLoading(false)); }} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
             </div>
+            {draftsListStatusMsg && (
+              <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center',
+                color: getStatusColor(draftsListStatusMsg), fontWeight: 600 }}>{draftsListStatusMsg}</div>
+            )}
             {memoLoading && <div style={{ textAlign: 'center', color: 'var(--c-muted)', fontSize: '0.786rem', padding: 16 }}>로딩...</div>}
             {!memoLoading && memoEntries.length === 0 && <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>저장된 메모가 없습니다.</div>}
             {!memoLoading && memoEntries.map((me, mi) => {
