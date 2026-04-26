@@ -2450,7 +2450,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                           }}>✓</span>
                                         ) : (
                                         <button
-                                          onClick={() => {
+                                          onClick={async () => {
                                             // Commit B: text 모드 [+] → pub_input 모드 직접 전환 + 4-tuple 자동 주입.
                                             // App.jsx pendingPub 흐름 우회 (App.jsx 변경 0). useEffect[pendingPub]
                                             // 매핑 로직을 직접 인라인으로 수행.
@@ -2487,15 +2487,17 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                               point_id: pt.num || '',
                                               subtopic: parentSubtopic,
                                             }));
-                                            // lookupPubTitle 강제 호출 (세션 5e 9'-3 패턴 — 같은 pub_code 재진입 안전)
+                                            // lookupPubTitle await 으로 race 차단 (세션 5f race hotfix).
+                                            // 비동기 결과 도착 전 사용자가 [저장] 누를 가능성 차단.
                                             if (token) {
-                                              lookupPubTitle(token).then(r => {
+                                              try {
+                                                const r = await lookupPubTitle(token);
                                                 if (r) setPubForm(p => ({
                                                   ...p,
                                                   pub_title: p.pub_title || r.pub_title || '',
                                                   reference: p.reference || r.reference || '',
                                                 }));
-                                              }).catch(() => {});
+                                              } catch {}
                                             }
                                           }}
                                           style={{
@@ -2716,7 +2718,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     background: 'var(--bg-card)', color: 'var(--c-faint)',
                     fontSize: '0.786rem', cursor: 'pointer', flexShrink: 0,
                   }}>초기화</button>
-                  <button onClick={() => saveStructureForm(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim()} style={{
+                  <button onClick={() => saveStructureForm(pubForm, '출판물', setPubForm, pubFormDefault)} disabled={saving || !pubForm.content.trim() || !pubForm.pub_code.trim() || !pubForm.reference.trim()} style={{
                     flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: saving ? 'var(--bd-medium)' : 'var(--accent-purple)', color: '#fff',
                     fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                   }}>{saving ? '저장 중...' : fromPub ? '저장 후 연설 준비로 돌아가기' : '저장'}</button>
