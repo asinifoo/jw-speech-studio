@@ -140,7 +140,7 @@ export default function BibleSearchPage({ fontSize }) {
               <span style={{ fontSize: '0.643rem', color: 'var(--c-danger)', marginLeft: 4 }}>⚠ 미발견: {r.not_found.join(', ')}</span>
             )}
             {r.warning && (
-              <span style={{ fontSize: '0.643rem', color: 'var(--accent-orange)', marginLeft: 4 }}>⚠ {r.warning}</span>
+              <span style={{ fontSize: '0.643rem', color: 'var(--c-warning)', marginLeft: 4 }}>⚠ {r.warning}</span>
             )}
           </div>
         </div>

@@ -406,6 +406,7 @@ export default function App() {
   --accent-gold: #F5A623;
   --accent-brown: #C7842D;
   --c-danger: #cc4444;
+  --c-warning: #E67E00;
 
   --opt-bg: #fefcf9;
   --opt-bd: #e8e0d0;
@@ -471,6 +472,7 @@ export default function App() {
   --accent-gold: #F5B84A;
   --accent-brown: #D8A050;
   --c-danger: #E06060;
+  --c-warning: #FF9933;
 
   --opt-bg: #2a2520;
   --opt-bd: #444;
