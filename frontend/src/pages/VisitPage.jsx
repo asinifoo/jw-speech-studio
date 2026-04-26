@@ -12,6 +12,7 @@ import { getOutlinePrefix } from '../utils/outlineFormat';
 import { getBody } from '../utils/textHelpers';
 import { bibleSearch, freeSearch, filterResults, generateServiceMeetingStream, getCategories, searchPast, listBySource, abortGeneration, dbUpdate } from '../api';
 import { useAlert } from '../providers/AlertProvider';
+import { MSG, getStatusColor } from '../utils/messages';
 
 export default function VisitPage({ fontSize, ai }) {
   const showAlert = useAlert();
@@ -347,17 +348,17 @@ export default function VisitPage({ fontSize, ai }) {
                     </div>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <button onClick={async () => {
-                        setPastDbStatus('저장 중...');
+                        setPastDbStatus(MSG.progress.save);
                         try {
                           const saveMeta = { ...pastDbMeta, rating: String(pastDbMeta.rating || 0), favorite: pastDbMeta.favorite ? 'true' : 'false', rating_note: pastDbMeta.rating_note || '' };
                           await dbUpdate(pm.collection || 'speech_expressions', pm.id, pastDbText, saveMeta);
                           setPastVisits(p => p.map((x, j) => j === i ? { ...x, text: pastDbText, metadata: saveMeta } : x));
-                          setPastDbStatus('저장 완료');
+                          setPastDbStatus(MSG.success.save);
                           setTimeout(() => { setPastDbStatus(''); setPastDbIdx(null); }, 1000);
-                        } catch (e) { setPastDbStatus('오류: ' + e.message); }
+                        } catch (e) { setPastDbStatus(MSG.fail.update + e.message); }
                       }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                       <button onClick={() => { setPastDbIdx(null); setPastDbStatus(''); }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                      {pastDbStatus && <span style={{ fontSize: '0.714rem', color: pastDbStatus.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{pastDbStatus}</span>}
+                      {pastDbStatus && <span style={{ fontSize: '0.714rem', color: getStatusColor(pastDbStatus), fontWeight: 600 }}>{pastDbStatus}</span>}
                     </div>
                   </div>
                 )}
@@ -494,17 +495,17 @@ export default function VisitPage({ fontSize, ai }) {
                     </div>
                     <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                       <button onClick={async (e) => {
-                        e.stopPropagation(); setSrDbStatus('저장 중...');
+                        e.stopPropagation(); setSrDbStatus(MSG.progress.save);
                         try {
                           const saveMeta = { ...srDbMeta, rating: String(srDbMeta.rating || 0), favorite: srDbMeta.favorite ? 'true' : 'false', rating_note: srDbMeta.rating_note || '' };
                           await dbUpdate(r.collection || 'speech_expressions', r.id, srDbText, saveMeta);
                           setSearchResults(p => p.map((x, j) => j === i ? { ...x, text: srDbText, metadata: saveMeta } : x));
-                          setSrDbStatus('저장 완료');
+                          setSrDbStatus(MSG.success.save);
                           setTimeout(() => { setSrDbStatus(''); setSrDbIdx(null); }, 1000);
-                        } catch (e2) { setSrDbStatus('오류: ' + e2.message); }
+                        } catch (e2) { setSrDbStatus(MSG.fail.update + e2.message); }
                       }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                       <button onClick={(e) => { e.stopPropagation(); setSrDbIdx(null); setSrDbStatus(''); }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                      {srDbStatus && <span style={{ fontSize: '0.714rem', color: srDbStatus.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{srDbStatus}</span>}
+                      {srDbStatus && <span style={{ fontSize: '0.714rem', color: getStatusColor(srDbStatus), fontWeight: 600 }}>{srDbStatus}</span>}
                     </div>
                   </div>
                 )}

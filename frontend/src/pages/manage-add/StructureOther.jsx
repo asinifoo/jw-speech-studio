@@ -4,6 +4,7 @@ import { saveCategories, deleteServiceType } from '../../api';
 import { discFormDefault, svcFormDefault, visitFormDefault } from '../../utils/formDefaults';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import { useConfirm } from '../../providers/ConfirmProvider';
+import { getStatusColor } from '../../utils/messages';
 
 const RESET_BTN_STYLE = {
   padding: '10px 14px', borderRadius: 8, border: '1px solid var(--bd)',
@@ -84,7 +85,7 @@ export default function ManageStructureOther({
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                 }}>{saving ? '저장 중...' : '저장'}</button>
               </div>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
+              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: getStatusColor(saveMsg), fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
           {/* 봉사 모임 입력 */}
@@ -165,7 +166,7 @@ export default function ManageStructureOther({
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                 }}>{saving ? '저장 중...' : '저장'}</button>
               </div>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
+              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: getStatusColor(saveMsg), fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
 
           {/* 방문 입력 */}
@@ -265,7 +266,7 @@ export default function ManageStructureOther({
                   fontSize: '1.0rem', fontWeight: 700, cursor: saving ? 'default' : 'pointer',
                 }}>{saving ? '저장 중...' : '저장'}</button>
               </div>
-              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
+              {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: getStatusColor(saveMsg), fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
   </>);
 }

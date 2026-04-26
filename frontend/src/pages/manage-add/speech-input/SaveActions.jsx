@@ -1,3 +1,5 @@
+import { getStatusColor } from '../../../utils/messages';
+
 export default function SaveActions({
   outline,
   noOutline,
@@ -63,7 +65,7 @@ export default function SaveActions({
           <span style={{ position: 'relative', zIndex: 1 }}>{completing ? '저장 중...' : '저장'}</span>
         </button>}
       </div>
-      {saveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: saveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>{saveMsg}</div>}
+      {saveMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center', color: getStatusColor(saveMsg), fontWeight: 600 }}>{saveMsg}</div>}
     </div>
   );
 }

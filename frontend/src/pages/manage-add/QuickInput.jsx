@@ -4,6 +4,7 @@ import { draftSave } from '../../api';
 import { quickFormDefault } from '../../utils/formDefaults';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import { useConfirm } from '../../providers/ConfirmProvider';
+import { MSG, getStatusColor } from '../../utils/messages';
 
 export default function ManageQuickInput() {
   const showConfirm = useConfirm();
@@ -181,13 +182,13 @@ export default function ManageQuickInput() {
             const savedId = (resp && resp.draft_id) || '';
             const wasEditing = !!qiEditingOutlineNum;
             setQiSaveMsg(wasEditing
-              ? `✓ 수정 저장됨 (${savedId})`
-              : `✓ 저장됨 — [전처리] > [임시저장]에서 확인 가능 (${savedId})`);
+              ? MSG.helpers.updateByLink(savedId)
+              : MSG.helpers.saveByLink(savedId));
             setQiForm(prev => ({ ...quickFormDefault, type: prev.type }));
             setQiEditingOutlineNum('');
             setTimeout(() => setQiSaveMsg(''), 4000);
           } catch (e) {
-            setQiSaveMsg('오류: ' + e.message);
+            setQiSaveMsg(MSG.fail.save + e.message);
           } finally {
             setQiSaving(false);
           }
@@ -202,7 +203,7 @@ export default function ManageQuickInput() {
 
       {qiSaveMsg && (
         <div style={{ marginTop: 6, fontSize: '0.786rem', textAlign: 'center',
-          color: qiSaveMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)', fontWeight: 600 }}>
+          color: getStatusColor(qiSaveMsg), fontWeight: 600 }}>
           {qiSaveMsg}
         </div>
       )}

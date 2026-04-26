@@ -132,9 +132,9 @@ export default function App() {
     setMemoSaving(true); setMemoMsg('');
     try {
       await dbAdd({ source: '메모', entry_type: 'expression', topic: memoTopic.trim(), content: memoContent.trim(), outline_num: '', outline_type: '', outline_title: memoTopic.trim(), subtopic: '', point_id: '', point_summary: '', speaker: '', date: '', keywords: '', scriptures: '', pub_code: '', sub_source: '', service_type: '' });
-      setMemoMsg('저장 완료');
+      setMemoMsg(MSG.success.save);
       setTimeout(() => { setMemoTopic(''); setMemoContent(''); setMemoMsg(''); }, 1200);
-    } catch (e) { setMemoMsg('오류: ' + e.message); }
+    } catch (e) { setMemoMsg(MSG.fail.save + e.message); }
     finally { setMemoSaving(false); }
   };
   useEffect(() => {
@@ -213,7 +213,7 @@ export default function App() {
       setPoints(finalPoints);
       setStatus(''); setPhase(3);
     } catch (e) {
-      setError('오류: ' + e.message); setStatus(''); setPhase(0);
+      setError(MSG.fail.parse + e.message); setStatus(''); setPhase(0);
     }
   };
 
@@ -1221,7 +1221,7 @@ textarea { resize: vertical; }
                 fontSize: '0.929rem', fontWeight: 700, cursor: memoSaving ? 'default' : 'pointer',
               }}>{memoSaving ? '저장 중...' : '저장'}</button>
             </div>
-            {memoMsg && <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center', color: memoMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{memoMsg}</div>}
+            {memoMsg && <div style={{ marginTop: 8, fontSize: '0.786rem', textAlign: 'center', color: getStatusColor(memoMsg), fontWeight: 600 }}>{memoMsg}</div>}
           </div>
         </div>
       )}

@@ -202,23 +202,23 @@ export default function TranscriptPage({ fontSize }) {
                       return next;
                     });
                     setSelSpeaker(null);
-                  } catch (e) { showAlert('삭제 오류: ' + e.message, { variant: 'error' }); }
+                  } catch (e) { showAlert(MSG.fail.delete + e.message, { variant: 'error' }); }
                 }} style={{ padding: '4px 10px', borderRadius: 8, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
               </>
             )}
             {editing && (
               <>
                 <button onClick={async () => {
-                  setEditStat('저장 중...');
+                  setEditStat(MSG.progress.save);
                   try {
                     await dbUpdate(selSpeaker.collection, selSpeaker.id, editVal);
                     selSpeaker.text = editVal;
                     setSelSpeaker({ ...selSpeaker });
                     setEditing(false); setEditStat('');
-                  } catch (e) { setEditStat('오류: ' + e.message); }
+                  } catch (e) { setEditStat(MSG.fail.update + e.message); }
                 }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--accent-purple)', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
                 <button onClick={() => { setEditing(false); setEditStat(''); }} style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                {editStat && <span style={{ fontSize: '0.786rem', color: editStat.includes('오류') ? 'var(--c-danger)' : 'var(--accent)' }}>{editStat}</span>}
+                {editStat && <span style={{ fontSize: '0.786rem', color: getStatusColor(editStat) }}>{editStat}</span>}
               </>
             )}
           </div>

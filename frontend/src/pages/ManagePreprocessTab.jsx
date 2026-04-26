@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { sttCorrectionsGet, sttCorrectionsSave, sttCorrectionsValidate, sttCorrectionsReload } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
+import { MSG, getStatusColor } from '../utils/messages';
 
 export default function ManagePreprocessTab() {
   const showConfirm = useConfirm();
@@ -55,7 +56,7 @@ export default function ManagePreprocessTab() {
       setPreprocDirty(false);
       setPreprocSelected({});
     } catch (e) {
-      setPreprocStatus('로드 실패: ' + e.message);
+      setPreprocStatus(MSG.fail.fetch + e.message);
     } finally {
       setPreprocLoading(false);
     }
@@ -64,19 +65,19 @@ export default function ManagePreprocessTab() {
   const savePreproc = async () => {
     if (!preprocData) return;
     setPreprocSaving(true);
-    setPreprocStatus('저장 중...');
+    setPreprocStatus(MSG.progress.save);
     try {
       const r = await sttCorrectionsSave(preprocData);
       setPreprocValidation(r.validation || null);
       setPreprocDirty(false);
       setPreprocOriginal(JSON.parse(JSON.stringify(preprocData)));
       setPreprocSelected({});
-      setPreprocStatus(`✓ 저장 완료 (백업 ${r.backup_count || 0}개)`);
+      setPreprocStatus(MSG.helpers.saveWithBackup(r.backup_count || 0));
       const detail = await sttCorrectionsGet();
       setPreprocBackups(detail.backups || []);
       setTimeout(() => setPreprocStatus(''), 3000);
     } catch (e) {
-      setPreprocStatus('저장 실패: ' + e.message);
+      setPreprocStatus(MSG.fail.save + e.message);
     } finally {
       setPreprocSaving(false);
     }
@@ -86,10 +87,10 @@ export default function ManagePreprocessTab() {
     try {
       const r = await sttCorrectionsValidate();
       setPreprocValidation(r);
-      setPreprocStatus(r.valid ? '✓ 검증 통과' : `⚠️ 경고 ${r.warnings?.length || 0}건`);
+      setPreprocStatus(r.valid ? MSG.success.validate : MSG.warn.validateWarning(r.warnings?.length || 0));
       setTimeout(() => setPreprocStatus(''), 3000);
     } catch (e) {
-      setPreprocStatus('검증 실패: ' + e.message);
+      setPreprocStatus(MSG.fail.validate + e.message);
     }
   };
 
@@ -97,10 +98,10 @@ export default function ManagePreprocessTab() {
     try {
       await sttCorrectionsReload();
       await loadPreproc();
-      setPreprocStatus('✓ 리로드 완료');
+      setPreprocStatus(MSG.success.reload);
       setTimeout(() => setPreprocStatus(''), 3000);
     } catch (e) {
-      setPreprocStatus('리로드 실패: ' + e.message);
+      setPreprocStatus(MSG.fail.reload + e.message);
     }
   };
 
@@ -197,7 +198,7 @@ export default function ManagePreprocessTab() {
     setPreprocAddingGroupTo(null);
     setPreprocSkipEditingIdx(null);
     setPreprocSkipAdding(null);
-    setPreprocStatus('✓ 되돌림 완료');
+    setPreprocStatus(MSG.success.revert);
     setTimeout(() => setPreprocStatus(''), 2000);
   };
 
@@ -550,10 +551,10 @@ export default function ManagePreprocessTab() {
               {/* 상태 메시지 */}
               {preprocStatus && (
                 <div style={{
-                  padding: '6px 12px', marginBottom: 12, borderRadius: 6,
-                  background: preprocStatus.includes('실패') ? '#ffebeb' : preprocStatus.includes('경고') ? '#fff5e6' : '#e6f7ed',
-                  color: preprocStatus.includes('실패') ? 'var(--c-danger)' : preprocStatus.includes('경고') ? 'var(--accent-gold)' : 'var(--accent)',
-                  fontSize: '0.786rem',
+                  marginTop: 8, marginBottom: 12,
+                  fontSize: '0.786rem', textAlign: 'center',
+                  color: getStatusColor(preprocStatus),
+                  fontWeight: 600,
                 }}>
                   {preprocStatus}
                 </div>

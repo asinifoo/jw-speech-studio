@@ -8,6 +8,7 @@ import { freeSearch, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { getOutlinePrefix } from '../utils/outlineFormat';
 import { useAlert } from '../providers/AlertProvider';
+import { MSG, getStatusColor } from '../utils/messages';
 
 export default function FreeSearchPage({ fontSize }) {
   const showConfirm = useConfirm();
@@ -334,7 +335,7 @@ export default function FreeSearchPage({ fontSize }) {
                     fontSize: '0.857rem', lineHeight: 1.7, fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
                 <div style={{ display: 'flex', gap: 4, marginTop: 6, alignItems: 'center' }}>
                   <button onClick={async () => {
-                    setDbStat('저장 중...');
+                    setDbStat(MSG.progress.save);
                     try {
                       let finalText = dbEditVal;
                       const tagUpdates = [['출처', dbEditMeta.source || ''], ['골자', dbEditMeta.outline_title ? (meta.outline_num ? meta.outline_num + ' - ' : '') + dbEditMeta.outline_title : ''], ['요점', dbEditMeta.point_content || ''], ['키워드', dbEditMeta.keywords || ''], ['성구', dbEditMeta.scriptures || ''], ['출판물', dbEditMeta.pub_code || '']];
@@ -348,20 +349,20 @@ export default function FreeSearchPage({ fontSize }) {
                       };
                       await dbUpdate(col, r.id, finalText, saveMeta);
                       setResults(prev => prev.map(rr => rr.id === r.id ? { ...rr, text: finalText, metadata: { ...rr.metadata, ...saveMeta } } : rr));
-                      setDbStat('저장 완료'); setTimeout(() => { setDbEditIdx(-1); setDbStat(''); }, 1000);
-                    } catch (e) { setDbStat('오류: ' + e.message); }
+                      setDbStat(MSG.success.save); setTimeout(() => { setDbEditIdx(-1); setDbStat(''); }, 1000);
+                    } catch (e) { setDbStat(MSG.fail.update + e.message); }
                   }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--accent-orange)', background: 'var(--accent-orange)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>DB 저장</button>
                   <button onClick={async () => {
                     if (!await showConfirm('이 항목을 DB에서 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
-                    setDbStat('삭제 중...');
+                    setDbStat(MSG.progress.delete);
                     try {
                       await dbDelete(col, r.id);
                       setResults(prev => prev.filter(rr => rr.id !== r.id));
                       setDbEditIdx(-1); setDbStat('');
-                    } catch (e) { setDbStat('오류: ' + e.message); }
+                    } catch (e) { setDbStat(MSG.fail.delete + e.message); }
                   }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.786rem', cursor: 'pointer' }}>삭제</button>
                   <button onClick={() => { setDbEditIdx(-1); setDbStat(''); }} style={{ padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
-                  {dbStat && <span style={{ fontSize: '0.786rem', color: dbStat.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{dbStat}</span>}
+                  {dbStat && <span style={{ fontSize: '0.786rem', color: getStatusColor(dbStat), fontWeight: 600 }}>{dbStat}</span>}
                 </div>
               </div>
             )}

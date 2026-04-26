@@ -267,7 +267,7 @@ export default function ManageDbTab({ mode }) {
                       }) }));
                       setDbTabCounts(p => ({ ...p, [viewSource]: Math.max(0, (p[viewSource] || 0) - count) }));
                       setDbSelected(new Set());
-                    } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
+                    } catch (e) { showAlert(MSG.fail.delete + e.message, { variant: 'error' }); }
                     finally { setDbDeleting(false); }
                   }} disabled={dbDeleting} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--c-danger)', background: dbDeleting ? 'var(--bd)' : 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.714rem', cursor: dbDeleting ? 'default' : 'pointer', fontWeight: 600 }}>{dbDeleting ? '삭제 중...' : '선택 삭제'}</button>
                 </>
@@ -346,7 +346,7 @@ export default function ManageDbTab({ mode }) {
                         }
                         setDbCache(p => ({ ...p, '골자': (p['골자'] || []).filter(r => !g.items.some(gi => gi.id === r.id)) }));
                         setDbTabCounts(p => ({ ...p, '골자': Math.max(0, (p['골자'] || 0) - g.items.length) }));
-                      } catch (err) { showAlert('오류: ' + err.message, { variant: 'error' }); }
+                      } catch (err) { showAlert(MSG.fail.delete + err.message, { variant: 'error' }); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
                   </div>
                   {isOpen && (
@@ -550,7 +550,7 @@ export default function ManageDbTab({ mode }) {
                     )}
                     <button onClick={async () => {
                       if (!await showConfirm('삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
-                      try { await deleteEntry(r); setDbEntries(p => p.filter(e => e.id !== r.id)); } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
+                      try { await deleteEntry(r); setDbEntries(p => p.filter(e => e.id !== r.id)); } catch (e) { showAlert(MSG.fail.delete + e.message, { variant: 'error' }); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </div>
                 </div>
@@ -688,7 +688,7 @@ export default function ManageDbTab({ mode }) {
                       setSpeakerMemos(p => p.filter(m => !dbSelected.has(m.id)));
                       setDbTabCounts(p => ({ ...p, '연사메모': Math.max(0, (p['연사메모'] || 0) - dbSelected.size) }));
                       setDbSelected(new Set());
-                    } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
+                    } catch (e) { showAlert(MSG.fail.delete + e.message, { variant: 'error' }); }
                     finally { setDbDeleting(false); }
                   }} disabled={dbDeleting} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--c-danger)', background: dbDeleting ? 'var(--bd)' : 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.714rem', cursor: dbDeleting ? 'default' : 'pointer', fontWeight: 600 }}>{dbDeleting ? '삭제 중...' : '선택 삭제'}</button>
                 </>
@@ -780,7 +780,7 @@ export default function ManageDbTab({ mode }) {
                     <button onClick={() => setEditingSpMemo(p => ({ ...p, [i]: body }))} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--accent-purple)', background: 'var(--bg-card)', color: 'var(--accent-purple)', fontSize: '0.643rem', cursor: 'pointer' }}>편집</button>
                     <button onClick={async () => {
                       if (!await showConfirm('삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
-                      try { await dbDelete(m.collection || 'speech_expressions', m.id); setSpeakerMemos(p => p.filter((_, j) => j !== i)); } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
+                      try { await dbDelete(m.collection || 'speech_expressions', m.id); setSpeakerMemos(p => p.filter((_, j) => j !== i)); } catch (e) { showAlert(MSG.fail.delete + e.message, { variant: 'error' }); }
                     }} style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid var(--c-danger)', background: 'var(--bg-card)', color: 'var(--c-danger)', fontSize: '0.643rem', cursor: 'pointer' }}>삭제</button>
                   </>}
                 </div>
@@ -795,7 +795,7 @@ export default function ManageDbTab({ mode }) {
                       style={{ display: 'block', width: '100%', padding: '6px 10px', boxSizing: 'border-box', border: 'none', borderRadius: 8, background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', fontSize: '0.857rem', lineHeight: 1.6, fontFamily: 'inherit', outline: 'none', resize: 'vertical', marginBottom: 4 }} />
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button onClick={async () => {
-                        try { await dbUpdate(m.collection || 'speech_expressions', m.id, editingSpMemo[i]); setSpeakerMemos(p => p.map((x, j) => j === i ? { ...x, document: editingSpMemo[i] } : x)); setEditingSpMemo(p => { const n = { ...p }; delete n[i]; return n; }); } catch (e) { showAlert('오류: ' + e.message, { variant: 'error' }); }
+                        try { await dbUpdate(m.collection || 'speech_expressions', m.id, editingSpMemo[i]); setSpeakerMemos(p => p.map((x, j) => j === i ? { ...x, document: editingSpMemo[i] } : x)); setEditingSpMemo(p => { const n = { ...p }; delete n[i]; return n; }); } catch (e) { showAlert(MSG.fail.update + e.message, { variant: 'error' }); }
                       }} style={{ padding: '4px 12px', borderRadius: 6, border: 'none', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>저장</button>
                       <button onClick={() => setEditingSpMemo(p => { const n = { ...p }; delete n[i]; return n; })} style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.786rem', cursor: 'pointer' }}>취소</button>
                     </div>

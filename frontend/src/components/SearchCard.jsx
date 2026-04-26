@@ -6,6 +6,7 @@ import { parseDocument, tagColor, tagLabel, sourceLabel, cleanMd, parseKeywords 
 import { dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { getOutlinePrefix } from '../utils/outlineFormat';
+import { MSG, getStatusColor } from '../utils/messages';
 
 const PRESETS = {
   default:  { actionBtn: S.btnXsAccent,  dangerBtn: S.btnXsDanger },
@@ -74,7 +75,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
 
   const saveDb = async (e) => {
     e.stopPropagation();
-    setDbStatus('저장 중...');
+    setDbStatus(MSG.progress.save);
     try {
       let finalText = dbEditValue;
       const tagUpdates = [['출처', dbEditMeta.source || ''], ['골자', dbEditMeta.outline_title ? (meta.outline_num ? meta.outline_num + ' - ' : '') + dbEditMeta.outline_title : ''], ['요점', dbEditMeta.point_content || ''], ['키워드', dbEditMeta.keywords || ''], ['성구', dbEditMeta.scriptures || ''], ['출판물', dbEditMeta.pub_code || '']];
@@ -84,20 +85,20 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
       await dbUpdate(col, item.id, finalText, saveMeta);
       if (onItemUpdate) onItemUpdate(finalText, dbEditMeta);
       onEditText(null);
-      setDbStatus('저장 완료');
+      setDbStatus(MSG.success.save);
       setTimeout(() => { setDbStatus(''); setDbEditing(false); }, 1000);
-    } catch (err) { setDbStatus('오류: ' + err.message); }
+    } catch (err) { setDbStatus(MSG.fail.update + err.message); }
   };
 
   const deleteDb = async (e) => {
     e.stopPropagation();
     if (!await showConfirm('이 항목을 DB에서 삭제하시겠습니까?', { confirmVariant: 'danger' })) return;
-    setDbStatus('삭제 중...');
+    setDbStatus(MSG.progress.delete);
     try {
       await dbDelete(col, item.id);
-      setDbStatus('삭제 완료');
+      setDbStatus(MSG.success.delete);
       if (onDbDelete) onDbDelete();
-    } catch (err) { setDbStatus('오류: ' + err.message); }
+    } catch (err) { setDbStatus(MSG.fail.delete + err.message); }
   };
 
   const headerClick = useCallback((e) => {
@@ -544,7 +545,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
               padding: '3px 10px', borderRadius: 8, border: '1px solid var(--bd)',
               background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: rem(11), cursor: 'pointer',
             }}>취소</button>
-            {dbStatus && <span style={{ fontSize: rem(10), color: dbStatus.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{dbStatus}</span>}
+            {dbStatus && <span style={{ fontSize: rem(10), color: getStatusColor(dbStatus), fontWeight: 600 }}>{dbStatus}</span>}
           </div>
         </div>
       )}

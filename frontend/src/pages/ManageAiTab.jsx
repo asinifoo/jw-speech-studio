@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getAiModels, saveAiModels as saveAiModelsAPI, getApiKeys, saveApiKeys, getApiVersions, saveApiVersions, ollamaModels, ollamaPull, ollamaDelete, getPasswordStatus, changePassword, getFilterModel, setFilterModel, getOllamaCtx, setOllamaCtx, getOllamaThink, setOllamaThink, getChatTurns, setChatTurns, setChatSearchTopK, getPrompts, setPrompt, resetPrompt, savePromptDefault } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
+import { MSG, getStatusColor } from '../utils/messages';
 
 // AI 탭 UI state persist (Phase 5b-1) — 탭 discard 후 재로드 시 열어둔 섹션 복원
 const _aiInit = (() => {
@@ -199,7 +200,7 @@ export default function ManageAiTab() {
   const saveChatAiDefault = (platform, model) => { localStorage.setItem('jw-ai-chat-default', JSON.stringify({ platform, model })); setAiModelsDirty(true); setAiModelsSaveMsg(''); setDefaultTick(t => t + 1); };
   const clearChatAiDefault = () => { localStorage.removeItem('jw-ai-chat-default'); setAiModelsDirty(true); setAiModelsSaveMsg(''); setDefaultTick(t => t + 1); };
   const saveAiModelsToServer = async () => {
-    setAiModelsSaveMsg('저장 중...');
+    setAiModelsSaveMsg(MSG.progress.save);
     try {
       const currentDefault = (() => { try { return JSON.parse(localStorage.getItem('jw-ai-default')); } catch { return null; } })();
       const currentChatDefault = (() => { try { return JSON.parse(localStorage.getItem('jw-ai-chat-default')); } catch { return null; } })();
@@ -208,10 +209,10 @@ export default function ManageAiTab() {
       serverAiDefault.current = currentDefault;
       serverChatDefault.current = currentChatDefault;
       setAiModelsDirty(false);
-      setAiModelsSaveMsg('서버 저장 완료');
+      setAiModelsSaveMsg(MSG.success.serverSave);
       setTimeout(() => setAiModelsSaveMsg(''), 2000);
     } catch (e) {
-      setAiModelsSaveMsg('저장 실패: ' + e.message);
+      setAiModelsSaveMsg(MSG.fail.save + e.message);
     }
   };
 
@@ -231,7 +232,7 @@ export default function ManageAiTab() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
               <div style={{ fontSize: '0.929rem', fontWeight: 700 }}>AI 모델 관리</div>
               <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                {aiModelsSaveMsg && <span style={{ fontSize: '0.786rem', color: aiModelsSaveMsg.includes('실패') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{aiModelsSaveMsg}</span>}
+                {aiModelsSaveMsg && <span style={{ fontSize: '0.786rem', color: getStatusColor(aiModelsSaveMsg), fontWeight: 600 }}>{aiModelsSaveMsg}</span>}
                 {aiModelsDirty && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-orange)' }} />}
                 <button onClick={resetAiModels}
                   style={{ padding: '2px 8px', borderRadius: 8, border: '1px solid var(--bd)', background: 'transparent', color: 'var(--c-muted)', fontSize: '0.786rem', cursor: 'pointer' }}>초기화</button>
@@ -886,7 +887,7 @@ export default function ManageAiTab() {
                         if (!aiPassword) { setAiError('비밀번호를 입력하세요'); return; }
                         if (!await showConfirm(`${label} API 키를 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                         try { await saveApiKeys(aiPassword, { [key]: '' }); setApiKeyStatus(await getApiKeys()); setApiKeyInputs(prev => ({ ...prev, [key]: '' })); }
-                        catch (e) { setAiError(e.message); }
+                        catch (e) { setAiError(MSG.fail.pwVerify + e.message); }
                       }}
                         style={{ padding: '2px 6px', borderRadius: 4, border: '1px solid #e55', background: 'transparent', color: '#e55', fontSize: '0.643rem', cursor: 'pointer', flexShrink: 0 }}>삭제</button>
                     )}
@@ -900,15 +901,15 @@ export default function ManageAiTab() {
                     const toSave = {}; Object.entries(apiKeyInputs).forEach(([k, v]) => { if (v) toSave[k] = v; });
                     if (!Object.keys(toSave).length) return;
                     setApiKeySaving(true); setAiError('');
-                    try { await saveApiKeys(aiPassword, toSave); setApiKeyStatus(await getApiKeys()); setApiKeyInputs({}); setAiError('✓ 저장 완료'); setTimeout(() => setAiError(''), 2000); }
-                    catch (e) { setAiError('저장 오류: ' + e.message); }
+                    try { await saveApiKeys(aiPassword, toSave); setApiKeyStatus(await getApiKeys()); setApiKeyInputs({}); setAiError(MSG.success.save); setTimeout(() => setAiError(''), 2000); }
+                    catch (e) { setAiError(MSG.fail.save + e.message); }
                     finally { setApiKeySaving(false); }
                   }} disabled={apiKeySaving}
                     style={{ padding: '4px 14px', borderRadius: 8, border: '1px solid var(--accent)', background: 'var(--accent)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600 }}>
                     {apiKeySaving ? '저장 중...' : '저장'}
                   </button>
                 </div>
-                {aiError && <div style={{ marginTop: 6, fontSize: '0.786rem', color: aiError.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{aiError}</div>}
+                {aiError && <div style={{ marginTop: 6, fontSize: '0.786rem', color: getStatusColor(aiError) }}>{aiError}</div>}
               </div>
             )}
             {apiVersions && (
@@ -920,8 +921,8 @@ export default function ManageAiTab() {
                     placeholder="2023-06-01"
                     style={{ flex: 1, minWidth: 0, padding: '8px 10px', borderRadius: 8, border: 'none', background: 'var(--bg-card)', color: 'var(--c-text-dark)', fontSize: '0.857rem', fontFamily: 'inherit', outline: 'none' }} />
                   <button onClick={async () => {
-                    try { await saveApiVersions({ anthropic: apiVersions.anthropic }); setAiError('✓ 버전 저장 완료'); setTimeout(() => setAiError(''), 2000); }
-                    catch (e) { setAiError('버전 저장 오류: ' + e.message); }
+                    try { await saveApiVersions({ anthropic: apiVersions.anthropic }); setAiError(MSG.success.versionSave); setTimeout(() => setAiError(''), 2000); }
+                    catch (e) { setAiError(MSG.fail.versionSave + e.message); }
                   }} style={{ padding: '4px 10px', borderRadius: 8, border: 'none', background: 'var(--accent-purple)', color: '#fff', fontSize: '0.786rem', cursor: 'pointer', fontWeight: 600, flexShrink: 0 }}>저장</button>
                 </div>
               </div>
@@ -977,10 +978,10 @@ export default function ManageAiTab() {
                   setPwChanging(true); setPwMsg('');
                   try {
                     await changePassword(pwCurrent, pwNew);
-                    setPwMsg('✓ 비밀번호가 변경되었습니다');
+                    setPwMsg(MSG.success.pwChange);
                     setPwCurrent(''); setPwNew(''); setPwConfirm('');
                     setPwStatus(await getPasswordStatus());
-                  } catch (e) { setPwMsg(e.message); }
+                  } catch (e) { setPwMsg(MSG.fail.pwChange + e.message); }
                   finally { setPwChanging(false); }
                 }} disabled={pwChanging || !pwNew || pwNew !== pwConfirm}
                   style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: 'none',
@@ -989,7 +990,7 @@ export default function ManageAiTab() {
                     opacity: (!pwNew || pwNew !== pwConfirm) ? 0.5 : 1 }}>
                   {pwChanging ? '변경 중...' : pwStatus.has_password ? '비밀번호 변경' : '비밀번호 설정'}
                 </button>
-                {pwMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', color: pwMsg.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{pwMsg}</div>}
+                {pwMsg && <div style={{ marginTop: 6, fontSize: '0.786rem', color: getStatusColor(pwMsg) }}>{pwMsg}</div>}
               </div>
             )}
           </div>}</div>

@@ -9,6 +9,7 @@ import { useConfirm } from '../../providers/ConfirmProvider';
 import { useAlert } from '../../providers/AlertProvider';
 import ManageSpeechInput from './SpeechInput';
 import ManageStructureOther from './StructureOther';
+import { MSG, getStatusColor } from '../../utils/messages';
 import ManageDrafts from './Drafts';
 import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
 import { Modal } from '../../components/Modal';
@@ -216,7 +217,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       );
       setSttPollingJobs(active);
     } catch (e) {
-      setSttUploadStatus('목록 조회 실패: ' + e.message);
+      setSttUploadStatus(MSG.fail.fetch + e.message);
     }
   };
 
@@ -280,22 +281,22 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     const maxLabel = isText ? '10MB' : '300MB';
     const sizeMb = (file.size / 1024 / 1024).toFixed(1);
     if (file.size > maxSize) {
-      setSttUploadStatus(`파일이 너무 큽니다 (${sizeMb}MB, 최대 ${maxLabel})`);
+      setSttUploadStatus(MSG.warn.fileTooLarge(sizeMb, maxLabel));
       return;
     }
     setSttUploading(true);
-    setSttUploadStatus(`업로드 중: ${file.name} (${sizeMb}MB)`);
+    setSttUploadStatus(MSG.helpers.uploadProgress(file.name, sizeMb));
     try {
       if (isText) {
         await sttUploadText(file);
       } else {
         await sttUpload(file);
       }
-      setSttUploadStatus(`✓ 업로드 완료: ${file.name}`);
+      setSttUploadStatus(MSG.helpers.uploadNamed(file.name));
       await sttLoadJobs();
       setTimeout(() => setSttUploadStatus(''), 3000);
     } catch (e) {
-      setSttUploadStatus('업로드 실패: ' + e.message);
+      setSttUploadStatus(MSG.fail.upload + e.message);
     } finally {
       setSttUploading(false);
       if (sttFileInputRef.current) sttFileInputRef.current.value = '';
@@ -319,7 +320,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       await sttTranscribe(jobId);
       await sttLoadJobs();
     } catch (e) {
-      setSttUploadStatus('변환 시작 실패: ' + e.message);
+      setSttUploadStatus(MSG.fail.convert + e.message);
     }
   };
 
@@ -329,7 +330,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       await sttDelete(jobId);
       await sttLoadJobs();
     } catch (e) {
-      setSttUploadStatus('삭제 실패: ' + e.message);
+      setSttUploadStatus(MSG.fail.delete + e.message);
     }
   };
 
@@ -507,7 +508,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       setStructureMode('speech_input');
       window.dispatchEvent(new Event('si-transfer'));
     } catch (e) {
-      showAlert('임시저장 로드 실패: ' + e.message, { variant: 'error' });
+      showAlert(MSG.fail.fetch + e.message, { variant: 'error' });
     }
   };
 
@@ -754,7 +755,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
   const applySttCorrection = async () => {
     if (!sttReviewJob) return;
     setSttReviewCorrecting(true);
-    setSttReviewStatus('교정 중...');
+    setSttReviewStatus(MSG.progress.correct);
     try {
       const readings = sttReviewVerses.filter(v => v.includes('(낭독)'));
       const options = {
@@ -777,7 +778,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         if (fresh.cloud_text) setSttReviewTab('cloud');
         else if (fresh.local_text) setSttReviewTab('local');
         else setSttReviewTab('parsed');
-        setSttReviewStatus('✓ 교정 완료');
+        setSttReviewStatus(MSG.success.correct);
         setSttReviewCorrecting(false);
         setTimeout(() => setSttReviewStatus(''), 3000);
         return;
@@ -796,7 +797,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
             if (fresh.cloud_text) setSttReviewTab('cloud');
             else if (fresh.local_text) setSttReviewTab('local');
             else setSttReviewTab('parsed');
-            setSttReviewStatus('✓ 교정 완료');
+            setSttReviewStatus(MSG.success.correct);
             setSttReviewCorrecting(false);
             // Phase 4: cloud 교정 완료 시점의 outline_id/verse_mode 스냅샷 저장
             if (fresh.cloud_text) {
@@ -808,7 +809,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
             sttPollRef.current = null;
             setTimeout(() => setSttReviewStatus(''), 3000);
           } else if (fresh.status === 'failed') {
-            setSttReviewStatus('교정 실패: ' + (fresh.error_message || ''));
+            setSttReviewStatus(MSG.fail.correct + (fresh.error_message || ''));
             setSttReviewCorrecting(false);
             clearInterval(sttPollRef.current);
             sttPollRef.current = null;
@@ -819,7 +820,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         if (sttPollRef.current) { clearInterval(sttPollRef.current); sttPollRef.current = null; }
       }, 5 * 60 * 1000);
     } catch (e) {
-      setSttReviewStatus('교정 실패: ' + e.message);
+      setSttReviewStatus(MSG.fail.correct + e.message);
       setSttReviewCorrecting(false);
     }
   };
@@ -832,7 +833,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
     if (!sttReviewMeta.source) { showAlert('유형을 선택해주세요', { variant: 'info' }); return; }
     if (!sttReviewFinalText.trim()) { showAlert('저장할 텍스트가 없습니다. 교정을 먼저 실행해주세요.', { variant: 'info' }); return; }
 
-    setSttReviewStatus('임시저장 전달 중...');
+    setSttReviewStatus(MSG.progress.transfer);
     try {
       const data = {
         speaker: sttReviewMeta.speaker,
@@ -845,7 +846,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       setSttReviewStatus('');
       setSttSavedModal(result);
     } catch (e) {
-      setSttReviewStatus('전달 실패: ' + e.message);
+      setSttReviewStatus(MSG.fail.transfer + e.message);
     }
   };
 
@@ -983,16 +984,16 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         try { await dbDelete(movingMemo.collection, movingMemo.id); } catch(e) {}
         setMemoEntries(prev => prev.filter(e => e.id !== movingMemo.id));
         setMovingMemo(null);
-        setSaveMsg(`이동 완료 (${res.collection})`);
+        setSaveMsg(MSG.helpers.moveTo(res.collection));
       } else {
-        setSaveMsg(`저장 완료 (${res.collection})`);
+        setSaveMsg(MSG.helpers.saveTo(res.collection));
       }
       setGatherForm(p => ({ ...p, subtopic: '', point_id: '', point_summary: '', content: '', keywords: '', scriptures: '' }));
       if (fromPub && onSaveReturn) {
         setFromPub(false);
         setTimeout(() => onSaveReturn(), 800);
       }
-    } catch (e) { setSaveMsg('오류: ' + e.message); }
+    } catch (e) { setSaveMsg(MSG.fail.save + e.message); }
     finally { setSaving(false); }
   };
 
@@ -1016,9 +1017,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
         try { await dbDelete(movingMemo.collection, movingMemo.id); } catch {}
         setMemoEntries(prev => prev.filter(e => e.id !== movingMemo.id));
         setMovingMemo(null);
-        setSaveMsg(`이동 완료 (${res.collection})${actionLabel}`);
+        setSaveMsg(MSG.helpers.moveTo(res.collection, actionLabel));
       } else {
-        setSaveMsg(`저장 완료 (${res.collection})${actionLabel}`);
+        setSaveMsg(MSG.helpers.saveTo(res.collection, actionLabel));
       }
       resetFn(dflt);
       // 출판물 저장 후 자동 복귀
@@ -1044,7 +1045,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           setTimeout(() => onSaveReturn(savedData), 800);
         }
       }
-    } catch (e) { setSaveMsg('오류: ' + e.message); }
+    } catch (e) { setSaveMsg(MSG.fail.save + e.message); }
     finally { setSaving(false); }
   };
 
@@ -1159,7 +1160,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     try {
                       const res = await parseMdFiles(files);
                       setMdParsed(res);
-                    } catch (err) { setMdResult('오류: ' + err.message); }
+                    } catch (err) { setMdResult(MSG.fail.parse + err.message); }
                     finally { setMdParsing(false); }
                   }} />
                   <button onClick={() => document.getElementById('mdUpload').click()} disabled={mdParsing} style={{
@@ -1247,7 +1248,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                 const parts = [];
                                 if (saved) parts.push(`${saved}개 저장`);
                                 if (dups) parts.push(`${dups}개 중복`);
-                                if (parts.length) setMdResult(`✓ ${parts.join(' · ')}`);
+                                if (parts.length) setMdResult(MSG.helpers.parseStats(parts));
                                 setMdSaving(p => ({ ...p, [g.saveKey]: false }));
                               }} disabled={anyProcessing || mdSaving[g.saveKey]} style={{
                                 padding: '3px 10px', borderRadius: 6, border: 'none',
@@ -1355,7 +1356,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       );})}
                     </div>;
                   })()}
-                  {mdResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: mdResult.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{mdResult}</div>}
+                  {mdResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: getStatusColor(mdResult) }}>{mdResult}</div>}
                 </div>
               )}
 
@@ -1410,7 +1411,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                       <div style={{
                         marginTop: 10,
                         fontSize: '0.786rem',
-                        color: sttUploadStatus.includes('실패') || sttUploadStatus.includes('큽') ? 'var(--c-danger)' : 'var(--accent)',
+                        color: getStatusColor(sttUploadStatus),
                       }}>{sttUploadStatus}</div>
                     )}
                   </div>
@@ -1667,7 +1668,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                         {sttReviewCorrecting ? '교정 중...' : (sttReviewJob.final_text ? '다시 교정' : '교정 적용')}
                       </button>
                       {sttReviewStatus && (
-                        <div style={{ fontSize: '0.714rem', color: sttReviewStatus.includes('실패') ? 'var(--c-danger)' : 'var(--accent)' }}>
+                        <div style={{ fontSize: '0.714rem', color: getStatusColor(sttReviewStatus) }}>
                           {sttReviewStatus}
                         </div>
                       )}
@@ -2081,9 +2082,9 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           duration: meta.total_time != null ? `${meta.total_time}분` : p.duration,
                           year: '',
                         }));
-                        setTxtResult('✓ DOCX 변환 완료. 들여쓰기를 검수한 후 [파싱] 버튼을 눌러주세요.');
+                        setTxtResult(MSG.helpers.convertDocx());
                       } catch (err) {
-                        setTxtResult('오류: ' + err.message);
+                        setTxtResult(MSG.fail.convert + err.message);
                       } finally {
                         setTxtDocxLoading(false);
                       }
@@ -2330,7 +2331,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                             return { ...pt, num };
                           });
                           setTxtParsed(next);
-                          setTxtResult('✓ 번호를 재정렬했습니다.');
+                          setTxtResult(MSG.success.numReorder);
                         }} disabled={!txtParsed.length} style={{
                           height: 20, padding: '0 8px', borderRadius: 6,
                           border: '1px solid var(--bd)', background: 'var(--bg-card)',
@@ -2552,7 +2553,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                             payload.overwrite = true;
                           }
                           const res = await saveOutline(payload);
-                          setTxtResult(`✓ ${res.message}`);
+                          setTxtResult(MSG.helpers.successFromBackend(res.message));
                           outlineList().then(r => setOutlines(r.outlines || [])).catch(() => {});
                           if (sttReturnAfterSave) {
                             const num = txtMeta.outlineNum || '';
@@ -2571,7 +2572,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                             setSttReturnAfterSave(false);
                             setGatherMode('stt');
                           }
-                        } catch (err) { setTxtResult('오류: ' + err.message); }
+                        } catch (err) { setTxtResult(MSG.fail.save + err.message); }
                         finally { setTxtSaving(false); }
                       }} disabled={txtSaving} style={{
                         width: '100%', padding: '10px 0', borderRadius: 8, border: 'none', marginTop: 6,
@@ -2591,7 +2592,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
                         }}>← 저장하지 않고 STT 검토로 돌아가기</button>
                       )}
-                      {txtResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: txtResult.startsWith('✓') ? 'var(--accent)' : 'var(--c-danger)' }}>{txtResult}</div>}
+                      {txtResult && <div style={{ marginTop: 6, fontSize: '0.786rem', color: getStatusColor(txtResult) }}>{txtResult}</div>}
                     </div>
                   )}
                 </div>
@@ -2748,7 +2749,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                     fontSize: '0.857rem', fontWeight: 600, cursor: 'pointer',
                   }}>← 저장하지 않고 돌아가기</button>
                 )}
-                {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
+                {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: getStatusColor(saveMsg), fontWeight: 600 }}>{saveMsg}</div>}
               </>)}
             </div>
           )}
@@ -2781,7 +2782,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
             }}>초기화</button>
           </div>
 
-          {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: saveMsg.startsWith('오류') ? 'var(--c-danger)' : 'var(--accent)', fontWeight: 600 }}>{saveMsg}</div>}
+          {saveMsg && <div style={{ marginTop: 8, fontSize: '0.857rem', textAlign: 'center', color: getStatusColor(saveMsg), fontWeight: 600 }}>{saveMsg}</div>}
           </>)}
           </div>
         </div>

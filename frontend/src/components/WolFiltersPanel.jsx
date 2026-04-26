@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getWolFilters, saveWolFilters, resetWolFilters, saveWolFiltersAsDefault, testWolQuery } from '../api';
+import { MSG } from '../utils/messages';
 
 export default function WolFiltersPanel({ compact = true }) {
   const [open, setOpen] = useState(false);
@@ -29,13 +30,13 @@ export default function WolFiltersPanel({ compact = true }) {
     const sw = stopwords.split('\n').map(s => s.trim()).filter(Boolean);
     saveWolFilters(sfx, sw)
       .then(d => flash(`저장됨 · 접미사 ${d.suffixes} · 불용어 ${d.stopwords}`))
-      .catch(e => flash('오류: ' + e.message, 'err'));
+      .catch(e => flash(MSG.fail.save + e.message, 'err'));
   };
 
   const doSaveDefault = () => {
     saveWolFiltersAsDefault()
       .then(d => flash(`나의 기본값 저장됨 · 접미사 ${d.suffixes} · 불용어 ${d.stopwords}`))
-      .catch(e => flash('오류: ' + e.message, 'err'));
+      .catch(e => flash(MSG.fail.save + e.message, 'err'));
   };
 
   const doReset = () => {
@@ -43,7 +44,7 @@ export default function WolFiltersPanel({ compact = true }) {
       load();
       const src = d.source === 'user' ? '나의 기본값' : '시스템 기본값';
       flash(`${src} 복원됨 · 접미사 ${d.suffixes} · 불용어 ${d.stopwords}`);
-    }).catch(e => flash('오류: ' + e.message, 'err'));
+    }).catch(e => flash(MSG.fail.save + e.message, 'err'));
   };
 
   const doTest = () => {

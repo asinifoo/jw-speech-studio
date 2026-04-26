@@ -6,6 +6,7 @@ import { cleanMd } from '../../components/utils';
 import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import { useConfirm } from '../../providers/ConfirmProvider';
 import { useAlert } from '../../providers/AlertProvider';
+import { MSG } from '../../utils/messages';
 import OriginalBlock from './speech-input/OriginalBlock';
 import SaveActions from './speech-input/SaveActions';
 import OutlineSelectorBar from './speech-input/OutlineSelectorBar';
@@ -260,7 +261,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       });
       setSiExpanded(exp);
       setSiDraftInfo(null);
-      setSiSaveMsg('✓ 임시저장 불러오기 완료');
+      setSiSaveMsg(MSG.success.loadDraft);
     }
   };
 
@@ -269,7 +270,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     await draftDelete(siDraftInfo.draft_id);
     setSiNotes({}); setSiDetails({}); setSiExpanded({});
     setSiDraftInfo(null);
-    setSiSaveMsg('✓ 기존 임시저장 삭제, 새로 시작');
+    setSiSaveMsg(MSG.success.newDraft);
   };
 
   const handleLoadNote = () => {
@@ -279,7 +280,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       if (keys.length) setSiNotes(p => ({ ...p, [keys[0]]: text }));
     }
     setSiNoteInfo(null);
-    setSiSaveMsg('✓ 간단 메모 불러오기 완료');
+    setSiSaveMsg(MSG.success.loadMemo);
   };
 
   const handleSaveDraft = async () => {
@@ -304,8 +305,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
         // STT 원본은 존재만으로 전송 (링크 독립, 골자 전환 후에도 참조 유지)
         stt_original_text: siSttOriginalText || '',
       });
-      setSiSaveMsg('✓ 임시저장 완료');
-    } catch (e) { setSiSaveMsg('오류: ' + e.message); }
+      setSiSaveMsg(MSG.success.saveTransient);
+    } catch (e) { setSiSaveMsg(MSG.fail.save + e.message); }
     finally { setSiSaving(false); }
   };
 
@@ -395,7 +396,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           const did = `ETC_${siSpeaker.trim()}_${siDate.trim()}${sttSuffix}`;
           await draftDelete(did);
         } catch {}
-        setSiSaveMsg(`✓ ${res.total_new || 0}건 저장 완료 (임시저장 삭제됨)`);
+        setSiSaveMsg(MSG.helpers.saveBatch(res.total_new || 0));
         // ManageDbTab이 mode='mydb' 활성 시 체크하여 연설 탭 캐시 무효화.
         localStorage.setItem('jw-db-stale-tab', '연설');
       } else {
@@ -410,12 +411,12 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           subtopics: siSubtopics,
         });
         if (siTransferMemo) { try { await dbDelete(siTransferMemo.col, siTransferMemo.id); } catch {} setSiTransferMemo(null); }
-        setSiSaveMsg(`✓ ${res.total}건 저장 완료 (임시저장 삭제됨)`);
+        setSiSaveMsg(MSG.helpers.saveBatch(res.total));
         setSiNotes({}); setSiDetails({});
         // ManageDbTab이 mode='mydb' 활성 시 체크하여 연설 탭 캐시 무효화.
         localStorage.setItem('jw-db-stale-tab', '연설');
       }
-    } catch (e) { setSiSaveMsg('오류: ' + e.message); }
+    } catch (e) { setSiSaveMsg(MSG.fail.save + e.message); }
     finally { setSiCompleting(false); }
   };
 
