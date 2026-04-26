@@ -27,6 +27,27 @@ _CHAT_SESSIONS_PATH = os.path.join(os.path.expanduser("~/jw-system"), "chat_sess
 router = APIRouter()
 
 
+def _norm_text(s: str) -> str:
+    """요점 본문 정규화 (point_text 매칭용).
+    - trim
+    - 전각 공백 (U+3000) → 일반 공백
+    - 연속 공백 → 1칸
+    프론트 Gather.jsx _normText 와 동일 규칙 (변경 시 함께 수정).
+    """
+    if not s:
+        return ''
+    return re.sub(r'\s+', ' ', s.replace('　', ' ').strip())
+
+
+def _norm_pub(s: str) -> str:
+    """pub_code 정규화 (백엔드/프론트 동일 규칙).
+    「」 + 공백 제거, 소문자.
+    """
+    if not s:
+        return ''
+    return s.replace('「', '').replace('」', '').replace(' ', '').lower()
+
+
 def _load_pub_list(client) -> list:
     """publications 컬렉션 전체 로드 (Phase 3: referenced_by 배열 포함)."""
     out = []
@@ -105,18 +126,32 @@ def search_points(req: SearchRequest):
         }
 
         # 출판물 자동 매칭: 요점의 출판물 참조 → DB 검색
+        # 세션 5f §3.x: pub_code 양방향 부분 일치 통과 후
+        # referenced_by[].point_text 와 현재 point.title 정규화 비교 → 일치 시에만 추가.
+        # 의미: "DB referenced_by 에 같은 point_text 가 있으면 ✓" (시나리오 ②).
         if pub_list:
+            cur_text_norm = _norm_text(point.get("title", ""))
             for pub_ref in point.get("publications", []):
-                ref_norm = pub_ref.replace("「", "").replace("」", "").replace(" ", "").lower()
+                ref_norm = _norm_pub(pub_ref)
                 for pub in pub_list:
-                    code_norm = pub["pub_code"].replace("「", "").replace("」", "").replace(" ", "").lower()
+                    code_norm = _norm_pub(pub["pub_code"])
                     if ref_norm == code_norm or ref_norm in code_norm or code_norm in ref_norm:
-                        point_result["auto_publications"].append({
-                            "pub_code": pub["pub_code"],
-                            "point_content": pub["point_content"],
-                            "text": pub["text"],
-                            "matched_ref": pub_ref,
-                        })
+                        # point_text 매칭: referenced_by 의 point_text 중 하나라도 현재 본문과 일치
+                        refs = pub.get("refs", [])
+                        text_match = False
+                        if cur_text_norm:
+                            for r in refs:
+                                pt = _norm_text(r.get("point_text", ""))
+                                if pt and pt == cur_text_norm:
+                                    text_match = True
+                                    break
+                        if text_match:
+                            point_result["auto_publications"].append({
+                                "pub_code": pub["pub_code"],
+                                "point_content": pub["point_content"],
+                                "text": pub["text"],
+                                "matched_ref": pub_ref,
+                            })
                         break
 
         # 성구 자동 조회 (원래 참조 단위로 그룹화)

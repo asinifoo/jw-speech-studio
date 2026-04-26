@@ -175,6 +175,45 @@ def lookup_pub_title(code: str = ""):
     return {"pub_title": "", "pub_type": "", "reference": ref, "pub_code": clean_code, "exact_match": exact_match}
 
 
+@router.post("/api/publications/match-points")
+def match_publication_points(req: dict):
+    """텍스트 모드 ✓ 매칭용 일괄 조회 (세션 5f §3.x).
+
+    Request: { "items": [{ "point_text": str, "pub_codes": [str, ...] }, ...] }
+    Response: { "matched": ["normPointText__normPubCode", ...] }  (평탄 매칭 키 배열)
+
+    의미: pub_code 양방향 부분 일치 + referenced_by[].point_text 와 item.point_text
+    정규화 비교 → 일치 시 매칭 키 추가. chat.py _norm_text/_norm_pub 동일 규칙.
+    프론트 Gather.jsx 의 _normText/_normPub 와도 일치 (변경 시 함께 수정).
+    """
+    from routers.chat import _load_pub_list, _norm_text, _norm_pub
+    items = (req or {}).get("items", []) or []
+    client = get_db()
+    pub_list = _load_pub_list(client)
+    matched = set()
+    for item in items:
+        cur_text_norm = _norm_text(item.get("point_text", ""))
+        if not cur_text_norm:
+            continue
+        for token in item.get("pub_codes", []) or []:
+            tok_norm = _norm_pub(token)
+            if not tok_norm:
+                continue
+            for pub in pub_list:
+                code_norm = _norm_pub(pub.get("pub_code", ""))
+                if not code_norm:
+                    continue
+                if tok_norm == code_norm or tok_norm in code_norm or code_norm in tok_norm:
+                    refs = pub.get("refs", [])
+                    for r in refs:
+                        pt = _norm_text(r.get("point_text", ""))
+                        if pt and pt == cur_text_norm:
+                            matched.add(f"{cur_text_norm}__{tok_norm}")
+                            break
+                    break
+    return {"matched": sorted(matched)}
+
+
 @router.get("/api/publications/outline/{outline_num}")
 def get_publications_by_outline(outline_num: str, outline_type: str = ""):
     """골자 번호로 출판물 조회 (Phase 3: referenced_by 배열 기반)."""
