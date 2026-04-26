@@ -387,6 +387,17 @@ export async function setOllamaCtx(ctx, target = 'filter') {
   return res.json();
 }
 
+// 세션 5f §3.x Commit 2: text 모드 ✓ 매칭. point_text + pub_code 일괄 조회.
+export async function matchPubPoints(items) {
+  const res = await fetch(`${API}/publications/match-points`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  });
+  if (!res.ok) throw new Error('Failed to match pub points');
+  return res.json();
+}
+
 export async function lookupPubTitle(code) {
   const res = await fetch(`${API}/publications/lookup?code=${encodeURIComponent(code)}`);
   return res.json();
