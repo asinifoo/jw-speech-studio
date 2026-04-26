@@ -409,7 +409,6 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           mode: siMode, notes: siNotes, details: siDetails,
           subtopics: siSubtopics,
         });
-        if (res.status === 'error') { setSiSaveMsg(res.message); setSiCompleting(false); return; }
         if (siTransferMemo) { try { await dbDelete(siTransferMemo.col, siTransferMemo.id); } catch {} setSiTransferMemo(null); }
         setSiSaveMsg(`✓ ${res.total}건 저장 완료 (임시저장 삭제됨)`);
         setSiNotes({}); setSiDetails({});

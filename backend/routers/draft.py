@@ -3,7 +3,7 @@ import os
 import json
 import re
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from db import get_db, get_embedding
 from services.outline_parser import _TYPE_NAMES, _outline_prefix, _ver_safe
 
@@ -258,7 +258,7 @@ def complete_draft(req: dict):
             subtopics.append({"title": st_key, "num": st_num, "points": pts})
 
     if not subtopics:
-        return {"status": "error", "message": "입력된 요점이 없습니다."}
+        raise HTTPException(status_code=400, detail="입력된 요점이 없습니다.")
 
     source = "note" if mode == "quick" else "speech"
     files = [{
