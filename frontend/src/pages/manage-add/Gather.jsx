@@ -1022,6 +1022,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           // text 모드 출처 — 로컬 복귀 (App.jsx onSaveReturn 우회)
           setFromPub(false);
           setSiFromOutlineText(false);
+          // 세션 5f Commit F-2: 방금 저장한 pub_code 매칭 Set 즉시 추가 (✓ 즉시 표시)
+          if (form.pub_code) setTxtPubMatched(s => new Set([...s, _normPub(form.pub_code)]));
           setTimeout(() => {
             setSubTab('gather');
             setGatherMode('text');
