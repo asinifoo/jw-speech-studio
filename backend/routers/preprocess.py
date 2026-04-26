@@ -1159,12 +1159,12 @@ def search_speaker_memo(req: dict):
             # rating 순 → 최신순
             items.sort(key=lambda x: (x["metadata"].get("rating", 0), x["metadata"].get("date", "")), reverse=True)
             return {"results": items[:top_k], "total": len(items)}
-        except Exception:
-            return {"results": [], "total": 0}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"연사메모 조회 실패: {str(e)}")
     try:
         query_emb = get_embedding(query)
     except Exception as e:
-        return {"results": [], "total": 0, "error": str(e)}
+        raise HTTPException(status_code=500, detail=f"임베딩 생성 실패: {str(e)}")
     from db import hybrid_search
     items = hybrid_search(client, "speech_expressions", query, query_emb, top_k=top_k * 3)
     filtered = [it for it in items if safe_meta(it).get("source", "") == "speaker_memo"]
