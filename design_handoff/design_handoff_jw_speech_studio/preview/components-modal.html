@@ -1,28 +1,48 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="../colors_and_type.css">
 <style>
 body{margin:0;padding:16px;background:var(--bg);font-family:var(--font-sans);color:var(--c-text);display:flex;flex-direction:column;gap:14px}
-.modal-backdrop{background:rgba(0,0,0,0.3);border-radius:12px;padding:24px;display:flex;align-items:center;justify-content:center}
-.modal{background:var(--bg-card);border-radius:12px;border:1px solid var(--bd);width:100%;max-width:360px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.15)}
-.modal-hd{padding:12px 16px;border-bottom:1px solid var(--bd-light);display:flex;align-items:center;gap:8px}
-.modal-hd .t{font-size:0.929rem;font-weight:700;color:var(--c-text-dark);flex:1}
-.modal-hd .close{background:none;border:none;font-size:16px;color:var(--c-muted);cursor:pointer}
-.modal-bd{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
-.modal-ft{padding:10px 16px;border-top:1px solid var(--bd-light);display:flex;gap:8px;justify-content:flex-end}
-.btn{border:none;border-radius:8px;padding:8px 16px;font-size:0.857rem;font-weight:600;font-family:inherit;cursor:pointer}
-.btn-p{background:#1D9E75;color:#fff}
-.btn-s{background:#EFEFF4;color:#3C3C43}
-label{font-size:0.75rem;color:#8E8E93;font-weight:600}
-input{background:#EFEFF4;border:none;border-radius:8px;padding:8px 10px;font-size:0.857rem;font-family:inherit;color:#000;outline:none;width:100%;box-sizing:border-box}
+.modal-backdrop{background:rgba(0,0,0,0.5);border-radius:12px;padding:24px;display:flex;align-items:center;justify-content:center}
+.modal{background:var(--bg-card);border-radius:12px;padding:24px;max-width:400px;width:100%}
+.modal .t{font-size:1rem;font-weight:700;color:var(--c-text-dark);margin-bottom:8px}
+.modal .bd{font-size:0.786rem;color:var(--c-muted);margin-bottom:16px;white-space:pre-wrap}
+.modal .ft{display:flex;gap:8px;justify-content:flex-end}
+.btn{border:none;border-radius:8px;padding:8px 16px;font-size:0.857rem;font-weight:700;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.btn-p{background:var(--accent);color:#fff}
+.btn-s{background:var(--bg-subtle);color:var(--c-text);border:1px solid var(--bd)}
+.btn-d{background:var(--c-danger);color:#fff}
 </style></head><body>
+
+<!-- Confirm modal -->
 <div class="modal-backdrop">
   <div class="modal">
-    <div class="modal-hd"><span class="t">출판물 추가</span><button class="close">✕</button></div>
-    <div class="modal-bd">
-      <div><label>출판물 코드</label><input placeholder="예: w24-04" style="margin-top:4px"></div>
-      <div><label>출판물명</label><input placeholder="「파수대」 2024년 4월호" style="margin-top:4px"></div>
-      <div><label>키워드</label><input placeholder="영적 양식 · 위로" style="margin-top:4px"></div>
-    </div>
-    <div class="modal-ft"><button class="btn btn-s">취소</button><button class="btn btn-p">저장</button></div>
+    <div class="t">골자 삭제</div>
+    <div class="bd">S-34_035 '영적 양식을 즐깁니다'
+이 골자의 모든 요점이 삭제됩니다.
+이 작업은 되돌릴 수 없습니다.</div>
+    <div class="ft"><button class="btn btn-s">취소</button><button class="btn btn-d">삭제</button></div>
   </div>
 </div>
+
+<!-- Alert modal -->
+<div style="margin-top:8px">
+  <div class="modal" style="border:1px solid var(--bd)">
+    <div class="t" style="color:var(--accent)">저장 완료</div>
+    <div class="bd">3개의 요점이 speech_expressions에 저장되었습니다.
+draft가 삭제되었습니다.</div>
+    <div class="ft"><button class="btn btn-p">확인</button></div>
+  </div>
+</div>
+
+<!-- Form modal -->
+<div style="margin-top:8px">
+  <div class="modal" style="border:1px solid var(--bd)">
+    <div class="t">출판물 추가</div>
+    <div class="bd" style="display:flex;flex-direction:column;gap:8px">
+      <div><label style="font-size:0.75rem;color:var(--c-muted);font-weight:600;display:block;margin-bottom:2px">출판물 코드</label><input style="width:100%;box-sizing:border-box;background:var(--bg-subtle);border:none;border-radius:8px;padding:8px 10px;font-size:0.857rem;font-family:inherit;color:var(--c-text-dark);outline:none" placeholder="예: w24-04"></div>
+      <div><label style="font-size:0.75rem;color:var(--c-muted);font-weight:600;display:block;margin-bottom:2px">키워드</label><input style="width:100%;box-sizing:border-box;background:var(--bg-subtle);border:none;border-radius:8px;padding:8px 10px;font-size:0.857rem;font-family:inherit;color:var(--c-text-dark);outline:none" placeholder="영적 양식 · 위로"></div>
+    </div>
+    <div class="ft" style="margin-top:16px"><button class="btn btn-s">취소</button><button class="btn btn-p">저장</button></div>
+  </div>
+</div>
+
 </body></html>

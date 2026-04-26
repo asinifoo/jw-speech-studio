@@ -126,11 +126,41 @@ Tight, iOS-like: `2, 4, 6, 8, 10, 12, 14, 16, 24` px. Card padding: `8px 10px` o
 
 ---
 
-## Components (9 new + updated SearchCard)
+## Components (12 new + updated SearchCard)
+
+### 0. Design Tokens (styles.js updates)
+
+**New tokens added to `styles.js`:**
+
+**Card tokens:**
+- `S.card` — container card: `borderRadius: 12`, `border: 1px solid var(--bd)`
+- `S.cardItem` — data item card: `borderRadius: 8`, `border: 1px solid var(--bd-soft)`, `marginBottom: 6`
+- `S.cardItemHeader` — `padding: 8px 10px`, `background: var(--bg-subtle)`, `borderBottom: 1px solid var(--bd-light)`, `cursor: pointer`
+- `S.cardItemBody` — `padding: 8px 10px`
+- `S.cardItemMeta` — `display: grid`, `gridTemplateColumns: auto 1fr`, `gap: 2px 8px`
+
+**XS button presets:**
+- `S.btnXsAccent` — `border: 1px solid var(--tint-green-bd)`, `color: var(--accent)` — for default cards
+- `S.btnXsOrange` — `border: 1px solid var(--tint-orange-bd)`, `color: var(--accent-orange)` — for 원문/연사메모
+- `S.btnXsPurple` — `border: 1px solid var(--tint-purple-bd)`, `color: var(--accent-purple)` — for AI/출판물
+- `S.btnXsDanger` — `border: 1px solid var(--tint-red-bd)`, `color: var(--c-danger)` — for destructive actions
+
+**New files:** `preview/components-card-item.html`, `preview/components-xs-presets.html`
+
+**Hooks:**
+- `useCardExpand(threshold=120)` — returns `{ expanded, toggle, isLong, bodyStyle, fadeStyle }`
+  - Collapsed: `max-height: 4.2em`, `overflow: hidden`
+  - Expanded: `max-height: 400px`, `overflow: auto`
+  - Fade: `linear-gradient(transparent, bgColor)`, `height: 2em`
+
+**Providers (wrap `<App>`):**
+- `ConfirmProvider` → `useConfirm()` → `confirm(title, msg, opts)` returns Promise<boolean>
+- `AlertProvider` → `useAlert()` → `alert(title, msg)` for notifications
+- Both use `Modal.jsx` internally
 
 ### 1. SearchCard — 3 Presets
 
-**File**: `ui_kit/SearchCard.jsx`, `preview/components-card-presets.html`
+**File**: `ui_kit/SearchCard.jsx`, `preview/components-card-presets.html`, `preview/components-card-item.html`
 
 Three card presets with distinct action button colors:
 
@@ -168,13 +198,29 @@ Three card presets with distinct action button colors:
 
 ### 2. Modal
 
-**File**: `preview/components-modal.html`
+**File**: `preview/components-modal.html` (updated to match `Modal.jsx`)
 
-- Backdrop: `rgba(0,0,0,0.3)`
-- Container: `bg-card`, `border-radius: 12`, `border: 1px solid var(--bd)`, `max-width: 360px`, `box-shadow: 0 4px 24px rgba(0,0,0,0.15)`
-- Header: `padding: 12px 16px`, bottom border, title (0.929rem/700) + ✕ close button
-- Body: `padding: 14px 16px`, stacked form fields
-- Footer: `padding: 10px 16px`, top border, right-aligned [취소][저장] buttons
+Shared `Modal.jsx` component — 3 usage patterns:
+
+**Confirm modal** (via `useConfirm()`):
+- Backdrop: `rgba(0,0,0,0.5)`, click to close
+- Container: `background: var(--bg-card)`, `borderRadius: 12`, `padding: 24`, `maxWidth: 400`
+- Title: `fontSize: 1rem`, `fontWeight: 700`, `color: var(--c-text-dark)` (or `titleColor` prop)
+- Body: `fontSize: 0.786rem`, `color: var(--c-muted)`, `whiteSpace: pre-wrap`
+- Actions: flex row, right-aligned, `gap: 8` — [취소 secondary][삭제 danger]
+
+**Alert modal** (via `useAlert()`):
+- Same container, title in accent color
+- Single [확인 primary] button
+
+**Form modal:**
+- Body contains form fields (label + input)
+- Actions: [취소 secondary][저장 primary]
+
+**Behavior:**
+- ESC key closes (configurable via `closeOnEsc` prop)
+- Body scroll locked while open (`overflow: hidden` + scrollbar padding compensation)
+- Backdrop click closes via `onClose`
 
 ### 3. Toast Notifications
 
@@ -320,7 +366,9 @@ design_handoff_jw_speech_studio/
 │       └── ManageScreen.jsx           ← 관리 tab
 └── preview/                           ← static HTML component specimens
     ├── components-card-presets.html    ← 3 card presets side-by-side
-    ├── components-modal.html
+    ├── components-card-item.html      ← S.cardItem tokens + 3 presets + expand (NEW)
+    ├── components-xs-presets.html     ← btnXsAccent/Orange/Purple/Danger (NEW)
+    ├── components-modal.html          ← Confirm / Alert / Form (UPDATED)
     ├── components-toast.html
     ├── components-states.html         ← empty + spinner + skeleton
     ├── components-dropdown-date.html
@@ -338,3 +386,6 @@ design_handoff_jw_speech_studio/
 4. **Existing `styles.js` tokens** (`S.btnXs`, `S.card`, `S.input`, etc.) should be extended, not replaced.
 5. **SearchCard presets** can be implemented by passing a `preset` prop to the existing `SearchCard.jsx` component and branching button rendering accordingly.
 6. **New components** (Modal, Toast, FilterPanel, RefinePanel, EditableBlock, PresetPills) should follow the same inline-style pattern used throughout the codebase.
+7. **`useCardExpand` hook** is now the standard for card body expand/collapse — use it instead of hand-rolling max-height logic.
+8. **`Modal.jsx`** is the shared modal — use `useConfirm()` / `useAlert()` providers instead of `window.confirm()`.
+9. **`S.cardItem*` tokens** should be used for all data item cards (search results, DB entries, drafts).
