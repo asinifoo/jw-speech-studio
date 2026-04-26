@@ -175,6 +175,20 @@ def lookup_pub_title(code: str = ""):
     return {"pub_title": "", "pub_type": "", "reference": ref, "pub_code": clean_code, "exact_match": exact_match}
 
 
+@router.get("/api/publications/codes")
+def list_publication_codes():
+    """publications 컬렉션의 pub_code 평탄 목록 (text 모드 매칭 ✓ 표시용).
+
+    chat.py:_load_pub_list 재사용. 클라이언트 (Gather.jsx) 가 [파싱] 직후
+    1회 호출 → 정규화 + 양방향 부분 일치 (chat.py:113-119 동일 규칙).
+    """
+    from routers.chat import _load_pub_list
+    client = get_db()
+    pub_list = _load_pub_list(client)
+    codes = [p.get("pub_code", "") for p in pub_list if p.get("pub_code")]
+    return {"codes": codes}
+
+
 @router.get("/api/publications/outline/{outline_num}")
 def get_publications_by_outline(outline_num: str, outline_type: str = ""):
     """골자 번호로 출판물 조회 (Phase 3: referenced_by 배열 기반)."""

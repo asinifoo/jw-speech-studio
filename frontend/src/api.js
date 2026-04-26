@@ -392,6 +392,14 @@ export async function lookupPubTitle(code) {
   return res.json();
 }
 
+// 세션 5f Commit F: publications 컬렉션의 pub_code 평탄 목록.
+// text 모드 [파싱] 직후 ✓ 매칭 표시용. chat.py:113 양방향 부분 일치 클라이언트 재현.
+export async function getPublicationCodes() {
+  const res = await fetch(`${API}/publications/codes`);
+  if (!res.ok) throw new Error('Failed to load pub codes');
+  return res.json();
+}
+
 export async function getCategories() {
   const res = await fetch(`${API}/categories`);
   return res.json();
