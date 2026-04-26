@@ -79,22 +79,46 @@ def test_ref_key_basic():
 
 # ─── _upsert_referenced_by ────────────────────────────
 
-def test_ref_arr_updated_when_same_key():
+def test_ref_arr_updated_when_full_5tuple_match():
+    """세션 5f §3.x: 5-tuple (4-tuple + point_text) 모두 일치 → idempotent updated."""
     arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
-            "point_num": "1.1", "point_text": "old"}]
+            "point_num": "1.1", "point_text": "본문", "outline_title": "old"}]
     new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
-               "point_num": "1.1", "point_text": "new"}
+               "point_num": "1.1", "point_text": "본문", "outline_title": "new"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "updated"
     assert len(out) == 1
-    assert out[0]["point_text"] == "new"
+    assert out[0]["outline_title"] == "new"
 
 
 def test_ref_arr_appended_when_different_point():
+    """다른 point_num → append (기존 동작)."""
     arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
             "point_num": "1.1", "point_text": "first"}]
     new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
                "point_num": "1.2", "point_text": "second"}
+    out, action = _upsert_referenced_by(arr, new_ref)
+    assert action == "appended"
+    assert len(out) == 2
+
+
+def test_ref_arr_appended_when_same_4tuple_different_text():
+    """세션 5f §3.x: 같은 4-tuple + 다른 point_text → append (기존엔 덮어쓰기)."""
+    arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+            "point_num": "1.1", "point_text": "old text"}]
+    new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+               "point_num": "1.1", "point_text": "new text"}
+    out, action = _upsert_referenced_by(arr, new_ref)
+    assert action == "appended"
+    assert len(out) == 2
+
+
+def test_ref_arr_appended_when_empty_4tuple_different_text():
+    """세션 5f §3.x: 빈 4-tuple + 다른 point_text → append (사용자 시나리오)."""
+    arr = [{"outline_type": "", "outline_num": "", "version": "",
+            "point_num": "", "point_text": "여호와께서는 자신의 아들들을"}]
+    new_ref = {"outline_type": "", "outline_num": "", "version": "",
+               "point_num": "", "point_text": "여호와께서는 자신의"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
     assert len(out) == 2
@@ -140,14 +164,29 @@ def test_scenario_A_created():
     assert json.loads(stored["meta"]["keywords"]) == ["kw1", "kw2"]
 
 
-def test_scenario_B_updated_same_ref():
+def test_scenario_B_appended_when_same_4tuple_different_text():
+    """세션 5f §3.x: _REF_KEY_FIELDS 5-tuple 변경 후 같은 4-tuple + 다른 point_text → append.
+    이전 (4-tuple) 동작은 'updated' 였음. 의도 변경 — 사용자 다른 본문은 별도 entry.
+    """
     col = FakeCollection()
     _upsert_publication(col, _pub_payload(point_text="v1 텍스트"))
     res2 = _upsert_publication(col, _pub_payload(point_text="v2 텍스트"))
+    assert res2["action"] == "appended"
+    refs = json.loads(col.store[res2["id"]]["meta"]["referenced_by_json"])
+    assert len(refs) == 2
+    texts = sorted([r["point_text"] for r in refs])
+    assert texts == ["v1 텍스트", "v2 텍스트"]
+
+
+def test_scenario_B_updated_when_full_5tuple_match():
+    """세션 5f §3.x: 5-tuple 모두 일치 → idempotent updated."""
+    col = FakeCollection()
+    _upsert_publication(col, _pub_payload(point_text="v1 텍스트"))
+    res2 = _upsert_publication(col, _pub_payload(point_text="v1 텍스트"))
     assert res2["action"] == "updated"
     refs = json.loads(col.store[res2["id"]]["meta"]["referenced_by_json"])
     assert len(refs) == 1
-    assert refs[0]["point_text"] == "v2 텍스트"
+    assert refs[0]["point_text"] == "v1 텍스트"
 
 
 def test_scenario_C_appended_different_point():

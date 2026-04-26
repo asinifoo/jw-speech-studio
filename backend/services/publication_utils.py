@@ -33,7 +33,7 @@ def _ref_key_str(ot: str, on: str, ver: str, pn: str) -> str:
     return f"{prefix}{ver_safe}:{pn}"
 
 
-_REF_KEY_FIELDS = ("outline_type", "outline_num", "version", "point_num")
+_REF_KEY_FIELDS = ("outline_type", "outline_num", "version", "point_num", "point_text")
 
 
 def _is_meaningful_ref(ref: dict) -> bool:
@@ -52,7 +52,8 @@ def _is_meaningful_ref(ref: dict) -> bool:
 def _upsert_referenced_by(existing: list, new_ref: dict):
     """기존 referenced_by 배열에 새 참조 항목 병합.
 
-    유일 키: outline_type + outline_num + version + point_num
+    유일 키: outline_type + outline_num + version + point_num + point_text
+    (세션 5f §3.x: 빈 4-tuple 끼리 덮어쓰기 회피 + 다른 본문은 별도 entry).
     반환: (갱신된 배열, "updated"|"appended")
     """
     new_key = tuple(new_ref.get(f, "") for f in _REF_KEY_FIELDS)
