@@ -1347,28 +1347,3 @@ def delete_speech(doc_id: str):
     return {"deleted": deleted}
 
 
-@router.delete("/api/preprocess/publication/{doc_id:path}")
-def delete_publication(doc_id: str, ref_key: str = ""):
-    """출판물 삭제 — ref_key 있으면 참조 1건만, 없으면 레코드 전체.
-
-    ref_key 형식: '{outline_id}:{point_num}' (예: 'S-34_035_v1-20:1.1.1')
-    """
-    client = get_db()
-    col = client.get_or_create_collection("publications", metadata={"hnsw:space": "cosine"})
-
-    if ref_key:
-        from services.publication_utils import _delete_reference
-        result = _delete_reference(col, doc_id, ref_key)
-        _bm25_cache.clear()
-        return result
-
-    # 레코드 전체 삭제
-    try:
-        target = col.get(ids=[doc_id], include=[])
-        if not target or not target["ids"]:
-            return {"action": "record_not_found", "deleted": 0}
-        col.delete(ids=[doc_id])
-        _bm25_cache.clear()
-        return {"action": "record_deleted", "deleted": 1}
-    except Exception as e:
-        return {"action": "error", "deleted": 0, "message": str(e)}
