@@ -1027,6 +1027,12 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
           // text 모드 출처 — 로컬 복귀 (App.jsx onSaveReturn 우회)
           setFromPub(false);
           setSiFromOutlineText(false);
+          // 점 단위 갱신: 방금 저장한 (point_text, pub_code) 매칭 키만 추가.
+          // [준비]>[연설] App.jsx:610-619 패턴 동일 의미 (matchPubPoints 재호출 X).
+          if (form.point_summary && form.pub_code) {
+            const txtKey = `${_normText(form.point_summary)}__${_normPub(form.pub_code)}`;
+            setTxtPubMatched(s => new Set([...s, txtKey]));
+          }
           setTimeout(() => {
             setSubTab('gather');
             setGatherMode('text');
