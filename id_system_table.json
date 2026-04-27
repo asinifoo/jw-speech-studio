@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft-07/schema",
   "title": "JW Speech Studio v2 — ID System Table",
   "description": "분류 체계 SSOT 정리 자료. 5i 세션 §3.5 종결 시점 동기화.",
-  "version": "1.1.0",
-  "session": "5i",
-  "tracking_item": "§3.5-id-system-doc-update (5i 종결 ✅)",
+  "version": "1.2.0",
+  "session": "5j",
+  "tracking_item": "§3.x-references-schema (5j 종결 ✅)",
   "last_updated": "2026-04-28",
   "sources": [
     "frontend/src/utils/outlineCategory.js",
@@ -469,13 +469,12 @@
       },
       {
         "path": "chroma_db/",
-        "description": "ChromaDB 벡터 저장소",
+        "description": "ChromaDB 벡터 저장소 (활성 4 컬렉션, 5j §3.x-references-schema 종결 시점)",
         "collections": [
+          "jw_ai",
           "speech_points",
           "speech_expressions",
-          "publications",
-          "transcripts",
-          "notes"
+          "publications"
         ],
         "metadata_schema_5i": {
           "description": "5i §3.x-schema-unify 트랙 종결 — version/title legacy 키 영영 outline_version/outline_title 통일.",
@@ -485,8 +484,10 @@
           ],
           "speech_points": "outline_version 사용 (legacy 'version' 폐기)",
           "speech_expressions": "outline_version 사용 (legacy 'version' 폐기)",
-          "publications": "publications metadata 영영 outline_title ✅. reference_info 영영 'version' 잔존 (별 트랙 §3.x-publication-schema)",
-          "references": "golza_* legacy 키 잔존 (별 트랙 §3.x-references-schema)"
+          "publications": "publications metadata 영영 outline_title ✅. reference_info 영영 'version' 잔존 (별 트랙 §3.x-publication-schema)"
+        },
+        "deprecated_collections": {
+          "references": "5j §3.x-references-schema 종결 — 폐기. 활성 코드 lookup 0 + doc 본문 100% substring으로 speech_expressions(source=speaker_memo)에 superset 보존 + 연사 명단 100% 이주 (44/44) → 정보 손실 0 확인 후 사용자 직접 delete_collection (P-4 정책 정합)"
         }
       }
     ]
@@ -593,7 +594,23 @@
       { "id": "§3.x-docx-parser-schema", "description": "DOCX 파서 (outline_parser.py L861) parsed.version → parsed.outline_version 통일" },
       { "id": "§3.x-publication-schema", "description": "publication reference_info 'version' / 'pub_title' / 'pub_code' 영영 SSOT 통일 + _REF_KEY_FIELDS 정합" },
       { "id": "§3.x-draft-stt-schema", "description": "draft.py / stt.py 영영 별 schema (version / title 키 영영 사용)" },
-      { "id": "§3.x-references-schema", "description": "ChromaDB references 컬렉션 (54건) golza_num/golza_type/golza_version legacy 키 → outline_* 통일" }
+      { "id": "§3.x-references-schema", "description": "ChromaDB references 컬렉션 (54건) golza_num/golza_type/golza_version legacy 키 → outline_* 통일", "status": "5j 종결 ✅ (컬렉션 폐기, P-4 정책)" }
+    ]
+  },
+
+  "session_5j_summary": {
+    "description": "5j 세션 종결 트랙 요약",
+    "tracks_closed": [
+      {
+        "id": "hotfix-generate-password-nameerror",
+        "commits": 1,
+        "description": "generate.py _verify_password 중복 정의 정정 — 81b5b0b 핫리로드 복원 시 두 번째 정의 (L142~146) bare PASSWORD_HASH 미치환 → POST /api/generate/stream NameError 운영 차단 hotfix"
+      },
+      {
+        "id": "§3.x-references-schema",
+        "commits": 1,
+        "description": "references 컬렉션 (54건, golza_* legacy 키) 폐기. 활성 코드 lookup 0 + 화면 백킹 단절 + doc 본문 100% substring 보존 (speech_expressions superset) + 연사 명단 100% 이주 (44/44) 검증 → 사용자 직접 delete_collection. P-4 정책 정합."
+      }
     ]
   }
 }

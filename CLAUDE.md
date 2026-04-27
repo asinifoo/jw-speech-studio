@@ -124,6 +124,8 @@
 | `speech_expressions` | 연설/메모/봉사/방문 | ✅ (speaker_memo 제외) | bge-m3 1024차원 |
 | `publications` | 출판물 본문 | ✅ | bge-m3 1024차원 |
 
+> **폐기 컬렉션** (5j §3.x-references-schema 종결): `references` (54건, golza_* legacy 메타) — 화면 백킹 단절 + doc 본문 100% substring으로 `speech_expressions`(source=speaker_memo)에 superset 보존 + 연사 명단 100% 이주 검증 후 사용자 직접 `delete_collection`. P-4 정책 정합.
+
 ### speech_points 저장 규칙 (version 단독 식별)
 
 - **document ID 패턴**: `{type}_{num}_v{version-safe}_{point_num}`
