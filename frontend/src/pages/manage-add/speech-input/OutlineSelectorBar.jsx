@@ -41,13 +41,13 @@ export default function OutlineSelectorBar({
                 {matched.map(g => (
                   <div key={g.filename} onMouseDown={() => { setQueryFocus(false); onSelectOutline(g); }} style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem', flexShrink: 0 }}>{getOutlinePrefix(g.outline_type, g.outline_num)}</span>
-                    {g.version && <span style={{
+                    {g.outline_version && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
                       background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
                       flexShrink: 0, lineHeight: 1.3,
-                    }}>v{g.version}</span>}
-                    <span style={{ flex: 1, fontSize: '0.786rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
+                    }}>v{g.outline_version}</span>}
+                    <span style={{ flex: 1, fontSize: '0.786rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.outline_title}</span>
                     <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{getOutlineLabel(g.outline_type, { withCategory: true })}</span>
                   </div>
                 ))}

@@ -879,7 +879,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       setSttReviewOutlineQuery('');
       return;
     }
-    const version = g.version || '';
+    const version = g.outline_version || '';
     const num = g.num || g.outline_num || '';
     const otype = g.outline_type || '';
     let outlineId = g.outline_id || '';
@@ -1293,10 +1293,10 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                   {m.date && <span style={{ color: 'var(--c-dim)' }}>· {m.date}</span>}
                                 </> : <>
                                   <span style={{ fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>
-                                  {m.title && <span style={{ color: 'var(--c-dim)' }}>— {m.title}</span>}
+                                  {m.outline_title && <span style={{ color: 'var(--c-dim)' }}>— {m.outline_title}</span>}
                                   {m.speaker && <span style={{ color: 'var(--accent-orange)' }}>· {m.speaker}</span>}
                                   {m.date && <span style={{ color: 'var(--c-dim)' }}>· {m.date}</span>}
-                                  {m.version && <span style={{ color: 'var(--c-dim)' }}>· v{m.version}</span>}
+                                  {m.outline_version && <span style={{ color: 'var(--c-dim)' }}>· v{m.outline_version}</span>}
                                 </>}
                                 {fSt === 'done' && <span style={{ color: 'var(--accent)', fontSize: '0.786rem', marginLeft: 'auto' }}>저장됨</span>}
                                 {fSt === 'updated' && <span style={{ color: 'var(--accent-brown)', fontSize: '0.786rem', marginLeft: 'auto' }}>{fMsg || '참조 추가'}</span>}
@@ -1826,7 +1826,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 180, overflowY: 'auto', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', marginTop: 2 }}>
                                   {sttReviewOutlines.map((g, gi) => {
                                     const pfx = getOutlinePrefix(g.outline_type, g.outline_num || g.num);
-                                    const ver = g.version || '';
+                                    const ver = g.outline_version || '';
                                     return (
                                       <div key={`${pfx}_${ver}_${gi}`}
                                         onMouseDown={() => { selectSttReviewOutline(g); setSttReviewOutlineOpen(false); }}
@@ -2077,8 +2077,8 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           ...p,
                           outlineType: meta.outline_type || p.outlineType,
                           outlineNum: meta.outline_num || p.outlineNum,
-                          version: meta.version || p.version,
-                          outlineTitle: meta.title || p.outlineTitle,
+                          version: meta.outline_version || p.version,
+                          outlineTitle: meta.outline_title || p.outlineTitle,
                           note: meta.note || '',
                           duration: meta.total_time != null ? `${meta.total_time}분` : p.duration,
                           year: '',
@@ -2545,7 +2545,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           }
                           if (!subtopics.length) subtopics.push({ num: 0, title: '', time: txtMeta.duration, points: [] });
                           const payload = {
-                            files: [{ meta: { outline_type: txtMeta.outlineType, outline_type_name: getOutlineTypeInfo(txtMeta.outlineType).name, outline_num: txtMeta.outlineNum, title: txtMeta.outlineTitle, version: txtMeta.version, time: txtMeta.duration, note: txtMeta.note || '' }, subtopics }],
+                            files: [{ meta: { outline_type: txtMeta.outlineType, outline_type_name: getOutlineTypeInfo(txtMeta.outlineType).name, outline_num: txtMeta.outlineNum, outline_title: txtMeta.outlineTitle, outline_version: txtMeta.version, time: txtMeta.duration, note: txtMeta.note || '' }, subtopics }],
                             overwrite: false,
                           };
                           const dupCheck = await checkDuplicates({ files: [{ ...payload.files[0], file_format: 'outline' }] });

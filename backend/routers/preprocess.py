@@ -151,14 +151,13 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
         filename = file.filename or ""
 
         # ── 본문 메타 우선 → 파일명 split fallback (5h §3.2 SSOT 헬퍼) ──
-        # SSOT 키 정합: outline_version / outline_title 영영 그대로 (5i §3.x-schema-unify commit 2).
-        # 기존 schema 호환 (frontend Gather.jsx L2080-2081): title 키 영영 보존.
+        # SSOT 키 통일: outline_title / outline_version (5i §3.x-schema-unify commit 3).
         # memo 영영 사용자 카드 메모 영역 (FreeSearchPage 입력 UI) — 빈 값 초기화.
         parsed = parse_md_meta(content, filename)
         meta = {
             "outline_type": parsed["outline_type"],
             "outline_num": parsed["outline_num"],
-            "title": parsed["outline_title"],
+            "outline_title": parsed["outline_title"],
             "outline_version": parsed["outline_version"],
             "time": parsed["time"],
             "note": parsed["note"],
@@ -331,7 +330,7 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
         total_pubs = len(file_publications)
         if total_points == 0 and total_pubs == 0:
             warnings.append("요점/출판물이 하나도 파싱되지 않았습니다")
-        if not meta["title"]:
+        if not meta["outline_title"]:
             warnings.append("제목이 감지되지 않았습니다")
         if not meta["outline_num"]:
             warnings.append("골자 번호가 감지되지 않았습니다")
@@ -528,7 +527,7 @@ def save_outline(req: dict):
         ot = normalize_outline_type(meta.get("outline_type", ""))
         on = meta.get("outline_num", "")
         ot_name = meta.get("outline_type_name", "") or _TYPE_NAMES.get(ot, ot)
-        title = meta.get("title", "")
+        title = meta.get("outline_title", "")
         version = meta.get("outline_version", "")
         vs = _ver_safe(version)
 
@@ -656,7 +655,7 @@ def save_speech(req: dict):
         ot = normalize_outline_type(meta.get("outline_type", ""))
         ot_name = meta.get("outline_type_name", "") or _TYPE_NAMES.get(ot, ot)
         on = meta.get("outline_num", "")
-        title = meta.get("title", "")
+        title = meta.get("outline_title", "")
         version = meta.get("outline_version", "")
         vs = _ver_safe(version)
         speaker = meta.get("speaker", "")
@@ -873,7 +872,7 @@ def save_publication(body: dict):
         ot = normalize_outline_type(meta.get("outline_type", ""))
         on = meta.get("outline_num", "")
         ver = meta.get("outline_version", "")
-        outline_title = meta.get("title", "")
+        outline_title = meta.get("outline_title", "")
 
         for pub in f.get("publications", []):
             try:

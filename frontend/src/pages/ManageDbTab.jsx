@@ -178,13 +178,13 @@ export default function ManageDbTab({ mode }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, minHeight: 28 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: '0.786rem', color: 'var(--c-muted)' }}>
                 <input type="checkbox" checked={dbSelected.size > 0 && dbSelected.size === (() => {
-                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`] = true; }); return Object.keys(g).length; }
+                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_version || ''}`] = true; }); return Object.keys(g).length; }
                   if (viewSource === '연설' && speechFilter === '그룹') { const g = {}; dbEntries.forEach(r => { const m = r.metadata || {}; g[`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`] = true; }); return Object.keys(g).length; }
                   return dbEntries.length;
                 })()} onChange={e => {
                   if (e.target.checked) {
                     if (viewSource === '골자') {
-                      const groups = {}; dbEntries.forEach(r => { groups[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`] = true; });
+                      const groups = {}; dbEntries.forEach(r => { groups[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_version || ''}`] = true; });
                       setDbSelected(new Set(Object.keys(groups)));
                     } else if (viewSource === '연설' && speechFilter === '그룹') {
                       const groups = {}; dbEntries.forEach(r => { const m = r.metadata || {}; groups[`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`] = true; });
@@ -198,7 +198,7 @@ export default function ManageDbTab({ mode }) {
               {dbSelected.size === 0 && (<>
                 <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', whiteSpace: 'nowrap' }}>{(() => {
                   if (viewSource === '연설' && speechFilter === '그룹') { const g = {}; dbEntries.forEach(r => { const m = r.metadata || {}; g[`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`] = true; }); return `${Object.keys(g).length}그룹`; }
-                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`] = true; }); return `${Object.keys(g).length}그룹`; }
+                  if (viewSource === '골자') { const g = {}; dbEntries.forEach(r => { g[`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_version || ''}`] = true; }); return `${Object.keys(g).length}그룹`; }
                   return `${dbEntries.length}건`;
                 })()}</span>
                 <button onClick={() => _loadDbTab(viewSource)} style={{ padding: '3px 8px', borderRadius: 6, border: 'none', background: 'var(--bg-subtle, #EFEFF4)', color: 'var(--c-dim)', fontSize: '0.714rem', cursor: 'pointer' }}>새로고침</button>
@@ -209,7 +209,7 @@ export default function ManageDbTab({ mode }) {
                   <button onClick={() => setDbSelected(new Set())} style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--bd)', background: 'var(--bg-card)', color: 'var(--c-faint)', fontSize: '0.714rem', cursor: 'pointer' }}>선택 해제</button>
                   <button onClick={async () => {
                     const count = viewSource === '골자'
-                      ? dbEntries.filter(r => dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`)).length
+                      ? dbEntries.filter(r => dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_version || ''}`)).length
                       : dbSelected.size;
                     if (!await showConfirm(`선택한 ${dbSelected.size}개 항목 (${count}건)을 삭제하시겠습니까?`, { confirmVariant: 'danger' })) return;
                     setDbDeleting(true);
@@ -217,12 +217,12 @@ export default function ManageDbTab({ mode }) {
                       if (viewSource === '골자') {
                         const failedKeys = [];
                         for (const gKey of dbSelected) {
-                          const items = dbEntries.filter(r => `${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}` === gKey);
+                          const items = dbEntries.filter(r => `${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_version || ''}` === gKey);
                           if (items.length) {
                             const m = items[0].metadata || {};
                             const code = normalizeOutlineCode(m.outline_type) || m.outline_type || '';
                             const num = m.outline_num || '';
-                            const ver = m.version || '';
+                            const ver = m.outline_version || '';
                             const verSafe = ver ? '_v' + ver.replace(/\//g, '-') : '';
                             const base = code && /^\d+$/.test(num) ? code + '_' + num.replace(/^0+/, '').padStart(3, '0') : code || num;
                             const res = await deleteOutline(base + verSafe);
@@ -261,7 +261,7 @@ export default function ManageDbTab({ mode }) {
                         }
                       }
                       setDbCache(p => ({ ...p, [viewSource]: (p[viewSource] || []).filter(r => {
-                        if (viewSource === '골자') return !dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.version || ''}`);
+                        if (viewSource === '골자') return !dbSelected.has(`${r.metadata?.outline_type || ''}_${r.metadata?.outline_num || ''}_${r.metadata?.outline_version || ''}`);
                         if (viewSource === '연설' && speechFilter === '그룹') { const m = r.metadata || {}; return !dbSelected.has(`${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`); }
                         return !dbSelected.has(r.id);
                       }) }));
@@ -285,23 +285,23 @@ export default function ManageDbTab({ mode }) {
               const m = r.metadata || {};
               const ot = m.outline_type || '';
               const on = m.outline_num || '기타';
-              const ver = m.version || '';
+              const ver = m.outline_version || '';
               const key = `${ot}_${on}_${ver}`;
-              if (!groups[key]) groups[key] = { num: on, title: m.outline_title || '', type: ot, version: ver, items: [] };
+              if (!groups[key]) groups[key] = { num: on, title: m.outline_title || '', type: ot, outline_version: ver, items: [] };
               if (!groups[key].title && m.outline_title) groups[key].title = m.outline_title;
               groups[key].items.push(r);
             });
             const sorted = Object.values(groups).sort((a, b) => {
               const codeA = normalizeOutlineCode(a.type) || a.type || 'ZZZ';
               const codeB = normalizeOutlineCode(b.type) || b.type || 'ZZZ';
-              const ka = `${codeA}_${(a.num || '').padStart(5, '0')}_${a.version || ''}`;
-              const kb = `${codeB}_${(b.num || '').padStart(5, '0')}_${b.version || ''}`;
+              const ka = `${codeA}_${(a.num || '').padStart(5, '0')}_${a.outline_version || ''}`;
+              const kb = `${codeB}_${(b.num || '').padStart(5, '0')}_${b.outline_version || ''}`;
               return ka.localeCompare(kb);
             });
             const q = dbSearch.trim().toLowerCase();
-            const filtered = q ? sorted.filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || (g.version || '').toLowerCase().includes(q)) : sorted;
+            const filtered = q ? sorted.filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || (g.outline_version || '').toLowerCase().includes(q)) : sorted;
             return filtered.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>골자가 없습니다.</div> : filtered.map(g => {
-              const gKey = `${g.type}_${g.num}_${g.version || ''}`;
+              const gKey = `${g.type}_${g.num}_${g.outline_version || ''}`;
               const isOpen = expandedDbEntry['g_' + gKey];
               const gt = g.type || '';
               const code = normalizeOutlineCode(gt);
@@ -309,9 +309,9 @@ export default function ManageDbTab({ mode }) {
               // SSOT 호출 — 비숫자 num (JWBC-MW + '연합' 등) 영영 'JWBC-MW_연합' 정합 (5h §3.3).
               const pfxBase = getOutlinePrefix(gt, num);
               const sbLabel = code === 'SB' ? formatSbMmw(num) : '';
-              const verSafe = g.version ? '_v' + g.version.replace(/\//g, '-') : '';
+              const verSafe = g.outline_version ? '_v' + g.outline_version.replace(/\//g, '-') : '';
               const pfx = pfxBase + verSafe;
-              const headerLabel = g.version ? `${pfxBase} v${g.version}` : pfxBase;
+              const headerLabel = g.outline_version ? `${pfxBase} v${g.outline_version}` : pfxBase;
               return (
                 <div key={gKey} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 4 }}>
                   <div onClick={() => setExpandedDbEntry(p => ({ ...p, ['g_' + gKey]: !p['g_' + gKey] }))} style={{
@@ -327,12 +327,12 @@ export default function ManageDbTab({ mode }) {
                       background: 'var(--tint-green, #e6f5ec)', color: 'var(--accent)',
                       flexShrink: 0, lineHeight: 1.3,
                     }}>{sbLabel}</span>}
-                    {g.version && <span style={{
+                    {g.outline_version && <span style={{
                       display: 'inline-flex', alignItems: 'center',
                       padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
                       background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
                       flexShrink: 0, lineHeight: 1.3,
-                    }}>v{g.version}</span>}
+                    }}>v{g.outline_version}</span>}
                     <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
                     <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.items.length}개 요점</span>
                     <button onClick={async (e) => {
