@@ -151,8 +151,9 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
         filename = file.filename or ""
 
         # ── 본문 메타 우선 → 파일명 split fallback (5h §3.2 SSOT 헬퍼) ──
-        # 기존 schema 호환: outline_version → version, outline_title → title,
-        # remark/memo 합쳐 memo (frontend Gather.jsx L2080-2081 호환).
+        # 기존 schema 호환: outline_version → version, outline_title → title.
+        # memo 영영 사용자 카드 메모 영역 (FreeSearchPage 입력 UI) — 본문 비고
+        # 영영 별 영역. 빈 값 영영 초기화 (5i §3.x-schema-unify commit 1).
         parsed = parse_md_meta(content, filename)
         meta = {
             "outline_type": parsed["outline_type"],
@@ -164,7 +165,7 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
             "speaker": parsed["speaker"],
             "date": parsed["date"],
             "source": parsed["source"],
-            "memo": parsed["remark"] or parsed["memo"],
+            "memo": "",
             "theme_scripture": parsed["theme_scripture"],
         }
 

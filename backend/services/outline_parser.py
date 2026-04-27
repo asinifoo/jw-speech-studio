@@ -197,14 +197,16 @@ def parse_md_meta(content: str, filename: str = "") -> dict:
       3. outline_type 영역 normalize_outline_type 통과 (한국어 alias → 영문 코드)
 
     Returns: dict — outline_type / outline_num / outline_version /
-      outline_title / speaker / date / time / source / note / remark /
-      memo / theme_scripture
+      outline_title / speaker / date / time / source / note / theme_scripture
+
+    ★ remark/memo 키 폐기 (5i §3.x-schema-unify commit 1):
+    - 본문 .md '- **비고**:' 영역 STT 녹취 메타 (사용자 카드 메모 영역과 별 영영)
+    - ChromaDB 'memo' 영역 사용자 카드 메모 (FreeSearchPage 입력) 영역 — 별 영역
     """
     meta = {
         "outline_type": "", "outline_num": "", "outline_version": "",
         "outline_title": "", "speaker": "", "date": "",
-        "time": "", "source": "", "note": "", "remark": "",
-        "memo": "", "theme_scripture": "",
+        "time": "", "source": "", "note": "", "theme_scripture": "",
     }
 
     for line in (content or "").split("\n"):
@@ -238,12 +240,6 @@ def parse_md_meta(content: str, filename: str = "") -> dict:
         elif stripped.startswith("- **출처**:"):
             val = stripped.replace("- **출처**:", "").strip()
             if val: meta["source"] = val
-        elif stripped.startswith("- **비고**:"):
-            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-            if val: meta["remark"] = val
-        elif stripped.startswith("- **메모**:"):
-            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-            if val: meta["memo"] = val
         elif stripped.startswith("- **주제성구**:") or stripped.startswith("- **주제 성구**:"):
             val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
             if val: meta["theme_scripture"] = val

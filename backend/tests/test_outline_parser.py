@@ -339,7 +339,7 @@ _S34_BODY = """# 연설 원문 수정본
 
 
 def test_parse_md_meta_s34_full_body():
-    """S-34 본문 메타 12 키 정상 추출."""
+    """S-34 본문 메타 정상 추출. 5i §3.x-schema-unify commit 1 영영 remark/memo 폐기."""
     m = parse_md_meta(_S34_BODY, "S-34_003_박성준_2503_원문수정본.md")
     assert m["outline_type"] == "S-34"
     assert m["outline_num"] == "003"
@@ -350,7 +350,18 @@ def test_parse_md_meta_s34_full_body():
     assert m["time"] == "30분"
     assert m["source"] == "S-34_003_박성준_2503"
     assert m["note"].startswith("여호와의 조직")
-    assert m["remark"] == "STT 녹취"
+    # ★ remark/memo 키 폐기 영영 — 본문 비고/메모 영영 ChromaDB 카드 메모 영역과 별 영영
+    assert "remark" not in m
+    assert "memo" not in m
+
+
+def test_parse_md_meta_remark_memo_keys_dropped():
+    """본문 .md 영영 '- **비고**:' / '- **메모**:' 박힘 영영 meta dict 영영 키 X 검증."""
+    body = "- **비고**: STT 녹취\n- **메모**: 사후 참고 메모\n- **제목**: 테스트\n"
+    m = parse_md_meta(body, "")
+    assert "remark" not in m
+    assert "memo" not in m
+    assert m["outline_title"] == "테스트"
 
 
 def test_parse_md_meta_s31_korean_filename_body_priority():
