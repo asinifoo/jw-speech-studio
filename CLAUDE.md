@@ -130,8 +130,8 @@
   - 예: `S-34_005_v9-15_2.2.1`, `S-123_001_v10-26_1.1`
 - **JSON 파일명 패턴**: `{type}_{num}_v{version-safe}.json`
   - 예: `S-34_005_v9-15.json`, `S-123_001_v10-26.json`
-- **메타 필드**: `outline_type`, `outline_num`, `outline_title`, `version`, `source="outline"`, ...
-- **중복 판정**: `outline_type + outline_num + version` 3-tuple (version 빈 값끼리도 매치)
+- **메타 필드**: `outline_type`, `outline_num`, `outline_title`, `outline_version`, `source="outline"`, ... (5i §3.x-schema-unify — legacy `version`/`title` 키 폐기)
+- **중복 판정**: `outline_type + outline_num + outline_version` 3-tuple (outline_version 빈 값끼리도 매치)
 - **삭제 규칙** (DELETE `/api/preprocess/outline/{id}`):
   - outline_id 로 DB doc_id prefix 매치 + 동일 prefix JSON glob 삭제
 - **버전별 병렬 보관**: 같은 type+num이라도 version 다르면 별개 레코드로 공존 (version MM/YY 가 년도 정보 흡수 — Doc-45)
@@ -145,7 +145,7 @@
 
 ### 메타데이터 키
 - `outline_*` 사용 (`golza_*` 사용 금지)
-- outline_type, outline_type_name, outline_num, outline_title, version
+- outline_type, outline_type_name, outline_num, outline_title, outline_version (5i §3.x-schema-unify — legacy `version` 폐기)
 
 ### 유형 코드 (번호 규칙)
 
@@ -470,10 +470,10 @@
 ### 전처리
 - `POST /api/preprocess/parse-md` — md 파일 파싱 (본문 메타 우선, 파일명 폴백)
 - `POST /api/preprocess/docx-to-text` — **DOCX → 들여쓰기 텍스트 + meta** (결정론적, LLM 미사용)
-  - 응답: `{text, meta: {outline_type, outline_type_name, outline_num, version, title, note, total_time}}`
+  - 응답: `{text, meta: {outline_type, outline_type_name, outline_num, version, title, note, total_time}}` ★ DOCX 파서 별 schema 영영 잔존 (별 트랙 §3.x-docx-parser-schema)
   - 프론트 [골자 입력] textarea로 주입 후 사용자가 [파싱] 버튼 수동 클릭
-- `POST /api/preprocess/check-duplicates` — 중복 체크 (type+num+version 3-tuple 매칭)
-  - 응답: `{duplicates: [{type, outline_num, version, count, message}], has_duplicates}`
+- `POST /api/preprocess/check-duplicates` — 중복 체크 (outline_type+outline_num+outline_version 3-tuple 매칭, 5i §3.x-schema-unify)
+  - 응답: `{duplicates: [{type, outline_num, outline_version, count, message}], has_duplicates}`
 - `POST /api/preprocess/save-outline` — speech_points만
   - body: `{files:[{meta:{...}, subtopics}], overwrite}`
   - JSON 파일명: `{prefix}_v{version}.json`
