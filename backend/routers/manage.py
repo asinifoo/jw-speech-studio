@@ -847,11 +847,15 @@ def list_originals():
                 meta = all_data["metadatas"][i]
                 if meta.get("source") != "원문":
                     continue
-                outline_key = meta.get("outline_num", "") or "기타"
+                # 그룹 키 = outline_type + outline_num (5h §3.2 정합).
+                # outline_num='001' 영역 S-31 + S-34 양쪽 type 영영 같은 그룹 영역 섞임 빈틈 차단.
+                _ot = meta.get("outline_type", "")
+                _on = meta.get("outline_num", "")
+                outline_key = f"{_ot}_{_on}" if _ot and _on else (_on or "기타")
                 if outline_key not in result:
                     result[outline_key] = {
-                        "outline_num": meta.get("outline_num", ""),
-                        "outline_type": meta.get("outline_type", ""),
+                        "outline_num": _on,
+                        "outline_type": _ot,
                         "outline_title": meta.get("outline_title", ""),
                         "speakers": []
                     }
@@ -886,7 +890,8 @@ def list_originals():
             speaker = parsed.get("speaker", "")
             date = parsed.get("date", "")
             title = parsed.get("outline_title", "")
-            outline_key = on or "기타"
+            # 그룹 키 = outline_type + outline_num (5h §3.2 정합 — type 다른 같은 num 섞임 차단).
+            outline_key = f"{ot}_{on}" if ot and on else (on or "기타")
             if outline_key not in result:
                 result[outline_key] = {
                     "outline_num": on,
@@ -964,7 +969,8 @@ def list_transcripts():
                         if line.startswith("- **골자유형**:"):
                             o_type = line.replace("- **골자유형**:", "").strip()
                             break
-                key = o_num or o_title or "기타"
+                # 그룹 키 = outline_type + outline_num (5h §3.2 정합 — type 다른 같은 num 섞임 차단).
+                key = f"{o_type}_{o_num}" if o_type and o_num else (o_num or o_title or "기타")
                 if key not in result:
                     result[key] = {"outline_num": o_num, "outline_title": o_title, "outline_type": o_type, "source": source, "speakers": []}
                 elif o_type and not result[key]["outline_type"]:
@@ -1000,7 +1006,8 @@ def list_transcripts():
             speaker = parsed.get("speaker", "")
             date = parsed.get("date", "")
             title = parsed.get("outline_title", "")
-            key = on or "기타"
+            # 그룹 키 = outline_type + outline_num (5h §3.2 정합 — type 다른 같은 num 섞임 차단).
+            key = f"{ot}_{on}" if ot and on else (on or "기타")
             if key not in result:
                 result[key] = {"outline_num": on, "outline_title": title, "outline_type": ot, "source": "원문", "speakers": []}
             if title and not result[key]["outline_title"]:
