@@ -6,7 +6,7 @@ import { S } from '../styles';
 import { dbDelete, dbUpdate, deleteOutline, deleteTranscriptFile, listManualEntries, listCollection, listOriginals, listSpeakerMemos } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
-import { formatSbMmw, matchOutlineType } from '../utils/outlineFormat';
+import { formatSbMmw } from '../utils/outlineFormat';
 import { resolveOutlineCode } from '../utils/outlineTypes';
 import { MSG } from '../utils/messages';
 
