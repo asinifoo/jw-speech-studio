@@ -5,7 +5,8 @@ import { getTranscriptBody } from '../utils/textHelpers';
 import { listTranscripts, dbUpdate, dbDelete } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
-import { matchOutlineType, getOutlinePrefix } from '../utils/outlineFormat';
+import { getOutlinePrefix } from '../utils/outlineFormat';
+import { getOutlineCategory, OUTLINE_CATEGORIES } from '../utils/outlineCategory';
 import { MSG, getStatusColor } from '../utils/messages';
 
 export default function TranscriptPage({ fontSize }) {
@@ -29,27 +30,18 @@ export default function TranscriptPage({ fontSize }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const getCategory = (t) => {
-    const gt = t.outline_type || t.outline_type || '';
-    const gn = t.outline_num || t.outline_num || '';
-    const src = t.source || '';
-    if (matchOutlineType(gt, 'S-34')) return '공개 강연';
-    if (gt.startsWith('JWBC') || src === 'JW 방송') return 'JW 방송';
-    if (gt === '대회' || gt === '대회연설' || matchOutlineType(gt, 'CO_C') || matchOutlineType(gt, 'CO_R')) return '대회';
-    if (matchOutlineType(gt, 'S-123') || matchOutlineType(gt, 'S-31') || gt === '특별 행사') return '특별 행사';
-    if (!gt && gn) {
-      if (/^\d{1,3}$/.test(gn)) return '공개 강연';
-      if (gn === '기념식' || gn.startsWith('S-31')) return '특별 행사';
-    }
-    return '기타';
-  };
+  const getCategory = (t) => getOutlineCategory(
+    t.outline_type || '',
+    t.outline_num || '',
+    t.source || ''
+  );
 
   const getPrefix = (t) => {
     const gt = t?.outline_type || ''; const gn = t?.outline_num || '';
     return getOutlinePrefix(gt, gn);
   };
 
-  const categories = ['공개 강연', 'JW 방송', '대회', '특별 행사', '기타'];
+  const categories = OUTLINE_CATEGORIES;
   const filteredKeys = Object.keys(transcripts).filter(k => getCategory(transcripts[k]) === category).filter(k => {
     if (!searchQ.trim()) return true;
     const q = searchQ.trim().toLowerCase();
