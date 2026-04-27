@@ -306,8 +306,8 @@ export default function ManageDbTab({ mode }) {
               const gt = g.type || '';
               const code = normalizeOutlineCode(gt);
               const num = g.num || '';
-              const isNumeric = /^\d+$/.test(num);
-              const pfxBase = code ? (isNumeric ? code + '_' + num.replace(/^0+/, '').padStart(3, '0') : code) : num;
+              // SSOT 호출 — 비숫자 num (JWBC-MW + '연합' 등) 영영 'JWBC-MW_연합' 정합 (5h §3.3).
+              const pfxBase = getOutlinePrefix(gt, num);
               const sbLabel = code === 'SB' ? formatSbMmw(num) : '';
               const verSafe = g.version ? '_v' + g.version.replace(/\//g, '-') : '';
               const pfx = pfxBase + verSafe;
@@ -403,11 +403,9 @@ export default function ManageDbTab({ mode }) {
               {sorted.slice(0, dbShowLimit).map(([gKey, g]) => {
                 const isOpen = expandedDbEntry['sg_' + gKey];
                 const gt = g.type || '';
-                const code = normalizeOutlineCode(gt);
                 const num = g.num || '';
-                const pfx = code && num
-                  ? code + '_' + (/^\d+$/.test(num) ? num.replace(/^0+/, '').padStart(3, '0') : num)
-                  : code || num;
+                // SSOT 호출 — JWBC-SP + 비숫자 num (소중함 등 626건) 영영 동일 결과 (5h §3.3).
+                const pfx = getOutlinePrefix(gt, num);
                 return (
                   <div key={gKey} style={{ borderRadius: 8, border: '1px solid var(--bd-soft)', background: 'var(--bg-card)', overflow: 'hidden', marginBottom: 4 }}>
                     <div onClick={() => setExpandedDbEntry(p => ({ ...p, ['sg_' + gKey]: !p['sg_' + gKey] }))} style={{
