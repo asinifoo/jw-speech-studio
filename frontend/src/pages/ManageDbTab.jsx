@@ -6,7 +6,7 @@ import { S } from '../styles';
 import { dbDelete, dbUpdate, deleteOutline, deleteTranscriptFile, listManualEntries, listCollection, listOriginals, listSpeakerMemos } from '../api';
 import { useConfirm } from '../providers/ConfirmProvider';
 import { useAlert } from '../providers/AlertProvider';
-import { formatSbMmw } from '../utils/outlineFormat';
+import { formatSbMmw, getOutlinePrefix } from '../utils/outlineFormat';
 import { resolveOutlineCode } from '../utils/outlineTypes';
 import { MSG } from '../utils/messages';
 
@@ -480,14 +480,7 @@ export default function ManageDbTab({ mode }) {
             const isPub = r.collection === 'publications';
             const gt = meta.outline_type || '';
             const gn = meta.outline_num || '';
-            const code = normalizeOutlineCode(gt);
-            const isNumeric = /^\d+$/.test(gn);
-            let prefix = '';
-            if (code === 'S-34' && gn) prefix = 'S-34_' + gn.replace(/^0+/, '').padStart(3, '0');
-            else if (code.startsWith('JWBC-')) prefix = gn ? code + '_' + gn : code;
-            else if (code && isNumeric && gn) prefix = code + '_' + gn.replace(/^0+/, '').padStart(3, '0');
-            else if (code) prefix = code;
-            else if (gn) prefix = gn;
+            const prefix = getOutlinePrefix(gt, gn);
             const isDisc = meta.source === 'discussion';
             const title = meta.outline_title || meta.topic || '';
             const subTopic = parsed?.subtopic || meta.sub_topic || '';

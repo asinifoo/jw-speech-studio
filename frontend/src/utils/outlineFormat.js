@@ -35,9 +35,12 @@ export function getOutlinePrefix(type, num) {
   if (matchOutlineType(type, 'CO_C')) return num ? `CO_C_${String(num).padStart(3, '0')}` : 'CO_C';
   if (matchOutlineType(type, 'CO_R')) return num ? `CO_R_${String(num).padStart(3, '0')}` : 'CO_R';
   if (typeof type === 'string' && type.startsWith('JWBC')) return num ? `${type}_${num}` : type;
-  // fallback: type+num 직접 조립
-  if (!type && num && /^\d{1,3}$/.test(num)) return 'S-34_' + String(num).padStart(3, '0');
-  return num ? `${type || ''}_${num}` : (type || '');
+  // fallback: type 빈 → ETC 통일. type+num 직접 조립.
+  if (!type) {
+    if (!num) return '';
+    return /^\d{1,3}$/.test(num) ? 'ETC_' + String(num).padStart(3, '0') : 'ETC_' + num;
+  }
+  return num ? `${type}_${num}` : type;
 }
 
 // "9/15" → "2015년 9월", "10/24" → "2024년 10월"
