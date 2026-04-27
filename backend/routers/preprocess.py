@@ -11,7 +11,7 @@ from services.outline_parser import (
     parse_outline_text, parse_outline_docx,
     _lines_to_indented_text, _extract_meta_from_docx,
     _outline_prefix, _ver_safe, _TYPE_NAMES,
-    normalize_outline_type,
+    normalize_outline_type, parse_md_meta,
 )
 from db import get_db, get_embedding, _bm25_cache, safe_meta
 
@@ -148,104 +148,27 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
 
     for file in files:
         content = (await file.read()).decode("utf-8", errors="replace")
-        lines = content.split("\n")
         filename = file.filename or ""
 
-        # ── 파일명에서 메타 추출 ──
-        fn_clean = filename.replace("_preprocessed", "").replace("_processed", "").replace(".md", "").replace(".txt", "")
-        fn_parts = fn_clean.split("_")
-
-        fn_type = ""
-        fn_num = ""
-        fn_speaker = ""
-        fn_date = ""
-
-        if fn_parts:
-            # "golza" 접두어 제거
-            if fn_parts[0].lower() == "golza":
-                fn_parts = fn_parts[1:]
-
-            if fn_parts:
-                first = fn_parts[0]
-                rest_start = 1
-
-                # 유형 감지
-                if first.startswith("S-34"):
-                    fn_type = "S-34"
-                elif first.startswith("S-31"):
-                    fn_type = "S-31"
-                elif first.startswith("JWBC"):
-                    fn_type = first
-                elif _re.match(r"^S-\d{2,3}", first):
-                    fn_type = first
-                elif _re.match(r"^(CO|SB|ETC)", first):
-                    fn_type = first
-                else:
-                    fn_type = first
-                    rest_start = 1
-
-                if len(fn_parts) > rest_start:
-                    fn_num = fn_parts[rest_start]
-
-                remaining = fn_parts[rest_start + 1:] if len(fn_parts) > rest_start + 1 else []
-                for part in remaining:
-                    if _re.match(r"^\d{4,6}$", part):
-                        fn_date = part
-                    elif part in ("preprocessed", "processed") or _re.match(r"^v[\d\-/]+$", part):
-                        pass  # 전처리 마커 또는 버전 (v8-19, v12-16 등) 무시
-                    else:
-                        fn_speaker = fn_speaker or part
-
-        # ── 내용에서 메타데이터 추출 (본문 우선, 파일명은 폴백) ──
+        # ── 본문 메타 우선 → 파일명 split fallback (5h §3.2 SSOT 헬퍼) ──
+        # 기존 schema 호환: outline_version → version, outline_title → title,
+        # remark/memo 합쳐 memo (frontend Gather.jsx L2080-2081 호환).
+        parsed = parse_md_meta(content, filename)
         meta = {
-            "outline_type": "", "outline_num": "", "title": "", "version": "",
-            "time": "", "note": "", "speaker": "", "date": "",
-            "source": "", "memo": "", "theme_scripture": "",
+            "outline_type": parsed["outline_type"],
+            "outline_num": parsed["outline_num"],
+            "title": parsed["outline_title"],
+            "version": parsed["outline_version"],
+            "time": parsed["time"],
+            "note": parsed["note"],
+            "speaker": parsed["speaker"],
+            "date": parsed["date"],
+            "source": parsed["source"],
+            "memo": parsed["remark"] or parsed["memo"],
+            "theme_scripture": parsed["theme_scripture"],
         }
 
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith("- **연사**:"):
-                val = stripped.replace("- **연사**:", "").strip()
-                if val: meta["speaker"] = val
-            elif stripped.startswith("- **날짜**:"):
-                val = _re.sub(r"\s*\(.*\)", "", stripped.replace("- **날짜**:", "")).strip()
-                if val: meta["date"] = val
-            elif stripped.startswith("- **골자번호**:") or stripped.startswith("- **번호**:"):
-                val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-                if val: meta["outline_num"] = val
-            elif stripped.startswith("- **제목**:"):
-                val = stripped.replace("- **제목**:", "").strip()
-                if val: meta["title"] = val
-            elif stripped.startswith("- **골자유형**:"):
-                val = stripped.replace("- **골자유형**:", "").strip()
-                if val: meta["outline_type"] = normalize_outline_type(val)
-            elif stripped.startswith("- **골자버전**:") or stripped.startswith("- **버전**:"):
-                val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-                if val: meta["version"] = val
-            elif stripped.startswith("- **시간**:") or stripped.startswith("- **총 시간**:"):
-                val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-                if val and not meta["time"]: meta["time"] = val
-            elif stripped.startswith("- **유의사항**:") or stripped.startswith("- **유의 사항**:"):
-                val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-                if val: meta["note"] = val
-            elif stripped.startswith("- **출처**:"):
-                val = stripped.replace("- **출처**:", "").strip()
-                if val: meta["source"] = val
-            elif stripped.startswith("- **메모**:") or stripped.startswith("- **비고**:"):
-                val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-                if val: meta["memo"] = val
-            elif stripped.startswith("- **주제성구**:") or stripped.startswith("- **주제 성구**:"):
-                val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
-                if val: meta["theme_scripture"] = val
-
-        # 본문에 없는 필드만 파일명 값으로 폴백
-        if not meta["outline_type"] and fn_type: meta["outline_type"] = fn_type
-        if not meta["outline_num"] and fn_num: meta["outline_num"] = fn_num
-        if not meta["speaker"] and fn_speaker: meta["speaker"] = fn_speaker
-        if not meta["date"] and fn_date: meta["date"] = fn_date
-
-        # ── 유형 보정 ──
+        # ── 유형 보정 (본문 outline_num='기념식'/'S-31' 박힘 케이스 — 구 데이터 호환) ──
         ot = meta["outline_type"]
         on = meta["outline_num"]
         if not ot and on:
