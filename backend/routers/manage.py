@@ -853,6 +853,7 @@ def list_originals():
                 _ot = meta.get("outline_type", "")
                 _on = meta.get("outline_num", "")
                 _title = (meta.get("outline_title", "") or "").strip()
+                _ver = meta.get("outline_version", "") or ""
                 if _ot and _on and _title:
                     outline_key = f"{_ot}_{_on}_{_title}"
                 elif _ot and _on:
@@ -864,6 +865,7 @@ def list_originals():
                         "outline_num": _on,
                         "outline_type": _ot,
                         "outline_title": _title,
+                        "outline_version": _ver,
                         "speakers": []
                     }
                 result[outline_key]["speakers"].append({
@@ -897,6 +899,7 @@ def list_originals():
             speaker = parsed.get("speaker", "")
             date = parsed.get("date", "")
             title = (parsed.get("outline_title", "") or "").strip()
+            ver = parsed.get("outline_version", "") or ""
             # 그룹 키 = outline_type + outline_num + outline_title (5h §3.2 commit 6 — 같은 num 다른 title 분리).
             if ot and on and title:
                 outline_key = f"{ot}_{on}_{title}"
@@ -909,17 +912,20 @@ def list_originals():
                     "outline_num": on,
                     "outline_type": ot,
                     "outline_title": title,
+                    "outline_version": ver,
                     "speakers": []
                 }
             if title and not result[outline_key]["outline_title"]:
                 result[outline_key]["outline_title"] = title
+            if ver and not result[outline_key].get("outline_version"):
+                result[outline_key]["outline_version"] = ver
             result[outline_key]["speakers"].append({
                 "id": f"file_{fname}",
                 "collection": "file",
                 "speaker": speaker,
                 "date": date,
                 "text": content,
-                "metadata": {"source": "원문", "outline_type": ot, "outline_num": on, "outline_title": title, "speaker": speaker, "date": date, "filename": fname},
+                "metadata": {"source": "원문", "outline_type": ot, "outline_num": on, "outline_title": title, "outline_version": ver, "speaker": speaker, "date": date, "filename": fname},
                 "source_type": "file",
                 "filename": fname,
             })
@@ -971,6 +977,7 @@ def list_transcripts():
                 o_num = meta.get("outline_num", "")
                 o_title = meta.get("outline_title", "")
                 o_type = meta.get("outline_type", "")
+                o_ver = meta.get("outline_version", "") or ""
                 source = meta.get("source", "")
                 speaker = meta.get("speaker", "")
                 date = meta.get("date", "")
@@ -989,7 +996,7 @@ def list_transcripts():
                 else:
                     key = o_num or o_title or "기타"
                 if key not in result:
-                    result[key] = {"outline_num": o_num, "outline_title": o_title, "outline_type": o_type, "source": source, "speakers": []}
+                    result[key] = {"outline_num": o_num, "outline_title": o_title, "outline_type": o_type, "outline_version": o_ver, "source": source, "speakers": []}
                 elif o_type and not result[key]["outline_type"]:
                     result[key]["outline_type"] = o_type
                 if source and not result[key].get("source"):
@@ -1023,6 +1030,7 @@ def list_transcripts():
             speaker = parsed.get("speaker", "")
             date = parsed.get("date", "")
             title = (parsed.get("outline_title", "") or "").strip()
+            ver = parsed.get("outline_version", "") or ""
             # 그룹 키 = outline_type + outline_num + outline_title (5h §3.2 commit 6 — 같은 num 다른 title 분리).
             if ot and on and title:
                 key = f"{ot}_{on}_{title}"
@@ -1031,7 +1039,9 @@ def list_transcripts():
             else:
                 key = on or "기타"
             if key not in result:
-                result[key] = {"outline_num": on, "outline_title": title, "outline_type": ot, "source": "원문", "speakers": []}
+                result[key] = {"outline_num": on, "outline_title": title, "outline_type": ot, "outline_version": ver, "source": "원문", "speakers": []}
+            if ver and not result[key].get("outline_version"):
+                result[key]["outline_version"] = ver
             if title and not result[key]["outline_title"]:
                 result[key]["outline_title"] = title
             result[key]["speakers"].append({
@@ -1111,6 +1121,7 @@ def batch_list():
                 dt = meta.get("date", "")
                 gt = meta.get("outline_type", "")
                 title = meta.get("outline_title", "")
+                ver = meta.get("outline_version", "") or ""
                 src = meta.get("source", "")
                 svc = meta.get("service_type", "")
                 sub_src = meta.get("sub_source", "")
@@ -1122,7 +1133,7 @@ def batch_list():
                 m = meta.get("mode", "") or ("manual" if meta.get("pub_type") == "manual" else "")
                 pc = meta.get("pub_code", "")
                 if key not in groups:
-                    groups[key] = {"outline_num": gn, "outline_type": gt, "outline_title": title, "speaker": sp, "date": dt, "mode": m, "source": src, "service_type": svc, "sub_source": sub_src, "pub_code": pc, "keywords": set(), "ids": {}, "counts": {}, "items": []}
+                    groups[key] = {"outline_num": gn, "outline_type": gt, "outline_title": title, "outline_version": ver, "speaker": sp, "date": dt, "mode": m, "source": src, "service_type": svc, "sub_source": sub_src, "pub_code": pc, "keywords": set(), "ids": {}, "counts": {}, "items": []}
                 if not groups[key]["pub_code"] and pc:
                     groups[key]["pub_code"] = pc
                 if not groups[key]["outline_type"] and gt:
