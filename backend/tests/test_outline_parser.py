@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from services.outline_parser import parse_outline_filename, _outline_prefix, normalize_outline_type, _TYPE_NAMES
+from services.outline_parser import parse_outline_filename, _outline_prefix, normalize_outline_type, _TYPE_NAMES, parse_md_meta
 
 
 # ─── parse_outline_filename 회귀 (Doc-45: outline_year 키 없음) ──
@@ -303,3 +303,121 @@ def test_type_names_jwbc_pg():
 
 def test_type_names_jwbc_am():
     assert _TYPE_NAMES["JWBC-AM"] == "연례총회"
+
+
+# ─── parse_md_meta — 본문 메타 우선 → 파일명 fallback (5h §3.2) ───
+
+_S31_BODY = """# 연설 원문 수정본
+
+## 메타데이터
+- **골자유형**: 기념식
+- **골자번호**: 001
+- **골자버전**: 8/19
+- **제목**: 하느님과 그리스도께서 당신을 위해 하신 일에 감사를 나타내십시오!
+- **연사**: 미상
+- **날짜**: 2604
+- **시간**: 45분
+- **출처**: S-31_기념식_미상_2604
+- **유의 사항**: (없음)
+- **비고**: STT 녹취 (Whisper).
+"""
+
+_S34_BODY = """# 연설 원문 수정본
+
+## 메타데이터
+- **골자유형**: 공개강연
+- **골자번호**: 003
+- **골자버전**: 9/15
+- **제목**: 여호와의 연합된 조직과 함께 전진하라
+- **연사**: 박성준
+- **날짜**: 2503
+- **시간**: 30분
+- **출처**: S-34_003_박성준_2503
+- **유의 사항**: 여호와의 조직의 하늘 부분과 지상 부분에 대한 인식을 세워 주라.
+- **비고**: STT 녹취
+"""
+
+
+def test_parse_md_meta_s34_full_body():
+    """S-34 본문 메타 12 키 정상 추출."""
+    m = parse_md_meta(_S34_BODY, "S-34_003_박성준_2503_원문수정본.md")
+    assert m["outline_type"] == "S-34"
+    assert m["outline_num"] == "003"
+    assert m["outline_version"] == "9/15"
+    assert m["outline_title"] == "여호와의 연합된 조직과 함께 전진하라"
+    assert m["speaker"] == "박성준"
+    assert m["date"] == "2503"
+    assert m["time"] == "30분"
+    assert m["source"] == "S-34_003_박성준_2503"
+    assert m["note"].startswith("여호와의 조직")
+    assert m["remark"] == "STT 녹취"
+
+
+def test_parse_md_meta_s31_korean_filename_body_priority():
+    """★ S-31_기념식_xxx 파일명 + 본문 골자번호: 001 → outline_num='001' 본문 우선."""
+    m = parse_md_meta(_S31_BODY, "S-31_기념식_미상_2604_원문수정본.md")
+    assert m["outline_type"] == "S-31"
+    assert m["outline_num"] == "001"  # 본문 우선 (파일명 '기념식' 무시)
+    assert m["speaker"] == "미상"
+    assert m["date"] == "2604"
+    assert m["outline_title"].startswith("하느님과")
+
+
+def test_parse_md_meta_normalize_korean_type():
+    """본문 메타 outline_type='기념식' → normalize → 'S-31'."""
+    m = parse_md_meta(_S31_BODY, "")
+    assert m["outline_type"] == "S-31"
+
+
+def test_parse_md_meta_filename_fallback_no_body():
+    """본문 메타 부재 + 파일명 정상 → 파일명 split fallback."""
+    m = parse_md_meta("", "S-34_005_김철수_2604_원문.md")
+    assert m["outline_type"] == "S-34"
+    assert m["outline_num"] == "005"
+    assert m["speaker"] == "김철수"
+    assert m["date"] == "2604"
+
+
+def test_parse_md_meta_filename_korean_num_skipped():
+    """파일명 num 자리 한국어 라벨 ('기념식') → outline_num 비움 (본문 영영 채움 영영)."""
+    m = parse_md_meta("", "S-31_기념식_미상_2604_원문수정본.md")
+    assert m["outline_type"] == "S-31"
+    assert m["outline_num"] == ""  # '기념식' 영역 폐기
+    assert m["speaker"] == "미상"
+    assert m["date"] == "2604"
+
+
+def test_parse_md_meta_partial_body_fallback():
+    """본문 메타 일부 부재 → 부재 키만 파일명 fallback."""
+    partial = "## 메타데이터\n- **제목**: 테스트 제목\n- **연사**: 김연사\n"
+    m = parse_md_meta(partial, "S-34_007_미상_2604_원문.md")
+    assert m["outline_title"] == "테스트 제목"
+    assert m["speaker"] == "김연사"  # 본문 우선
+    assert m["outline_type"] == "S-34"  # 파일명 fallback
+    assert m["outline_num"] == "007"  # 파일명 fallback
+    assert m["date"] == "2604"  # 파일명 fallback
+
+
+def test_parse_md_meta_empty_inputs():
+    """본문 + 파일명 모두 빈 → default dict."""
+    m = parse_md_meta("", "")
+    assert m["outline_type"] == ""
+    assert m["outline_num"] == ""
+    assert m["speaker"] == ""
+    assert m["outline_title"] == ""
+
+
+def test_parse_md_meta_alias_normalize_공개강연():
+    """본문 메타 outline_type='공개강연' → normalize → 'S-34'."""
+    body = "- **골자유형**: 공개강연\n- **골자번호**: 100\n"
+    m = parse_md_meta(body, "")
+    assert m["outline_type"] == "S-34"
+    assert m["outline_num"] == "100"
+
+
+def test_parse_md_meta_alias_normalize_순회대회():
+    """본문 메타 outline_type='순회대회' → normalize → 'CO_C'."""
+    body = "- **골자유형**: 순회대회\n- **골자번호**: 001\n"
+    m = parse_md_meta(body, "")
+    assert m["outline_type"] == "CO_C"
+    assert m["outline_num"] == "001"

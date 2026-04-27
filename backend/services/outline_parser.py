@@ -185,6 +185,130 @@ def _ver_safe(version: str) -> str:
     return version.replace("/", "-").replace(" ", "").strip()
 
 
+def parse_md_meta(content: str, filename: str = "") -> dict:
+    """원문/연설 .md 본문 메타 우선 → 파일명 split fallback 통합 파서.
+
+    호출처: routers/preprocess.py parse_md_files / routers/manage.py
+    list_originals / list_transcripts (5h §3.2 통합).
+
+    파싱 우선순위:
+      1. 본문 메타 (- **{키}**: {값}) — 12 키
+      2. 본문 메타 부재 시 파일명 split('_') fallback
+      3. outline_type 영역 normalize_outline_type 통과 (한국어 alias → 영문 코드)
+
+    Returns: dict — outline_type / outline_num / outline_version /
+      outline_title / speaker / date / time / source / note / remark /
+      memo / theme_scripture
+    """
+    meta = {
+        "outline_type": "", "outline_num": "", "outline_version": "",
+        "outline_title": "", "speaker": "", "date": "",
+        "time": "", "source": "", "note": "", "remark": "",
+        "memo": "", "theme_scripture": "",
+    }
+
+    for line in (content or "").split("\n"):
+        stripped = line.strip()
+        if not stripped.startswith("- **"):
+            continue
+        if stripped.startswith("- **연사**:"):
+            val = stripped.replace("- **연사**:", "").strip()
+            if val: meta["speaker"] = val
+        elif stripped.startswith("- **날짜**:"):
+            val = re.sub(r"\s*\(.*\)", "", stripped.replace("- **날짜**:", "")).strip()
+            if val: meta["date"] = val
+        elif stripped.startswith("- **골자번호**:") or stripped.startswith("- **번호**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val: meta["outline_num"] = val
+        elif stripped.startswith("- **제목**:"):
+            val = stripped.replace("- **제목**:", "").strip()
+            if val: meta["outline_title"] = val
+        elif stripped.startswith("- **골자유형**:"):
+            val = stripped.replace("- **골자유형**:", "").strip()
+            if val: meta["outline_type"] = normalize_outline_type(val)
+        elif stripped.startswith("- **골자버전**:") or stripped.startswith("- **버전**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val: meta["outline_version"] = val
+        elif stripped.startswith("- **시간**:") or stripped.startswith("- **총 시간**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val and not meta["time"]: meta["time"] = val
+        elif stripped.startswith("- **유의사항**:") or stripped.startswith("- **유의 사항**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val: meta["note"] = val
+        elif stripped.startswith("- **출처**:"):
+            val = stripped.replace("- **출처**:", "").strip()
+            if val: meta["source"] = val
+        elif stripped.startswith("- **비고**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val: meta["remark"] = val
+        elif stripped.startswith("- **메모**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val: meta["memo"] = val
+        elif stripped.startswith("- **주제성구**:") or stripped.startswith("- **주제 성구**:"):
+            val = stripped.split(":", 1)[1].strip() if ":" in stripped else ""
+            if val: meta["theme_scripture"] = val
+
+    # 파일명 fallback — 본문 메타 부재 키만 채움
+    if filename:
+        fn_clean = filename
+        for suf in ("_원문수정본", "_원문", "_preprocessed", "_processed"):
+            fn_clean = fn_clean.replace(suf, "")
+        fn_clean = fn_clean.replace(".md", "").replace(".txt", "")
+        fn_parts = fn_clean.split("_")
+
+        fn_type = ""
+        fn_num = ""
+        fn_speaker = ""
+        fn_date = ""
+
+        if fn_parts:
+            if fn_parts[0].lower() == "golza":
+                fn_parts = fn_parts[1:]
+
+        if fn_parts:
+            first = fn_parts[0]
+            rest_start = 1
+            if first.startswith("S-34"):
+                fn_type = "S-34"
+            elif first.startswith("S-31"):
+                fn_type = "S-31"
+            elif first.startswith("JWBC"):
+                fn_type = first
+            elif re.match(r"^S-\d{2,3}", first):
+                fn_type = first
+            elif re.match(r"^(CO|SB|ETC)", first):
+                fn_type = first
+            else:
+                fn_type = first
+
+            if len(fn_parts) > rest_start:
+                fn_num = fn_parts[rest_start]
+
+            for part in fn_parts[rest_start + 1:]:
+                if re.match(r"^\d{4,6}$", part):
+                    fn_date = part
+                elif part in ("preprocessed", "processed") or re.match(r"^v[\d\-/]+$", part):
+                    pass
+                else:
+                    fn_speaker = fn_speaker or part
+
+        if not meta["outline_type"] and fn_type:
+            meta["outline_type"] = normalize_outline_type(fn_type)
+        if not meta["outline_num"] and fn_num:
+            # 파일명 num 자리 한국어 라벨 ('기념식' 등) 흡수 — outline_type 정규화 가능 시 num 폐기
+            if normalize_outline_type(fn_num) in _TYPE_NAMES:
+                # fn_num 영역 type 라벨 박힘 — outline_num 비움 (본문 메타 영영 채워짐 영영 영영)
+                pass
+            else:
+                meta["outline_num"] = fn_num
+        if not meta["speaker"] and fn_speaker:
+            meta["speaker"] = fn_speaker
+        if not meta["date"] and fn_date:
+            meta["date"] = fn_date
+
+    return meta
+
+
 _TRAILING_MARKER_RE = re.compile(
     r'(\s*(?:\[\s*시각\s*자료\s*\d+\s*\]|\[\s*지시문\s*\]|\[\s*연사\s*지시\s*\]|\[\s*영상\s*\d+\s*\]|\[\s*낭독\s*\])\s*)+$'
 )
