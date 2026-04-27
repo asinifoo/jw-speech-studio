@@ -76,7 +76,7 @@ def test_prefix_s31():
 
 
 def test_prefix_korean_memorial_empty_num():
-    assert _outline_prefix("기념식", "") == "S-31_"
+    assert _outline_prefix("기념식", "") == "S-31"
 
 
 def test_prefix_jwbc_sp():
@@ -92,11 +92,97 @@ def test_prefix_sb():
 
 
 def test_prefix_etc_passthrough():
-    assert _outline_prefix("ETC", "abc") == "abc"
+    assert _outline_prefix("ETC", "abc") == "ETC_abc"
 
 
 def test_prefix_empty_type_passthrough():
-    assert _outline_prefix("", "001") == "001"
+    assert _outline_prefix("", "001") == "ETC_001"
+
+
+# ─── 한국어 alias 흡수 (5g §4.4 양쪽 동기화 영역, commit 3.5 신규) ───
+
+def test_prefix_korean_alias_공개_강연():
+    assert _outline_prefix("공개 강연", "1") == "S-34_001"
+
+
+def test_prefix_korean_alias_특별강연():
+    assert _outline_prefix("특별강연", "1") == "S-123_001"
+
+
+def test_prefix_korean_alias_특별_강연():
+    assert _outline_prefix("특별 강연", "1") == "S-123_001"
+
+
+def test_prefix_korean_alias_RP모임():
+    assert _outline_prefix("RP모임", "1") == "S-211_001"
+
+
+def test_prefix_korean_alias_RP_모임():
+    assert _outline_prefix("RP 모임", "1") == "S-211_001"
+
+
+def test_prefix_korean_alias_순회대회():
+    assert _outline_prefix("순회대회", "1") == "CO_C_001"
+
+
+def test_prefix_korean_alias_순회_대회():
+    assert _outline_prefix("순회 대회", "1") == "CO_C_001"
+
+
+def test_prefix_korean_alias_지역대회():
+    assert _outline_prefix("지역대회", "1") == "CO_R_001"
+
+
+def test_prefix_korean_alias_지역_대회():
+    assert _outline_prefix("지역 대회", "1") == "CO_R_001"
+
+
+def test_prefix_korean_alias_생활과봉사():
+    assert _outline_prefix("생활과봉사", "41") == "SB_041"
+
+
+def test_prefix_korean_alias_생활과_봉사():
+    assert _outline_prefix("생활과 봉사", "41") == "SB_041"
+
+
+# ─── ETC 통일 (추가 케이스) ───
+
+def test_prefix_etc_with_numeric():
+    assert _outline_prefix("ETC", "001") == "ETC_001"
+
+
+def test_prefix_etc_empty_num():
+    assert _outline_prefix("ETC", "") == "ETC"
+
+
+def test_prefix_empty_type_korean_num():
+    assert _outline_prefix("", "기념식") == "ETC_기념식"
+
+
+def test_prefix_empty_both():
+    assert _outline_prefix("", "") == ""
+
+
+# ─── num 빈 시 끝 _ 제거 정합 ───
+
+def test_prefix_s34_empty_num():
+    assert _outline_prefix("S-34", "") == "S-34"
+
+
+# ─── 자유 입력 4종 영역 (siFreeType — commit 3.6 예정 영역) ───
+# '생활과봉사' / '기타' → 매핑 흡수 (이미 위 영역 검증)
+# 'JW방송' / '대회' → wrapper 매핑 부재, fallback 동작 (commit 3.6 에서 매핑 보강 예정)
+
+def test_prefix_freetype_JW방송_fallback():
+    """'JW방송' wrapper — _OUTLINE_TYPE_KO_TO_EN 매핑 부재 (commit 3.6 영역).
+    자유 입력 모드 운영 영역에서 outline_type='ETC' 고정이라 본 케이스 호출 영역 X.
+    """
+    assert _outline_prefix("JW방송", "1") == "JW방송_001"
+
+
+def test_prefix_freetype_대회_fallback():
+    """'대회' wrapper 라벨 — 매핑 부재 (commit 3.6 영역). fallback 동작."""
+    assert _outline_prefix("대회", "1") == "대회_001"
 
 
 # ─── normalize_outline_type: 한글 매핑 ─────────────────

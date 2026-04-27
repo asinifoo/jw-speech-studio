@@ -167,25 +167,17 @@ def normalize_outline_type(value: str) -> str:
 
 
 def _outline_prefix(otype: str, onum: str) -> str:
-    """유형코드+번호 → 파일/ID용 prefix ('{code}_{num}').
+    """유형코드+번호 → 파일/ID용 prefix.
 
-    ETC/빈 type은 번호 그대로 반환.
+    한국어 alias → 영문 코드 변환 후 prefix 생성. ETC/빈 type → 'ETC_${num}' 통일.
     Doc-45: year 파라미터 제거 (version MM/YY 가 년도 정보 흡수).
     """
     num = onum.zfill(3) if onum.isdigit() else onum
+    code = normalize_outline_type(otype)
 
-    if otype in ("공개강연",) or otype.startswith("S-34"):
-        return f"S-34_{num}"
-    elif otype in ("기념식",) or otype.startswith("S-31"):
-        return f"S-31_{num}"
-    elif otype.startswith("JWBC"):
-        return f"{otype}_{num}"
-    elif otype.startswith("S-") or otype.startswith("CO") or otype.startswith("SB"):
-        return f"{otype}_{num}"
-    elif otype == "ETC" or not otype:
-        return onum
-    else:
-        return f"{otype}_{num}"
+    if not code:
+        return f"ETC_{num}" if num else ""
+    return f"{code}_{num}" if num else code
 
 
 def _ver_safe(version: str) -> str:

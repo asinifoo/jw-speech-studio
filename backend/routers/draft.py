@@ -39,7 +39,7 @@ def _count_draft(data):
 
 
 def _draft_id(outline_type, outline_num, speaker, date, source_stt_job_id=""):
-    prefix = _outline_prefix(outline_type, outline_num) if outline_num else "ETC"
+    prefix = _outline_prefix(outline_type, outline_num) or "ETC"
     base = f"{prefix}_{speaker}_{date}"
     # STT 출처 있으면 해시 suffix 추가 (기존 골자 draft와 충돌 방지)
     if source_stt_job_id:
