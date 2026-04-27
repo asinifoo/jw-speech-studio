@@ -711,12 +711,12 @@ def parse_outline_docx(file_bytes: bytes) -> dict:
         flag_str = f" [{','.join(flags)}]" if flags else ""
         raw_lines.append(f"[{ln['indent_pt']:5.1f}pt] [{ln['tag']}]{flag_str} {ln['text']}")
 
-    # 4. 구조화
+    # 4. 구조화 (5j §3.x-docx-parser-schema — 5i parse_md_meta SSOT 정합)
     result = {
-        "title": "",
+        "outline_title": "",
         "outline_type": None,
         "outline_num": None,
-        "version": None,
+        "outline_version": None,
         "note": None,
         "subtopics": [],
         "raw_lines": raw_lines,
@@ -731,12 +731,12 @@ def parse_outline_docx(file_bytes: bytes) -> dict:
         if tag in ("하단", "제외"):
             # 하단 영역에서 마지막 줄이 버전(예: "1/20")일 수 있음
             vm = re.search(r'No\.?\s*(\d+)\s+(\d+/\d+)', text)
-            if vm and not result["version"]:
-                result["version"] = vm.group(2)
+            if vm and not result["outline_version"]:
+                result["outline_version"] = vm.group(2)
             continue
 
         if tag == "제목":
-            result["title"] = text
+            result["outline_title"] = text
             continue
 
         if tag == "주의":
@@ -771,7 +771,7 @@ def parse_outline_docx(file_bytes: bytes) -> dict:
             if current_sub is None:
                 # 소주제가 없는 10분짜리 골자 등 — 제목을 소주제로 사용
                 current_sub = {
-                    "title": result["title"] or "",
+                    "title": result["outline_title"] or "",
                     "time_minutes": None,
                     "points": [],
                 }
@@ -854,12 +854,12 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
       3) 폴백: [하단] 줄 전수에서 M/YY 패턴 (구버전 포맷 호환)
     """
     fn_meta = parse_outline_filename(filename) if filename else {
-        "outline_type": None, "outline_num": None, "version": None,
+        "outline_type": None, "outline_num": None, "outline_version": None,
     }
     ot = parsed.get("outline_type") or fn_meta.get("outline_type") or ""
     on = parsed.get("outline_num") or fn_meta.get("outline_num") or ""
-    version = parsed.get("version") or fn_meta.get("version") or ""
-    title = parsed.get("title") or ""
+    version = parsed.get("outline_version") or fn_meta.get("outline_version") or ""
+    title = parsed.get("outline_title") or ""
     note = parsed.get("note") or ""
 
     total_time = None
@@ -903,8 +903,8 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
         "outline_type": ot or None,
         "outline_type_name": (_TYPE_NAMES.get(ot) if ot else None),
         "outline_num": on or None,
-        "version": version or None,
-        "title": title or None,
+        "outline_version": version or None,
+        "outline_title": title or None,
         "note": note or None,
         "total_time": total_time,
     }
@@ -928,7 +928,7 @@ def parse_outline_filename(filename: str) -> dict:
       CO_C_001_KO.docx              → type=CO_C,  num=001
       JWBC-SP_KO_123.docx           → type=JWBC-SP, num=123
     """
-    result = {"outline_type": None, "outline_num": None, "version": None}
+    result = {"outline_type": None, "outline_num": None, "outline_version": None}
     if not filename:
         return result
     base = os.path.splitext(os.path.basename(filename))[0]
@@ -941,7 +941,7 @@ def parse_outline_filename(filename: str) -> dict:
     for p in parts:
         vm = re.match(r'^v(\d+(?:[\-]\d+)*)$', p)
         if vm:
-            result["version"] = vm.group(1).replace("-", "/")
+            result["outline_version"] = vm.group(1).replace("-", "/")
         else:
             kept.append(p)
 

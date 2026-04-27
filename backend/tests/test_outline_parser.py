@@ -18,7 +18,7 @@ def test_regression_s34_explicit_num():
     r = parse_outline_filename("S-34_KO_001_v09-15.docx")
     assert r["outline_type"] == "S-34"
     assert r["outline_num"] == "001"
-    assert r["version"] == "09/15"
+    assert r["outline_version"] == "09/15"
 
 
 def test_regression_s31():
@@ -41,7 +41,7 @@ def test_regression_unknown_filename():
 
 def test_regression_empty():
     r = parse_outline_filename("")
-    assert r == {"outline_type": None, "outline_num": None, "version": None}
+    assert r == {"outline_type": None, "outline_num": None, "outline_version": None}
 
 
 # ─── Doc-45 회귀 방지: 레거시 YY 파일명 주어도 outline_year 키 부재 ──
@@ -432,3 +432,75 @@ def test_parse_md_meta_alias_normalize_순회대회():
     m = parse_md_meta(body, "")
     assert m["outline_type"] == "CO_C"
     assert m["outline_num"] == "001"
+
+
+# ─── 5j §3.x-docx-parser-schema — DOCX 파서 SSOT 키 (outline_version/outline_title) 회귀 ──
+
+from services.outline_parser import _extract_meta_from_docx
+
+
+def test_parse_outline_filename_ssot_keys_no_legacy():
+    """parse_outline_filename 결과 dict에 SSOT outline_version 박힘 + legacy 'version'/'title' 부재."""
+    r = parse_outline_filename("S-34_KO_001_v09-15.docx")
+    assert "outline_version" in r and r["outline_version"] == "09/15"
+    assert "version" not in r
+    assert "title" not in r
+
+
+def test_extract_meta_from_docx_ssot_keys_body_priority():
+    """본문 메타 우선 — parsed outline_version/outline_title 영영 박혀 있으면 fallback 무시."""
+    parsed = {
+        "outline_type": "S-34",
+        "outline_num": "035",
+        "outline_version": "9/15",
+        "outline_title": "본문 제목",
+        "note": "유의 사항",
+        "subtopics": [],
+        "raw_lines": [],
+    }
+    m = _extract_meta_from_docx(parsed, "S-34_KO_035_v01-26.docx")
+    # SSOT 키 박힘
+    assert m["outline_version"] == "9/15"  # 본문 우선
+    assert m["outline_title"] == "본문 제목"
+    assert m["outline_type"] == "S-34"
+    assert m["outline_num"] == "035"
+    # legacy 키 부재
+    assert "version" not in m
+    assert "title" not in m
+
+
+def test_extract_meta_from_docx_filename_fallback():
+    """본문 outline_version 빈 영영 — 파일명 fallback (SSOT 키 정합)."""
+    parsed = {
+        "outline_type": None,
+        "outline_num": None,
+        "outline_version": None,
+        "outline_title": "",
+        "note": None,
+        "subtopics": [],
+        "raw_lines": [],
+    }
+    m = _extract_meta_from_docx(parsed, "S-34_KO_001_v09-15.docx")
+    assert m["outline_version"] == "09/15"  # 파일명 fallback
+    assert m["outline_type"] == "S-34"
+    assert m["outline_num"] == "001"
+    assert "version" not in m
+    assert "title" not in m
+
+
+def test_extract_meta_from_docx_no_filename():
+    """filename 빈 영영 — fn_meta SSOT 키 fallback dict 정합."""
+    parsed = {
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "outline_version": "8/19",
+        "outline_title": "기념식 제목",
+        "note": None,
+        "subtopics": [],
+        "raw_lines": [],
+    }
+    m = _extract_meta_from_docx(parsed, "")
+    assert m["outline_version"] == "8/19"
+    assert m["outline_title"] == "기념식 제목"
+    assert "version" not in m
+    assert "title" not in m
