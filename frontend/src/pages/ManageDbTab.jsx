@@ -287,8 +287,8 @@ export default function ManageDbTab({ mode }) {
               const on = m.outline_num || '기타';
               const ver = m.outline_version || '';
               const key = `${ot}_${on}_${ver}`;
-              if (!groups[key]) groups[key] = { num: on, title: m.outline_title || '', type: ot, outline_version: ver, items: [] };
-              if (!groups[key].title && m.outline_title) groups[key].title = m.outline_title;
+              if (!groups[key]) groups[key] = { num: on, outline_title: m.outline_title || '', type: ot, outline_version: ver, items: [] };
+              if (!groups[key].outline_title && m.outline_title) groups[key].outline_title = m.outline_title;
               groups[key].items.push(r);
             });
             const sorted = Object.values(groups).sort((a, b) => {
@@ -299,7 +299,7 @@ export default function ManageDbTab({ mode }) {
               return ka.localeCompare(kb);
             });
             const q = dbSearch.trim().toLowerCase();
-            const filtered = q ? sorted.filter(g => g.num.toLowerCase().includes(q) || g.title.toLowerCase().includes(q) || (g.outline_version || '').toLowerCase().includes(q)) : sorted;
+            const filtered = q ? sorted.filter(g => g.num.toLowerCase().includes(q) || (g.outline_title || '').toLowerCase().includes(q) || (g.outline_version || '').toLowerCase().includes(q)) : sorted;
             return filtered.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--c-dim)', fontSize: '0.786rem', padding: 16 }}>골자가 없습니다.</div> : filtered.map(g => {
               const gKey = `${g.type}_${g.num}_${g.outline_version || ''}`;
               const isOpen = expandedDbEntry['g_' + gKey];
@@ -333,7 +333,7 @@ export default function ManageDbTab({ mode }) {
                       background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
                       flexShrink: 0, lineHeight: 1.3,
                     }}>v{g.outline_version}</span>}
-                    <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
+                    <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.outline_title}</span>
                     <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.items.length}개 요점</span>
                     <button onClick={async (e) => {
                       e.stopPropagation();
@@ -388,7 +388,7 @@ export default function ManageDbTab({ mode }) {
                 if (!(m.outline_title || m.topic || '').toLowerCase().includes(q) && !(m.speaker || '').toLowerCase().includes(q) && !(m.outline_num || '').toLowerCase().includes(q) && !txt.includes(q)) return;
               }
               const key = `${m.outline_num || ''}_${m.speaker || ''}_${m.date || ''}`;
-              if (!groups[key]) groups[key] = { num: m.outline_num || '', title: m.outline_title || m.topic || '', speaker: m.speaker || '', date: m.date || '', type: m.outline_type || '', items: [] };
+              if (!groups[key]) groups[key] = { num: m.outline_num || '', outline_title: m.outline_title || m.topic || '', speaker: m.speaker || '', date: m.date || '', type: m.outline_type || '', items: [] };
               groups[key].items.push(r);
             });
             const sorted = Object.entries(groups).sort((a, b) => {
@@ -416,7 +416,7 @@ export default function ManageDbTab({ mode }) {
                       <span style={{ fontSize: '0.786rem', color: 'var(--c-dim)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(90deg)' : 'none' }}>▶</span>
                       {pfx && <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{pfx}</span>}
                       {g.items[0]?.metadata?.source === 'discussion' && (g.items[0]?.metadata?.discussion_type || g.items[0]?.metadata?.sub_source) && <span style={{ fontSize: '0.571rem', padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: 'var(--accent-blue)', fontWeight: 600 }}>{g.items[0].metadata.discussion_type || g.items[0].metadata.sub_source}</span>}
-                      <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
+                      <span style={{ fontSize: '0.786rem', color: 'var(--c-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.outline_title}</span>
                       {g.speaker && <span style={{ fontSize: '0.714rem', color: 'var(--c-faint)', flexShrink: 0 }}>{g.speaker}</span>}
                       {g.date && <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.date}</span>}
                       <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.items.length}건</span>
