@@ -847,16 +847,23 @@ def list_originals():
                 meta = all_data["metadatas"][i]
                 if meta.get("source") != "원문":
                     continue
-                # 그룹 키 = outline_type + outline_num (5h §3.2 정합).
-                # outline_num='001' 영역 S-31 + S-34 양쪽 type 영영 같은 그룹 영역 섞임 빈틈 차단.
+                # 그룹 키 = outline_type + outline_num + outline_title (5h §3.2 commit 6).
+                # JWBC-SP_소중함 영영 2 다른 연설 (다른 title) 영영 별 그룹 영영 정합.
+                # title 빈 영역 → type_num fallback (미래 방어).
                 _ot = meta.get("outline_type", "")
                 _on = meta.get("outline_num", "")
-                outline_key = f"{_ot}_{_on}" if _ot and _on else (_on or "기타")
+                _title = (meta.get("outline_title", "") or "").strip()
+                if _ot and _on and _title:
+                    outline_key = f"{_ot}_{_on}_{_title}"
+                elif _ot and _on:
+                    outline_key = f"{_ot}_{_on}"
+                else:
+                    outline_key = _on or "기타"
                 if outline_key not in result:
                     result[outline_key] = {
                         "outline_num": _on,
                         "outline_type": _ot,
-                        "outline_title": meta.get("outline_title", ""),
+                        "outline_title": _title,
                         "speakers": []
                     }
                 result[outline_key]["speakers"].append({
@@ -889,9 +896,14 @@ def list_originals():
             on = parsed.get("outline_num", "")
             speaker = parsed.get("speaker", "")
             date = parsed.get("date", "")
-            title = parsed.get("outline_title", "")
-            # 그룹 키 = outline_type + outline_num (5h §3.2 정합 — type 다른 같은 num 섞임 차단).
-            outline_key = f"{ot}_{on}" if ot and on else (on or "기타")
+            title = (parsed.get("outline_title", "") or "").strip()
+            # 그룹 키 = outline_type + outline_num + outline_title (5h §3.2 commit 6 — 같은 num 다른 title 분리).
+            if ot and on and title:
+                outline_key = f"{ot}_{on}_{title}"
+            elif ot and on:
+                outline_key = f"{ot}_{on}"
+            else:
+                outline_key = on or "기타"
             if outline_key not in result:
                 result[outline_key] = {
                     "outline_num": on,
@@ -969,8 +981,13 @@ def list_transcripts():
                         if line.startswith("- **골자유형**:"):
                             o_type = line.replace("- **골자유형**:", "").strip()
                             break
-                # 그룹 키 = outline_type + outline_num (5h §3.2 정합 — type 다른 같은 num 섞임 차단).
-                key = f"{o_type}_{o_num}" if o_type and o_num else (o_num or o_title or "기타")
+                # 그룹 키 = outline_type + outline_num + outline_title (5h §3.2 commit 6 — 같은 num 다른 title 분리).
+                if o_type and o_num and o_title:
+                    key = f"{o_type}_{o_num}_{o_title}"
+                elif o_type and o_num:
+                    key = f"{o_type}_{o_num}"
+                else:
+                    key = o_num or o_title or "기타"
                 if key not in result:
                     result[key] = {"outline_num": o_num, "outline_title": o_title, "outline_type": o_type, "source": source, "speakers": []}
                 elif o_type and not result[key]["outline_type"]:
@@ -1005,9 +1022,14 @@ def list_transcripts():
             on = parsed.get("outline_num", "")
             speaker = parsed.get("speaker", "")
             date = parsed.get("date", "")
-            title = parsed.get("outline_title", "")
-            # 그룹 키 = outline_type + outline_num (5h §3.2 정합 — type 다른 같은 num 섞임 차단).
-            key = f"{ot}_{on}" if ot and on else (on or "기타")
+            title = (parsed.get("outline_title", "") or "").strip()
+            # 그룹 키 = outline_type + outline_num + outline_title (5h §3.2 commit 6 — 같은 num 다른 title 분리).
+            if ot and on and title:
+                key = f"{ot}_{on}_{title}"
+            elif ot and on:
+                key = f"{ot}_{on}"
+            else:
+                key = on or "기타"
             if key not in result:
                 result[key] = {"outline_num": on, "outline_title": title, "outline_type": ot, "source": "원문", "speakers": []}
             if title and not result[key]["outline_title"]:
