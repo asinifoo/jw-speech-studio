@@ -139,13 +139,6 @@ def _build_generate_prompt(req: GenerateRequest) -> str:
 """
 
 
-def _verify_password(password: str):
-    if not PASSWORD_HASH:
-        raise HTTPException(status_code=500, detail="서버에 비밀번호가 설정되지 않았습니다")
-    if hashlib.sha256(password.encode()).hexdigest() != PASSWORD_HASH:
-        raise HTTPException(status_code=403, detail="비밀번호가 올바르지 않습니다")
-
-
 @router.post("/api/generate")
 def generate_speech(req: GenerateRequest):
     _verify_password(req.password)
