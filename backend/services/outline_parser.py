@@ -859,6 +859,10 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
     ot = parsed.get("outline_type") or fn_meta.get("outline_type") or ""
     on = parsed.get("outline_num") or fn_meta.get("outline_num") or ""
     version = parsed.get("outline_version") or fn_meta.get("outline_version") or ""
+    # 5j §3.x-docx-fallback-policy (사용자 정책 P-1.1):
+    #   title은 본문(parsed)만 신뢰. 파일명 placeholder
+    #   (예: S-34_044_제목입니다_v11_11.docx 의 "제목입니다") 신뢰 X.
+    #   본문 부재 시 빈값. 미래 회귀 차단.
     title = parsed.get("outline_title") or ""
     note = parsed.get("note") or ""
 
@@ -914,14 +918,19 @@ def _extract_meta_from_docx(parsed: dict, filename: str) -> dict:
 
 def parse_outline_filename(filename: str) -> dict:
     """
-    골자 DOCX 파일명에서 outline_type, outline_num, version 추출.
+    골자 DOCX 파일명에서 outline_type, outline_num, outline_version 추출.
     매칭 실패 시 값은 None.
 
     Doc-45: YY 추출 제거. version MM/YY 가 년도 정보 흡수.
 
+    5j §3.x-docx-fallback-policy (사용자 정책 P-1.1):
+      추출 대상 — 정형 패턴 키 (outline_type / outline_num / outline_version).
+      추출 X — outline_title (자유 텍스트는 본문만 신뢰. 파일명 placeholder X).
+
     파일명 규칙:
       S-34_KO_001.docx              → type=S-34,  num=001
       S-34_KO_001_v09-15.docx       → + version=09/15
+      S-34_KO_001_v09_15.docx       → + version=09/15  (5j: _ 구분자 정합)
       S-31_KO.docx                  → type=S-31,  num=001
       S-123_KO.docx                 → type=S-123, num=001
       S-123_KO_v01-26.docx          → + version=01/26
@@ -932,16 +941,19 @@ def parse_outline_filename(filename: str) -> dict:
     if not filename:
         return result
     base = os.path.splitext(os.path.basename(filename))[0]
+    # 5j §3.x-docx-fallback-policy: _v9_15 영역 _v9-15 정규화
+    # (이후 _ split 충돌 회피 — 운영 케이스 S-34_044_제목_v11_11.docx 영역).
+    base = re.sub(r'_v(\d+)_(\d+)', r'_v\1-\2', base)
     parts = base.split("_")
     if not parts:
         return result
 
-    # 버전 "_v09-15" 추출
+    # 버전 "_v09-15" / "_v09_15" 추출 (5j §3.x-docx-fallback-policy: _ 구분자 정합)
     kept = []
     for p in parts:
-        vm = re.match(r'^v(\d+(?:[\-]\d+)*)$', p)
+        vm = re.match(r'^v(\d+(?:[\-_]\d+)*)$', p)
         if vm:
-            result["outline_version"] = vm.group(1).replace("-", "/")
+            result["outline_version"] = vm.group(1).replace("-", "/").replace("_", "/")
         else:
             kept.append(p)
 

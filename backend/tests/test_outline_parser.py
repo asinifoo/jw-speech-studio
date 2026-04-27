@@ -488,6 +488,29 @@ def test_extract_meta_from_docx_filename_fallback():
     assert "title" not in m
 
 
+def test_parse_outline_filename_version_underscore():
+    """5j §3.x-docx-fallback-policy: _v01_26 영역 → 01/26 변환 정합."""
+    r = parse_outline_filename("S-34_KO_001_v01_26.docx")
+    assert r["outline_version"] == "01/26"
+    # 운영 케이스 — 자유 텍스트 박힘 + _ 구분자
+    r2 = parse_outline_filename("S-34_044_제목입니다_v11_11.docx")
+    assert r2["outline_version"] == "11/11"
+    assert r2["outline_type"] == "S-34"
+    assert r2["outline_num"] == "044"
+
+
+def test_parse_outline_filename_version_dash_baseline():
+    """회귀 방지: 기존 _v01-26 영역 정합 보존."""
+    r = parse_outline_filename("S-34_KO_001_v01-26.docx")
+    assert r["outline_version"] == "01/26"
+
+
+def test_parse_outline_filename_no_title_extraction():
+    """5j P-1.1: parse_outline_filename은 title 추출 X (자유 텍스트 영역 본문만)."""
+    r = parse_outline_filename("S-34_044_제목입니다_v11_11.docx")
+    assert "outline_title" not in r or r.get("outline_title") in (None, "")
+
+
 def test_extract_meta_from_docx_no_filename():
     """filename 빈 영영 — fn_meta SSOT 키 fallback dict 정합."""
     parsed = {
