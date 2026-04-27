@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from services.outline_parser import parse_outline_filename, _outline_prefix, normalize_outline_type
+from services.outline_parser import parse_outline_filename, _outline_prefix, normalize_outline_type, _TYPE_NAMES
 
 
 # ─── parse_outline_filename 회귀 (Doc-45: outline_year 키 없음) ──
@@ -277,3 +277,29 @@ def test_norm_strip_whitespace():
 
 def test_norm_unknown_returned_as_is():
     assert normalize_outline_type("UNKNOWN") == "UNKNOWN"
+
+
+# ─── _TYPE_NAMES 라벨 정정 검증 (commit 3.6c — frontend SSOT 정합) ───
+
+def test_type_names_co_c():
+    assert _TYPE_NAMES["CO_C"] == "순회대회"
+
+
+def test_type_names_co_r():
+    assert _TYPE_NAMES["CO_R"] == "지역대회"
+
+
+def test_type_names_jwbc_sp():
+    assert _TYPE_NAMES["JWBC-SP"] == "연설"
+
+
+def test_type_names_jwbc_mw():
+    assert _TYPE_NAMES["JWBC-MW"] == "아침숭배"
+
+
+def test_type_names_jwbc_pg():
+    assert _TYPE_NAMES["JWBC-PG"] == "월간프로그램"
+
+
+def test_type_names_jwbc_am():
+    assert _TYPE_NAMES["JWBC-AM"] == "연례총회"

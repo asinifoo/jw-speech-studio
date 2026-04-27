@@ -31,8 +31,8 @@ def _split_comma_refs(text):
 _TYPE_NAMES = {
     "S-34": "공개강연", "S-31": "기념식", "S-123": "특별강연", "S-211": "RP모임",
     "SB": "생활과봉사",
-    "CO": "대회", "CO_C": "대회(순회)", "CO_R": "대회(지역)",
-    "JWBC": "JW방송", "JWBC-SP": "JW방송(연설)", "JWBC-MW": "JW방송(아침숭배)", "JWBC-PG": "JW방송(월간프로그램)", "JWBC-AM": "JW방송(연례총회)",
+    "CO": "대회", "CO_C": "순회대회", "CO_R": "지역대회",
+    "JWBC": "JW방송", "JWBC-SP": "연설", "JWBC-MW": "아침숭배", "JWBC-PG": "월간프로그램", "JWBC-AM": "연례총회",
     "ETC": "기타",
 }
 
