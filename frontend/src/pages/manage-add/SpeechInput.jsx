@@ -235,7 +235,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       siDraftLoadedRef.current = false;
       setSiDraftInfo(null);
     } else {
-      draftCheck({ outline_num: siOutline.outline_num, speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline.outline_type || 'S-34' })
+      draftCheck({ outline_num: siOutline.outline_num, speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline.outline_type || 'ETC' })
         .then(r => { if (!cancelled) setSiDraftInfo(r.exists ? r : null); })
         .catch(() => { if (!cancelled) setSiDraftInfo(null); });
     }
