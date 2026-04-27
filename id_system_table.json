@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft-07/schema",
   "title": "JW Speech Studio v2 — ID System Table",
   "description": "분류 체계 SSOT 정리 자료. 5i 세션 §3.5 종결 시점 동기화.",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "session": "5j",
-  "tracking_item": "§3.x-references-schema (5j 종결 ✅)",
+  "tracking_item": "5j 5 commit 종결 + P-1.1 정책 명문화",
   "last_updated": "2026-04-28",
   "sources": [
     "frontend/src/utils/outlineCategory.js",
@@ -590,8 +590,8 @@
   "session_5i_backlog": {
     "description": "5i 세션 영영 영영 영영 신규 발견 잔존 트랙",
     "items": [
-      { "id": "§3.x-card-version-display", "description": "카드 영영 outline_version 표시 정합 (사용자 발견 시)" },
-      { "id": "§3.x-docx-parser-schema", "description": "DOCX 파서 (outline_parser.py L861) parsed.version → parsed.outline_version 통일" },
+      { "id": "§3.x-card-version-display", "description": "카드 영영 outline_version 표시 정합 (사용자 발견 시)", "status": "5j 종결 ✅ (commit 67bb123, 원문/연사메모 카드 헤더 v뱃지)" },
+      { "id": "§3.x-docx-parser-schema", "description": "DOCX 파서 (outline_parser.py L861) parsed.version → parsed.outline_version 통일", "status": "5j 종결 ✅ (commit 180e24c, 3 함수 SSOT 통일 + pytest 신규 4)" },
       { "id": "§3.x-publication-schema", "description": "publication reference_info 'version' / 'pub_title' / 'pub_code' 영영 SSOT 통일 + _REF_KEY_FIELDS 정합" },
       { "id": "§3.x-draft-stt-schema", "description": "draft.py / stt.py 영영 별 schema (version / title 키 영영 사용)" },
       { "id": "§3.x-references-schema", "description": "ChromaDB references 컬렉션 (54건) golza_num/golza_type/golza_version legacy 키 → outline_* 통일", "status": "5j 종결 ✅ (컬렉션 폐기, P-4 정책)" }
@@ -599,17 +599,68 @@
   },
 
   "session_5j_summary": {
-    "description": "5j 세션 종결 트랙 요약",
+    "description": "5j 세션 종결 트랙 요약 (5 commit, HEAD: f0c9878)",
     "tracks_closed": [
       {
         "id": "hotfix-generate-password-nameerror",
+        "commit": "baf2d0e",
         "commits": 1,
         "description": "generate.py _verify_password 중복 정의 정정 — 81b5b0b 핫리로드 복원 시 두 번째 정의 (L142~146) bare PASSWORD_HASH 미치환 → POST /api/generate/stream NameError 운영 차단 hotfix"
       },
       {
         "id": "§3.x-references-schema",
+        "commit": "d167a16",
         "commits": 1,
         "description": "references 컬렉션 (54건, golza_* legacy 키) 폐기. 활성 코드 lookup 0 + 화면 백킹 단절 + doc 본문 100% substring 보존 (speech_expressions superset) + 연사 명단 100% 이주 (44/44) 검증 → 사용자 직접 delete_collection. P-4 정책 정합."
+      },
+      {
+        "id": "§3.x-card-version-display",
+        "commit": "67bb123",
+        "commits": 1,
+        "description": "ManageDbTab 원문/연사메모 카드 헤더 outline_version v뱃지 표시. 골자 sub-tab L310~L330 SSOT 패턴 정합. 출판물 영역 영향 0 (별 트랙 §3.x-publication-schema 보존)."
+      },
+      {
+        "id": "§3.x-docx-parser-schema",
+        "commit": "180e24c",
+        "commits": 1,
+        "description": "DOCX 파서 3 함수 (parse_outline_docx / parse_outline_filename / _extract_meta_from_docx) 출력 dict 키 legacy version/title → SSOT outline_version/outline_title 통일. frontend Gather.jsx L2080~ 영역 잠재 버그 자동 해소. pytest 신규 4 케이스."
+      },
+      {
+        "id": "§3.x-docx-fallback-policy",
+        "commit": "f0c9878",
+        "commits": 1,
+        "description": "version 정규식 _ 구분자 정합 (운영 케이스 v11_11 → 11/11) + base 사전 변환 (_v\\d+_\\d+ → _v\\d+-\\d+) 영역 split 충돌 회피 + P-1.1 정책 명문화 (title은 본문만, 파일명 placeholder X). pytest 신규 3 케이스."
+      }
+    ]
+  },
+
+  "session_5j_policies": {
+    "description": "5j 세션 신규 사용자 정책",
+    "items": [
+      {
+        "id": "P-1.1",
+        "name": "DOCX 파일명 폴백 정책",
+        "established": "5j §3.x-docx-fallback-policy",
+        "rule": "본문 메타 우선 (P-1) 정합 보존. 본문 부재 시 파일명 폴백 영역은 정형 패턴 키 (outline_type / outline_num / outline_version)만 신뢰. 자유 텍스트 키 (outline_title) 영역은 본문 부재 시 빈값.",
+        "rationale": "파일명 placeholder (예: S-34_044_제목입니다_v11_11.docx 의 '제목입니다') 영영 사용자 임시 영역 — DB 저장본 신뢰 X. title은 본문 영역 박힘 영역만 신뢰.",
+        "applied_at": [
+          "backend/services/outline_parser.py:_extract_meta_from_docx (L862 위 주석)",
+          "backend/services/outline_parser.py:parse_outline_filename (docstring 명시)"
+        ]
+      }
+    ]
+  },
+
+  "session_5j_learning_assets": {
+    "description": "5j 세션 학습 자산 (5i §5.17 Hotfix 사이클 패턴 재현)",
+    "items": [
+      {
+        "id": "§5.17-hotfix-cycle-recurrence",
+        "session_origin": "5i",
+        "recurrence": "5j commit f0c9878",
+        "pattern": "STEP 0 진단 빈틈 → STEP 1 진행 중 추가 발견 → atomic 1 commit 안 흡수",
+        "incident": "f0c9878 STEP 1 진행 중 split('_') 충돌 발견 — spec 정규식 정정만으로 사용자 케이스 (v11_11) 작동 X. base 사전 변환 (re.sub) 영역 추가 필요. CC 정직 보고 + atomic 1 commit 안 흡수.",
+        "policy": "5i §5.17 'STEP 0 0 보장 불가 솔직 정책' + '사용자 운영 hotfix 사이클 인정' 영역 5j 영역 재현. 별 commit 분리 X — 본의 정합 우선."
       }
     ]
   }

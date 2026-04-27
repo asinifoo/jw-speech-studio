@@ -126,6 +126,19 @@
 
 > **폐기 컬렉션** (5j §3.x-references-schema 종결): `references` (54건, golza_* legacy 메타) — 화면 백킹 단절 + doc 본문 100% substring으로 `speech_expressions`(source=speaker_memo)에 superset 보존 + 연사 명단 100% 이주 검증 후 사용자 직접 `delete_collection`. P-4 정책 정합.
 
+### 5j 종결 트랙 (5 commit, HEAD: f0c9878)
+- `baf2d0e` hotfix(generate): PASSWORD_HASH NameError (81b5b0b 핫리로드 복원 잔존)
+- `d167a16` docs(references): 컬렉션 폐기 + SSOT 동기화
+- `67bb123` feat(ManageDbTab): 원문/연사메모 카드 헤더 outline_version v뱃지
+- `180e24c` refactor(outline_parser): DOCX 파서 schema SSOT 통일 (version/title)
+- `f0c9878` fix(outline_parser): version 정규식 _ 구분자 정합 + P-1.1 정책 명문화
+
+### 사용자 정책 P-1.1 (DOCX 파일명 폴백)
+- 본문 메타 우선 (P-1) 정합 보존
+- 본문 부재 시 파일명 폴백 영역은 **정형 패턴 키 (type/num/version)만** 신뢰
+- **자유 텍스트 키 (title)** 영역은 본문 부재 시 빈값 — 파일명 placeholder (예: `S-34_044_제목입니다_v11_11.docx`의 "제목입니다") 신뢰 X
+- 적용: `outline_parser._extract_meta_from_docx` (L862 위 주석) + `parse_outline_filename` (docstring)
+
 ### speech_points 저장 규칙 (version 단독 식별)
 
 - **document ID 패턴**: `{type}_{num}_v{version-safe}_{point_num}`
