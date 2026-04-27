@@ -1,0 +1,599 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "JW Speech Studio v2 — ID System Table",
+  "description": "분류 체계 SSOT 정리 자료. 5i 세션 §3.5 종결 시점 동기화.",
+  "version": "1.1.0",
+  "session": "5i",
+  "tracking_item": "§3.5-id-system-doc-update (5i 종결 ✅)",
+  "last_updated": "2026-04-28",
+  "sources": [
+    "frontend/src/utils/outlineCategory.js",
+    "backend/services/outline_parser.py",
+    "backend/services/outline_parser.py — parse_md_meta SSOT (5i §3.2 commit 1)"
+  ],
+
+  "id_structure": {
+    "format": "[outline_type]_[outline_num]_[version?]",
+    "examples": [
+      "S-34_001",
+      "S-34_001_v9",
+      "JWBC-MW_연합_2604"
+    ],
+    "components": {
+      "outline_type": "영문 코드 (분류 체계 식별자)",
+      "outline_num": "숫자 또는 한국어 키워드",
+      "version": "선택. 버전 정보 (예: v9)"
+    }
+  },
+
+  "categories": {
+    "description": "[검색]>[원문] 화면 6탭 그룹화",
+    "list": [
+      "공개 강연",
+      "JW 방송",
+      "대회",
+      "특별 행사",
+      "생활과 봉사",
+      "기타"
+    ],
+    "source_constant": "OUTLINE_CATEGORIES (frontend/src/utils/outlineCategory.js)"
+  },
+
+  "code_to_label_mapping": {
+    "description": "영문 코드 ↔ 한국어 라벨 매핑 SSOT",
+    "frontend_source": "_OUTLINE_CODE_TO_LABEL",
+    "backend_source": "_TYPE_NAMES",
+    "entries": [
+      {
+        "code": "S-34",
+        "label": "공개강연",
+        "category": "공개 강연",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["001", "035", "099"],
+        "description": "회중 공개 강연"
+      },
+      {
+        "code": "S-31",
+        "label": "기념식",
+        "category": "특별 행사",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["001"],
+        "description": "기념식 골자"
+      },
+      {
+        "code": "S-123",
+        "label": "특별강연",
+        "category": "특별 행사",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["001", "002"],
+        "description": "특별 강연"
+      },
+      {
+        "code": "S-211",
+        "label": "RP모임",
+        "category": "특별 행사",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["001"],
+        "description": "RP 모임"
+      },
+      {
+        "code": "SB",
+        "label": "생활과봉사",
+        "category": "생활과 봉사",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["041"],
+        "description": "생활과 봉사 회의"
+      },
+      {
+        "code": "CO_C",
+        "label": "순회대회",
+        "category": "대회",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["001"],
+        "description": "순회 대회",
+        "wrapper": "CO"
+      },
+      {
+        "code": "CO_R",
+        "label": "지역대회",
+        "category": "대회",
+        "num_format": "숫자 (3자리)",
+        "num_examples": ["001"],
+        "description": "지역 대회",
+        "wrapper": "CO"
+      },
+      {
+        "code": "JWBC-SP",
+        "label": "연설",
+        "category": "JW 방송",
+        "num_format": "한국어 키워드",
+        "num_examples": ["겸손", "거룩함", "사랑"],
+        "description": "JW방송 연설 — 골자 X (연설문 요점)",
+        "wrapper": "JWBC"
+      },
+      {
+        "code": "JWBC-MW",
+        "label": "아침숭배",
+        "category": "JW 방송",
+        "num_format": "한국어 키워드",
+        "num_examples": ["연합"],
+        "description": "JW방송 아침숭배",
+        "wrapper": "JWBC"
+      },
+      {
+        "code": "JWBC-PG",
+        "label": "월간프로그램",
+        "category": "JW 방송",
+        "num_format": "숫자 또는 한국어 키워드",
+        "num_examples": ["헌신", "001"],
+        "description": "JW방송 월간프로그램",
+        "wrapper": "JWBC"
+      },
+      {
+        "code": "JWBC-AM",
+        "label": "연례총회",
+        "category": "JW 방송",
+        "num_format": "숫자 또는 한국어 키워드",
+        "num_examples": ["2025", "001"],
+        "description": "JW방송 연례총회",
+        "wrapper": "JWBC"
+      },
+      {
+        "code": "ETC",
+        "label": "기타",
+        "category": "기타",
+        "num_format": "자유 형식",
+        "num_examples": [],
+        "description": "자유 입력 모드 fallback / 분류 X"
+      }
+    ]
+  },
+
+  "wrapper_codes": {
+    "description": "wrapper 코드 — 저장 X / UI 드롭다운 lookup X. sub 코드만 저장.",
+    "excluded_constant": "_TYPE_META_EXCLUDED = {\"CO\"}",
+    "entries": [
+      {
+        "code": "CO",
+        "label": "대회",
+        "subs": ["CO_C", "CO_R"],
+        "ui_visible": false
+      },
+      {
+        "code": "JWBC",
+        "label": "JW방송",
+        "subs": ["JWBC-SP", "JWBC-MW", "JWBC-PG", "JWBC-AM"],
+        "ui_visible": false
+      }
+    ],
+    "policy": "sub 강제 — 자유 입력 모드 시 wrapper 선택 후 sub 강제 (UI 2단계 드롭다운)"
+  },
+
+  "korean_alias_mapping": {
+    "description": "한국어 입력 → 영문 코드 자동 변환",
+    "backend_source": "_OUTLINE_TYPE_KO_TO_EN",
+    "entries": [
+      { "korean": "공개강연", "code": "S-34" },
+      { "korean": "공개 강연", "code": "S-34" },
+      { "korean": "기념식", "code": "S-31" },
+      { "korean": "특별강연", "code": "S-123" },
+      { "korean": "특별 강연", "code": "S-123" },
+      { "korean": "RP모임", "code": "S-211" },
+      { "korean": "RP 모임", "code": "S-211" },
+      { "korean": "순회대회", "code": "CO_C" },
+      { "korean": "순회 대회", "code": "CO_C" },
+      { "korean": "지역대회", "code": "CO_R" },
+      { "korean": "지역 대회", "code": "CO_R" },
+      { "korean": "생활과봉사", "code": "SB" },
+      { "korean": "생활과 봉사", "code": "SB" },
+      { "korean": "기타", "code": "ETC" }
+    ],
+    "note": "wrapper alias (대회 / JW방송) 매핑 미적용 — sub 강제 정책으로 발현 X"
+  },
+
+  "free_input_mapping": {
+    "description": "[전처리]>[구조화]>[연설] 자유 입력 모드 분류 매핑 (sub 강제)",
+    "frontend_source": "_FREETYPE_MAPPING (frontend/src/utils/outlineCategory.js)",
+    "ui_flow": "1단계: siFreeType 4종 선택 → 2단계: '대회' / 'JW방송' 시 siFreeSubType 강제 선택",
+    "entries": [
+      {
+        "siFreeType": "생활과봉사",
+        "siFreeSubType": null,
+        "outline_type": "SB",
+        "has_sub": false
+      },
+      {
+        "siFreeType": "대회",
+        "siFreeSubType": "순회대회",
+        "outline_type": "CO_C",
+        "has_sub": true
+      },
+      {
+        "siFreeType": "대회",
+        "siFreeSubType": "지역대회",
+        "outline_type": "CO_R",
+        "has_sub": true
+      },
+      {
+        "siFreeType": "JW방송",
+        "siFreeSubType": "연설",
+        "outline_type": "JWBC-SP",
+        "has_sub": true
+      },
+      {
+        "siFreeType": "JW방송",
+        "siFreeSubType": "아침숭배",
+        "outline_type": "JWBC-MW",
+        "has_sub": true
+      },
+      {
+        "siFreeType": "JW방송",
+        "siFreeSubType": "월간프로그램",
+        "outline_type": "JWBC-PG",
+        "has_sub": true
+      },
+      {
+        "siFreeType": "JW방송",
+        "siFreeSubType": "연례총회",
+        "outline_type": "JWBC-AM",
+        "has_sub": true
+      },
+      {
+        "siFreeType": "기타",
+        "siFreeSubType": null,
+        "outline_type": "ETC",
+        "has_sub": false
+      }
+    ],
+    "ui_validation": "sub 미선택 + [저장] 시 알림 ('세부 유형을 선택해주세요') + 저장 차단"
+  },
+
+  "draft_id_format": {
+    "description": "임시저장 draft_id 구성",
+    "format": "[code]_[speaker]_[date](_stt[hash6])",
+    "components": {
+      "code": "outline_type 영문 코드 (자유 입력 시 freeTypeToOutlineCode 매핑 결과)",
+      "speaker": "연사 이름",
+      "date": "날짜 (YYMM 형식 일반)",
+      "stt_suffix": "STT 출처 시 _stt + source_stt_job_id 영문 6자리"
+    },
+    "examples": [
+      {
+        "mode": "골자 모드",
+        "draft_id": "S-34_최진규_2604"
+      },
+      {
+        "mode": "자유 입력 모드 (JW방송 연설)",
+        "draft_id": "JWBC-SP_최진규_2604"
+      },
+      {
+        "mode": "STT 출처 자유 입력",
+        "draft_id": "JWBC-SP_최진규_2604_stt8a3f2c"
+      }
+    ]
+  },
+
+  "display_format": {
+    "description": "화면별 표시 형식",
+    "rules": [
+      {
+        "screen": "[관리]>[DB] 카드 prefix",
+        "format": "[code]_[num]",
+        "function": "getOutlinePrefix(otype, onum)",
+        "examples": ["S-34_001", "JWBC-SP_겸손", "CO_C_001", "SB_041"]
+      },
+      {
+        "screen": "list_originals / list_transcripts 응답 outline_key (5i §3.2 commit 6)",
+        "format": "[code]_[num]_[title] (3-tuple, fallback [code]_[num] / [num] / '기타')",
+        "function": "manage.py L857/L902/L986/L1028",
+        "rationale": "JWBC-SP_소중함 영영 2 다른 연설 (다른 title) 영영 별 그룹 분리",
+        "examples": [
+          "S-31_001_하느님과 그리스도께서 당신을 위해 하신 일에 감사를 나타내십시오!",
+          "S-34_001_당신은 하느님을 얼마나 잘 아는가?",
+          "JWBC-SP_소중함_여호와께서는 여러분을 소중히 여기십니다",
+          "JWBC-SP_소중함_여러분은 여호와께 소중합니다"
+        ]
+      },
+      {
+        "screen": "[전처리]>[구조화]>[연설] 검색창",
+        "format": "[카테고리 라벨] [num] - [제목]",
+        "function": "getOutlineLabel(code, { withCategory: true })",
+        "examples": [
+          "공개강연 001 - 행복한 가정",
+          "JW 방송 연설 겸손 - 겸손에 대하여",
+          "특별 행사 기념식 001 - 제목",
+          "대회 순회대회 001 - 제목"
+        ]
+      },
+      {
+        "screen": "[전처리]>[구조화]>[연설] 드롭다운",
+        "format": "[카테고리 라벨]",
+        "function": "getOutlineLabel(code, { withCategory: true })",
+        "examples": ["공개강연", "JW 방송 연설", "대회 순회대회", "생활과봉사"]
+      },
+      {
+        "screen": "[전처리]>[구조화]>[연설] 선택 골자",
+        "format": "[카테고리 라벨] [num] - [제목]",
+        "function": "getOutlineLabel(code, { withCategory: true })",
+        "examples": ["JW 방송 연설  겸손  - 제목"]
+      },
+      {
+        "screen": "[검색]>[원문] 카드",
+        "format": "[code]_[num] [v버전] [제목] [카테고리 라벨]",
+        "function": "분리 표시 (좌: prefix / 우: 카테고리 결합 라벨)",
+        "examples": ["S-31_001 v8/19 ... 특별 행사 기념식"]
+      },
+      {
+        "screen": "[전처리]>[가져오기]>[STT 검토] 드롭다운",
+        "format": "[카테고리 라벨]",
+        "function": "getOutlineLabel(code, { withCategory: true })",
+        "examples": ["JW 방송 아침숭배", "특별 행사 기념식"]
+      }
+    ]
+  },
+
+  "category_label_combination": {
+    "description": "결합 표시 규칙 — getOutlineLabel(code, { withCategory: true })",
+    "rule": "카테고리 단어가 라벨에 포함된 경우 (공백 제거 비교) 단독 표시. 그 외 결합 표시.",
+    "deduplication_logic": "label !== category && label !== category.replace(/\\s+/g, '')",
+    "entries": [
+      {
+        "code": "S-34",
+        "category": "공개 강연",
+        "label": "공개강연",
+        "result_alone": "공개강연",
+        "result_combined": "공개강연",
+        "deduplication": "중복 회피 (공개 강연 = 공개강연 공백 제거 비교)"
+      },
+      {
+        "code": "S-31",
+        "category": "특별 행사",
+        "label": "기념식",
+        "result_alone": "기념식",
+        "result_combined": "특별 행사 기념식",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "S-123",
+        "category": "특별 행사",
+        "label": "특별강연",
+        "result_alone": "특별강연",
+        "result_combined": "특별 행사 특별강연",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "S-211",
+        "category": "특별 행사",
+        "label": "RP모임",
+        "result_alone": "RP모임",
+        "result_combined": "특별 행사 RP모임",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "SB",
+        "category": "생활과 봉사",
+        "label": "생활과봉사",
+        "result_alone": "생활과봉사",
+        "result_combined": "생활과봉사",
+        "deduplication": "중복 회피 (생활과 봉사 = 생활과봉사 공백 제거 비교)"
+      },
+      {
+        "code": "CO_C",
+        "category": "대회",
+        "label": "순회대회",
+        "result_alone": "순회대회",
+        "result_combined": "대회 순회대회",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "CO_R",
+        "category": "대회",
+        "label": "지역대회",
+        "result_alone": "지역대회",
+        "result_combined": "대회 지역대회",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "JWBC-SP",
+        "category": "JW 방송",
+        "label": "연설",
+        "result_alone": "연설",
+        "result_combined": "JW 방송 연설",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "JWBC-MW",
+        "category": "JW 방송",
+        "label": "아침숭배",
+        "result_alone": "아침숭배",
+        "result_combined": "JW 방송 아침숭배",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "JWBC-PG",
+        "category": "JW 방송",
+        "label": "월간프로그램",
+        "result_alone": "월간프로그램",
+        "result_combined": "JW 방송 월간프로그램",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "JWBC-AM",
+        "category": "JW 방송",
+        "label": "연례총회",
+        "result_alone": "연례총회",
+        "result_combined": "JW 방송 연례총회",
+        "deduplication": "결합 표시"
+      },
+      {
+        "code": "ETC",
+        "category": "기타",
+        "label": "기타",
+        "result_alone": "기타",
+        "result_combined": "기타",
+        "deduplication": "category === '기타' 조건 단독 표시"
+      }
+    ]
+  },
+
+  "source_types": {
+    "description": "source 필드 값",
+    "entries": [
+      { "value": "outline", "meaning": "골자" },
+      { "value": "expression", "meaning": "연설" },
+      { "value": "publication", "meaning": "출판물" },
+      { "value": "transcript", "meaning": "원문" },
+      { "value": "note", "meaning": "연사 메모" },
+      { "value": "quick", "meaning": "빠른 입력" }
+    ]
+  },
+
+  "storage_structure": {
+    "description": "저장 폴더 구조",
+    "base_path": "~/jw-system",
+    "directories": [
+      {
+        "path": "speech_drafts/",
+        "description": "임시저장 draft (JSON)",
+        "filename_pattern": "{draft_id}.json"
+      },
+      {
+        "path": "outlines/",
+        "description": "골자 JSON",
+        "filename_pattern": "{prefix}.json"
+      },
+      {
+        "path": "originals/",
+        "description": "원문 마크다운",
+        "filename_pattern": "{prefix}_{speaker}_{date}_원문.md"
+      },
+      {
+        "path": "chroma_db/",
+        "description": "ChromaDB 벡터 저장소",
+        "collections": [
+          "speech_points",
+          "speech_expressions",
+          "publications",
+          "transcripts",
+          "notes"
+        ],
+        "metadata_schema_5i": {
+          "description": "5i §3.x-schema-unify 트랙 종결 — version/title legacy 키 영영 outline_version/outline_title 통일.",
+          "ssot_keys": [
+            "outline_type", "outline_type_name", "outline_num",
+            "outline_title", "outline_version", "note", "source"
+          ],
+          "speech_points": "outline_version 사용 (legacy 'version' 폐기)",
+          "speech_expressions": "outline_version 사용 (legacy 'version' 폐기)",
+          "publications": "publications metadata 영영 outline_title ✅. reference_info 영영 'version' 잔존 (별 트랙 §3.x-publication-schema)",
+          "references": "golza_* legacy 키 잔존 (별 트랙 §3.x-references-schema)"
+        }
+      }
+    ]
+  },
+
+  "future_change_guide": {
+    "description": "미래 변경 시 수정 위치 안내",
+    "scenarios": [
+      {
+        "scenario": "새 골자 유형 추가",
+        "files_to_modify": [
+          "frontend/src/utils/outlineCategory.js (_OUTLINE_CODE_TO_LABEL + _CATEGORY_BY_CODE)",
+          "backend/services/outline_parser.py (_TYPE_NAMES + _OUTLINE_TYPE_KO_TO_EN + _TYPE_META)"
+        ],
+        "test": "backend pytest test_outline_parser.py 신규 케이스 추가"
+      },
+      {
+        "scenario": "새 카테고리 추가",
+        "files_to_modify": [
+          "frontend/src/utils/outlineCategory.js (OUTLINE_CATEGORIES 배열)"
+        ],
+        "ui_impact": "TranscriptPage 자동 흡수 — 탭 폭 자동 분할"
+      },
+      {
+        "scenario": "라벨 형식 변경 (예: '연설' → 'JW방송 연설')",
+        "files_to_modify": [
+          "frontend/src/utils/outlineCategory.js (_OUTLINE_CODE_TO_LABEL)",
+          "backend/services/outline_parser.py (_TYPE_NAMES)"
+        ],
+        "data_migration": "ChromaDB outline_type_name 비대칭 발생 — 사용자 재주입 권고 (P-4)"
+      },
+      {
+        "scenario": "num 형식 변경",
+        "files_to_modify": [
+          "frontend/src/utils/outlineFormat.js (getOutlinePrefix)",
+          "backend/services/outline_parser.py (_outline_prefix)"
+        ],
+        "test": "양쪽 동기화 검증 (5g §4.4 패턴)"
+      },
+      {
+        "scenario": "i18n / 다국어 도입",
+        "files_to_modify": [
+          "frontend/src/utils/outlineCategory.js (_OUTLINE_CODE_TO_LABEL 다국어 맵)"
+        ],
+        "design": "현재 SSOT 구조에서 다국어 키 추가 자연 흡수"
+      }
+    ]
+  },
+
+  "session_5h_backlog": {
+    "description": "5h 종결 시점 잔존 백로그 12 항목 — 5i 트랙 종결 표시 포함",
+    "items": [
+      { "id": "§3.x-prefix-generation-unify", "description": "L307/L406/L486 prefix 박힘 정정", "status": "5i §3.3 종결 ✅ (commit d5d1ebd)" },
+      { "id": "§3.x-display-format-consistency", "description": "S-31 골자 num 형식 (숫자 / 한국어 키워드 혼재)", "status": "5i §3.2 흡수 (parse_md_meta 본문 메타 우선 정책)" },
+      { "id": "§3.x-id-system-doc-update", "description": "ID 체계 표 동기화", "status": "5i §3.5 종결 ✅ (본 commit)" },
+      { "id": "§3.x-jwbc-wrapper-edge-case", "description": "outline_type='JWBC' 단독 케이스", "status": "잔존" },
+      { "id": "§3.x-draft-free-type-storage", "description": "backend free_type 저장 (commit 3.6d 일부 흡수, list_drafts 잔존)", "status": "잔존" },
+      { "id": "§3.x-backend-wrapper-korean-mapping", "description": "미래 wrapper 매핑", "status": "잔존 (운영 발현 0건)" },
+      { "id": "§3.x-stt-auto-classify", "description": "STT 자동 분류 (현재 사용자 분류 정합)", "status": "잔존" },
+      { "id": "§3.x-label-migration", "description": "ChromaDB 626건 라벨 (사용자 재주입으로 자동 정합)", "status": "잔존 — 사용자 P-4 정책" },
+      { "id": "§3.x-jwbc-co-sub-display", "description": "UI 단독 표시 시 카테고리 명시", "status": "잔존" },
+      { "id": "§3.x-monolith-cleanup", "description": "main_monolith.py legacy 정리 (사용 0건 검증 완료)", "status": "잔존" },
+      { "id": "§3.x-original-filename-format-fix", "description": "backend list_originals 파싱 + 다른 outline_type 빈틈", "status": "5i §3.2 종결 ✅ (commit 2055141 외 6 commit)" },
+      { "id": "§3.x-drafts-card-display", "description": "Drafts 카드 free_type / free_sub_type 표시", "status": "잔존" }
+    ]
+  },
+
+  "session_5i_summary": {
+    "description": "5i 세션 종결 트랙 요약 (HEAD: f1d0cd4 + 본 commit)",
+    "tracks_closed": [
+      {
+        "id": "§3.2-original-filename + outline_key 정합",
+        "commits": 6,
+        "description": "parse_md_meta SSOT 헬퍼 + list_originals/list_transcripts 본문 메타 우선 + outline_key type+num+title 3-tuple"
+      },
+      {
+        "id": "§3.3-prefix-generation-unify",
+        "commits": 1,
+        "description": "ManageDbTab L307/L406 인라인 prefix 생성 → getOutlinePrefix 헬퍼 SSOT 통합"
+      },
+      {
+        "id": "§3.x-schema-unify",
+        "commits": 5,
+        "hotfixes": 2,
+        "description": "version/title legacy 키 → outline_version/outline_title SSOT 통일 (preprocess + manage + frontend)"
+      },
+      {
+        "id": "§3.x-groups-state-cosmetic",
+        "commits": 1,
+        "description": "ManageDbTab groups state title → outline_title cosmetic 일관성"
+      },
+      {
+        "id": "§3.5-id-system-doc-update",
+        "commits": 2,
+        "description": "id_system_table.json + CLAUDE.md 5i 동기화"
+      }
+    ]
+  },
+
+  "session_5i_backlog": {
+    "description": "5i 세션 영영 영영 영영 신규 발견 잔존 트랙",
+    "items": [
+      { "id": "§3.x-card-version-display", "description": "카드 영영 outline_version 표시 정합 (사용자 발견 시)" },
+      { "id": "§3.x-docx-parser-schema", "description": "DOCX 파서 (outline_parser.py L861) parsed.version → parsed.outline_version 통일" },
+      { "id": "§3.x-publication-schema", "description": "publication reference_info 'version' / 'pub_title' / 'pub_code' 영영 SSOT 통일 + _REF_KEY_FIELDS 정합" },
+      { "id": "§3.x-draft-stt-schema", "description": "draft.py / stt.py 영영 별 schema (version / title 키 영영 사용)" },
+      { "id": "§3.x-references-schema", "description": "ChromaDB references 컬렉션 (54건) golza_num/golza_type/golza_version legacy 키 → outline_* 통일" }
+    ]
+  }
+}
