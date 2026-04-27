@@ -508,6 +508,13 @@ export default function ManageDbTab({ mode }) {
                     <input type="checkbox" checked={dbSelected.has(r.id)} onChange={e => setDbSelected(p => { const n = new Set(p); if (e.target.checked) n.add(r.id); else n.delete(r.id); return n; })} style={{ accentColor: cColor, cursor: 'pointer' }} />
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: cColor, flexShrink: 0 }} />
                     <span style={{ fontSize: '0.786rem', fontWeight: 600, color: 'var(--c-hint)' }}>{sourceLabel[meta.source] || meta.source || viewSource}</span>
+                    {(viewSource === '원문' || viewSource === '연사메모') && prefix && <span style={{ fontWeight: 700, color: cColor, fontSize: '0.786rem' }}>{prefix}</span>}
+                    {(viewSource === '원문' || viewSource === '연사메모') && meta.outline_version && <span style={{
+                      display: 'inline-flex', alignItems: 'center',
+                      padding: '1px 6px', borderRadius: 4, fontSize: '0.643rem', fontWeight: 600,
+                      background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)',
+                      flexShrink: 0, lineHeight: 1.3,
+                    }}>v{meta.outline_version}</span>}
                     {meta.source === 'discussion' && (meta.discussion_type || meta.sub_source) && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#378ADD15', color: 'var(--accent-blue)', fontWeight: 600 }}>{meta.discussion_type || meta.sub_source}</span>}
                     {meta.service_type && meta.service_type !== '일반' && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#1D9E7515', color: 'var(--accent)', fontWeight: 600 }}>{meta.service_type}</span>}
                     {meta.visit_target && <span style={{ fontSize: '0.643rem', padding: '1px 5px', borderRadius: 3, background: '#D85A3015', color: 'var(--accent-orange)', fontWeight: 600 }}>{meta.visit_target}</span>}
