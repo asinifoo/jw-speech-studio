@@ -15,6 +15,7 @@ import SttCorrectionDiff, { computeDiffPairs } from './SttCorrectionDiff';
 import { Modal } from '../../components/Modal';
 import { collectScripturesFromOutline } from '../../utils/scriptureHelpers';
 import { getOutlinePrefix } from '../../utils/outlineFormat';
+import { getOutlineLabel } from '../../utils/outlineCategory';
 import { dbAdd, dbDelete, dbUpdate, deleteServiceType, freeSearch, getServiceTypes, outlineList, outlineDetail, listBySource, batchAdd, batchList, batchDelete, parseMdFiles, docxToText, saveOutline, saveSpeech, savePublication, saveOriginal, bulkSave, checkDuplicates, bibleLookup, draftSave, draftCheck, draftLoad, draftComplete, draftDelete, draftList, getCategories, saveCategories, lookupPubTitle, matchPubPoints, sttUpload, sttUploadText, sttTranscribe, sttJobsList, sttJobDetail, sttDelete, sttCorrect, sttSave, sttCorrectionsGet } from '../../api';
 
 function _splitCommaRefs(text) {
@@ -1833,7 +1834,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                         <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.714rem', flexShrink: 0 }}>{pfx}</span>
                                         {ver && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)', flexShrink: 0 }}>v{ver}</span>}
                                         <span style={{ flex: 1, fontSize: '0.714rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title || ''}</span>
-                                        <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.outline_type_name || g.outline_type}</span>
+                                        <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)', flexShrink: 0 }}>{getOutlineLabel(g.outline_type, { withCategory: true })}</span>
                                       </div>
                                     );
                                   })}

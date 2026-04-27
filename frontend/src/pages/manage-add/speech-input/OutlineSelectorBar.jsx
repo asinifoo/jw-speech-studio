@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { S } from '../../../styles';
 import { getOutlinePrefix } from '../../../utils/outlineFormat';
+import { getOutlineLabel } from '../../../utils/outlineCategory';
 
 export default function OutlineSelectorBar({
   outline,
@@ -9,9 +10,11 @@ export default function OutlineSelectorBar({
   query,
   freeTopic,
   freeType,
+  freeSubType,
   onQueryChange,
   onFreeTopicChange,
   onFreeTypeChange,
+  onFreeSubTypeChange,
   onToggleMode,
   onSelectOutline,
   onClearOutline,
@@ -45,7 +48,7 @@ export default function OutlineSelectorBar({
                       flexShrink: 0, lineHeight: 1.3,
                     }}>v{g.version}</span>}
                     <span style={{ flex: 1, fontSize: '0.786rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title}</span>
-                    <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{g.outline_type_name || g.outline_type}</span>
+                    <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{getOutlineLabel(g.outline_type, { withCategory: true })}</span>
                   </div>
                 ))}
               </div>
@@ -56,7 +59,7 @@ export default function OutlineSelectorBar({
 
       {outline && !noOutline && (
         <div style={{ marginTop: 6, padding: '6px 10px', borderRadius: 8, background: 'var(--tint-green)', display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{outline.outline_type_name || outline.outline_type}</span>
+          <span style={{ fontSize: '0.643rem', color: 'var(--c-dim)', flexShrink: 0 }}>{getOutlineLabel(outline.outline_type, { withCategory: true })}</span>
           <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.786rem' }}>{outline.outline_num}</span>
           <span style={{ fontSize: '0.786rem', color: 'var(--c-text)' }}>{outline.title}</span>
           <div style={{ flex: 1 }} />
@@ -66,16 +69,39 @@ export default function OutlineSelectorBar({
 
       {noOutline && (
         <div style={{ marginTop: 6 }}>
-          {/* 연설 유형 */}
+          {/* 연설 유형 (1단계) */}
           <div style={{ marginBottom: 6 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>연설 유형</div>
-            <select value={freeType} onChange={e => onFreeTypeChange(e.target.value)}
+            <select value={freeType} onChange={e => {
+              onFreeTypeChange(e.target.value);
+              onFreeSubTypeChange('');
+            }}
               style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', outline: 'none', boxSizing: 'border-box', appearance: 'none', cursor: 'pointer' }}>
               {['생활과봉사', 'JW방송', '대회', '기타'].map(v => (
                 <option key={v} value={v}>{v}</option>
               ))}
             </select>
           </div>
+          {/* 세부 유형 (2단계) — '대회' / 'JW방송' 만 */}
+          {(freeType === '대회' || freeType === 'JW방송') && (
+            <div style={{ marginBottom: 6 }}>
+              <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>세부 유형</div>
+              <select value={freeSubType} onChange={e => onFreeSubTypeChange(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', border: 'none', borderRadius: 8, fontSize: '0.857rem', fontFamily: 'inherit', background: 'var(--bg-subtle)', color: 'var(--c-text-dark)', outline: 'none', boxSizing: 'border-box', appearance: 'none', cursor: 'pointer' }}>
+                <option value="">— 선택 —</option>
+                {freeType === '대회' && (<>
+                  <option value="순회대회">순회대회</option>
+                  <option value="지역대회">지역대회</option>
+                </>)}
+                {freeType === 'JW방송' && (<>
+                  <option value="연설">연설</option>
+                  <option value="아침숭배">아침숭배</option>
+                  <option value="월간프로그램">월간프로그램</option>
+                  <option value="연례총회">연례총회</option>
+                </>)}
+              </select>
+            </div>
+          )}
           {/* 주제 */}
           <div style={{ marginBottom: 6 }}>
             <div style={{ fontSize: '0.643rem', color: 'var(--c-muted)', marginBottom: 3 }}>주제</div>

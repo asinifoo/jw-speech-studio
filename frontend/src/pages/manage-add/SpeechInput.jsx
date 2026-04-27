@@ -7,6 +7,7 @@ import { RESET_CONFIRM_MSG } from '../../utils/formReset';
 import { useConfirm } from '../../providers/ConfirmProvider';
 import { useAlert } from '../../providers/AlertProvider';
 import { MSG } from '../../utils/messages';
+import { freeTypeToOutlineCode, getOutlineLabel } from '../../utils/outlineCategory';
 import OriginalBlock from './speech-input/OriginalBlock';
 import SaveActions from './speech-input/SaveActions';
 import OutlineSelectorBar from './speech-input/OutlineSelectorBar';
@@ -47,6 +48,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   const [siFreeSubtopics, setSiFreeSubtopics] = useState(_siInit.freeSubtopics || []); // [{ title, memo }]
   const [siFreeMode, setSiFreeMode] = useState(_siInit.freeMode || 'subtopic'); // 항상 'subtopic' (bulk 제거됨)
   const [siFreeType, setSiFreeType] = useState(_siInit.freeType || '생활과봉사'); // 생활과 봉사 | JW방송 | 대회 | 기타
+  const [siFreeSubType, setSiFreeSubType] = useState(_siInit.freeSubType || ''); // 대회/JW방송 sub 영역 (순회대회/지역대회/연설/...)
   const [siSourceSttJobId, setSiSourceSttJobId] = useState(_siInit.sourceSttJobId || '');
   const [siSttOriginalText, setSiSttOriginalText] = useState(_siInit.sttOriginalText || '');
   const [siSttOriginalEditing, setSiSttOriginalEditing] = useState(false);
@@ -67,13 +69,13 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   useEffect(() => { try { localStorage.setItem('jw-speech-state', JSON.stringify({
     outline: siOutline, query: siQuery, speaker: siSpeaker, date: siDate,
     mode: siMode, notes: siNotes, details: siDetails,
-    noOutline: siNoOutline, freeText: siFreeText, freeTopic: siFreeTopic, freeSubtopics: siFreeSubtopics, freeMode: siFreeMode, freeType: siFreeType,
+    noOutline: siNoOutline, freeText: siFreeText, freeTopic: siFreeTopic, freeSubtopics: siFreeSubtopics, freeMode: siFreeMode, freeType: siFreeType, freeSubType: siFreeSubType,
     // STT ID는 자유 입력 모드일 때만 persist (골자 모드 오염 방지)
     sourceSttJobId: siNoOutline ? siSourceSttJobId : '',
     // STT 원본은 존재만으로 persist (골자 선택 후에도 참조 유지)
     sttOriginalText: siSttOriginalText || '',
     originType: siOriginType || '',
-  })); } catch {} }, [siOutline, siQuery, siSpeaker, siDate, siMode, siNotes, siDetails, siNoOutline, siFreeText, siFreeTopic, siFreeSubtopics, siFreeMode, siFreeType, siSourceSttJobId, siSttOriginalText, siOriginType]);
+  })); } catch {} }, [siOutline, siQuery, siSpeaker, siDate, siMode, siNotes, siDetails, siNoOutline, siFreeText, siFreeTopic, siFreeSubtopics, siFreeMode, siFreeType, siFreeSubType, siSourceSttJobId, siSttOriginalText, siOriginType]);
 
   // ── useEffect 2: siOutline subtopics 복원 ──
   useEffect(() => {
@@ -92,7 +94,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     if (!t) return;
     // 기존 state 전부 리셋
     setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiNotes({}); setSiDetails({});
-    setSiExpanded({}); setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과봉사');
+    setSiExpanded({}); setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과봉사'); setSiFreeSubType('');
     setSiVerseOpen({}); setSiVerseData({}); setSiDraftInfo(null); setSiNoteInfo(null);
     setSiSourceSttJobId('');
     setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false); setSiOriginType('');
@@ -109,6 +111,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       setSiFreeText('');
       setSiFreeTopic(t.free_topic || '');
       setSiFreeSubtopics(t.free_subtopics || []);
+      setSiFreeSubType('');  // STT 자유 입력 진입 — 사용자 분류 영역
       setSiSourceSttJobId(t.source_stt_job_id || '');
       // STT 원본: 저장되어 있으면 복원, 없으면 free_text 초기값
       setSiSttOriginalText(t.stt_original_text || t.free_text || '');
@@ -125,6 +128,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       setSiFreeText('');
       setSiFreeTopic(t.free_topic || '');
       setSiFreeType(t.free_type || '생활과봉사');
+      setSiFreeSubType(t.free_sub_type || '');
       // Hotfix 4: 구 draft 구조 마이그레이션 (pt.text → pt.title, _mode 추론)
       const rawSubs = t.free_subtopics || [];
       const migrated = rawSubs.map((st, si) => ({
@@ -286,8 +290,11 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   const handleSaveDraft = async () => {
     setSiSaving(true); setSiSaveMsg('');
     try {
+      const draftCode = siNoOutline
+        ? (freeTypeToOutlineCode(siFreeType, siFreeSubType) || 'ETC')
+        : (siOutline?.outline_type || 'ETC');
       await draftSave({
-        outline_type: siOutline?.outline_type || 'ETC',
+        outline_type: draftCode,
         outline_num: siOutline?.outline_num || '',
         outline_title: siOutline?.title || siFreeTopic || '',
         version: siOutline?.version || '',
@@ -300,6 +307,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
         free_subtopics: siFreeSubtopics,
         free_mode: siFreeMode,
         free_type: siFreeType,
+        free_sub_type: siFreeSubType,
         // STT ID는 자유 입력 모드일 때만 전송
         source_stt_job_id: siNoOutline ? siSourceSttJobId : '',
         // STT 원본은 존재만으로 전송 (링크 독립, 골자 전환 후에도 참조 유지)
@@ -314,6 +322,13 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     // 공통 검증
     if (!siSpeaker.trim()) { showAlert('연사를 입력해주세요', { variant: 'info' }); return; }
     if (!siDate.trim()) { showAlert('날짜를 입력해주세요', { variant: 'info' }); return; }
+    if (siNoOutline) {
+      const code = freeTypeToOutlineCode(siFreeType, siFreeSubType);
+      if (!code) {
+        showAlert('세부 유형을 선택해주세요', { variant: 'info' });
+        return;
+      }
+    }
 
     setSiCompleting(true); setSiSaveMsg('');
     try {
@@ -372,11 +387,12 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
               num: 1,
               points: [{ num: '1', text: siFreeText, level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
             }];
+        const freeCode = freeTypeToOutlineCode(siFreeType, siFreeSubType);
         const res = await saveSpeech({
           files: [{
             meta: {
-              outline_type: 'ETC',
-              outline_type_name: siFreeType || '생활과봉사',
+              outline_type: freeCode,
+              outline_type_name: siFreeSubType || siFreeType || '생활과봉사',
               outline_num: '',
               title: siFreeTopic || '',
               version: '',
@@ -393,7 +409,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           const sttSuffix = (siNoOutline && siSourceSttJobId)
             ? `_stt${(siSourceSttJobId.split('_').pop() || siSourceSttJobId).slice(0, 6)}`
             : '';
-          const did = `ETC_${siSpeaker.trim()}_${siDate.trim()}${sttSuffix}`;
+          const codeForDid = freeTypeToOutlineCode(siFreeType, siFreeSubType);
+          const did = `${codeForDid || 'ETC'}_${siSpeaker.trim()}_${siDate.trim()}${sttSuffix}`;
           await draftDelete(did);
         } catch {}
         setSiSaveMsg(MSG.helpers.saveBatch(res.total_new || 0));
@@ -424,7 +441,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     if (!await showConfirm(RESET_CONFIRM_MSG)) return;
     setSiOutline(null); setSiSubtopics({}); setSiQuery(''); setSiSpeaker(''); setSiDate(_siDateDefault);
     setSiMode('quick'); setSiExpanded({}); setSiNotes({}); setSiDetails({});
-    setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과봉사'); siDraftLoadedRef.current = false;
+    setSiNoOutline(false); setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeType('생활과봉사'); setSiFreeSubType(''); siDraftLoadedRef.current = false;
     setSiSourceSttJobId(''); setSiSttOriginalText(''); setSiSttOriginalEditing(false); setSiSttOriginalCollapsed(false);
     setSiVerseOpen({}); setSiVerseData({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
     try { localStorage.removeItem('jw-speech-state'); } catch {}
@@ -461,7 +478,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
     if (!isFree) {
       // 자유 → 골자 전환: 자유 편집 state만 클리어.
       // siSourceSttJobId/siSttOriginalText는 유지 → 골자 선택 전까지 원본 블록 노출 유지.
-      setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]);
+      setSiFreeText(''); setSiFreeTopic(''); setSiFreeSubtopics([]); setSiFreeSubType('');
     }
     setSiSaveMsg('');
   };
@@ -469,7 +486,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   const handleSelectOutline = (g) => {
     setSiOutline(g);
     setSiSourceSttJobId(''); // 골자 선택 시 STT 링크 해제 (다른 draft 오염 방지)
-    setSiQuery(`${g.outline_type_name || g.outline_type || ''} ${g.outline_num} - ${g.title}`);
+    setSiQuery(`${getOutlineLabel(g.outline_type, { withCategory: true })} ${g.outline_num} - ${g.title}`);
     setSiNotes({}); setSiDetails({}); setSiExpanded({}); setSiSaveMsg(''); setSiDraftInfo(null); setSiNoteInfo(null);
     // 소주제 로드 (version 포함 — 같은 번호 다른 버전 섞임 방지)
     const oid = `${g.outline_type || 'S-34'}_${g.outline_num}`;
@@ -527,9 +544,11 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
             query={siQuery}
             freeTopic={siFreeTopic}
             freeType={siFreeType}
+            freeSubType={siFreeSubType}
             onQueryChange={setSiQuery}
             onFreeTopicChange={setSiFreeTopic}
             onFreeTypeChange={setSiFreeType}
+            onFreeSubTypeChange={setSiFreeSubType}
             onToggleMode={handleToggleMode}
             onSelectOutline={handleSelectOutline}
             onClearOutline={handleClearOutline}
