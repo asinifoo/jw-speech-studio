@@ -860,7 +860,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       outlineList().then(r => {
         const all = r.outlines || [];
         const filtered = all.filter(g => {
-          const title = (g.title || '').toLowerCase();
+          const title = (g.outline_title || '').toLowerCase();
           const tcode = (g.outline_type || '').toLowerCase();
           const typeName = (g.outline_type_name || '').toLowerCase();
           const num = (g.outline_num || g.num || '').toString().toLowerCase();
@@ -893,7 +893,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       outline_num: num,
       outline_version: version,
     }));
-    setSttReviewOutlineQuery(`${g.prefix || otype + '_' + num} - ${g.title || ''}`);
+    setSttReviewOutlineQuery(`${g.prefix || otype + '_' + num} - ${g.outline_title || ''}`);
     setSttReviewOutlineFocus(false);
   };
 
@@ -1283,12 +1283,12 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                 </span>
                                 {isPub ? <>
                                   {ot && <span style={{ color: 'var(--accent-purple)', fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>}
-                                  <span style={{ fontWeight: 600 }}>{m.title || '출판물'}</span>
+                                  <span style={{ fontWeight: 600 }}>{m.outline_title || '출판물'}</span>
                                   <span style={{ color: 'var(--accent-purple)', fontSize: '0.786rem' }}>출판물</span>
                                 </> : isOrig ? <>
                                   <span style={{ fontWeight: 600 }}>{ot}{on && on !== ot ? ` ${on}${/^\d+$/.test(on) ? '번' : ''}` : ''}</span>
                                   <span style={{ color: 'var(--accent-blue)', fontSize: '0.786rem' }}>원문</span>
-                                  {m.title && <span style={{ color: 'var(--c-dim)' }}>— {m.title}</span>}
+                                  {m.outline_title && <span style={{ color: 'var(--c-dim)' }}>— {m.outline_title}</span>}
                                   {m.speaker && <span style={{ color: 'var(--accent-orange)' }}>· {m.speaker}</span>}
                                   {m.date && <span style={{ color: 'var(--c-dim)' }}>· {m.date}</span>}
                                 </> : <>
@@ -1833,7 +1833,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                                         style={{ padding: '6px 10px', cursor: 'pointer', borderBottom: '1px solid var(--bd-light)', display: 'flex', alignItems: 'center', gap: 6 }}>
                                         <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: '0.714rem', flexShrink: 0 }}>{pfx}</span>
                                         {ver && <span style={{ padding: '1px 5px', borderRadius: 3, fontSize: '0.643rem', fontWeight: 600, background: 'var(--tint-blue, #eef4fb)', color: 'var(--accent-blue)', flexShrink: 0 }}>v{ver}</span>}
-                                        <span style={{ flex: 1, fontSize: '0.714rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.title || ''}</span>
+                                        <span style={{ flex: 1, fontSize: '0.714rem', color: 'var(--c-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.outline_title || ''}</span>
                                         <span style={{ fontSize: '0.571rem', color: 'var(--c-dim)', flexShrink: 0 }}>{getOutlineLabel(g.outline_type, { withCategory: true })}</span>
                                       </div>
                                     );
