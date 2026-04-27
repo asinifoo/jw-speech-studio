@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from config import _OUTLINES_DIR, normalize_source, SPEECHES_DIR
 from models import DbAddRequest, DbUpdateRequest, DbDeleteRequest, BatchItem, BatchAddRequest, BatchDeleteRequest, TranscriptFileDeleteRequest
-from services.outline_parser import _outline_prefix, _ver_safe, normalize_outline_type, get_outline_types
+from services.outline_parser import _outline_prefix, _ver_safe, normalize_outline_type, get_outline_types, parse_md_meta
 from services.file_utils import validate_transcript_filename
 from db import get_db, get_embedding, _bm25_cache
 
@@ -867,9 +867,8 @@ def list_originals():
         except Exception:
             continue
 
-    # 2. ~/jw-system/speeches/ 폴더에서 파일 조회
+    # 2. ~/jw-system/speeches/ 폴더에서 파일 조회 — 본문 메타 우선 (5h §3.2 SSOT 헬퍼)
     if os.path.exists(SPEECHES_DIR):
-        import re as _re
         for fname in sorted(os.listdir(SPEECHES_DIR)):
             if not fname.endswith(".md") and not fname.endswith(".txt"):
                 continue
@@ -879,19 +878,14 @@ def list_originals():
                     content = f.read()
             except Exception:
                 continue
-            # 파일명에서 메타 추출: S-34_003_박성준_2503_원문.md
-            fn_clean = fname.replace("_원문수정본", "").replace("_원문", "").replace(".md", "").replace(".txt", "")
-            fn_parts = fn_clean.split("_")
-            ot = fn_parts[0] if fn_parts else ""
-            on = fn_parts[1] if len(fn_parts) > 1 else ""
-            speaker = fn_parts[2] if len(fn_parts) > 2 else ""
-            date = fn_parts[3] if len(fn_parts) > 3 else ""
-            # md 내용에서 제목 추출
-            title = ""
-            for line in content.split("\n"):
-                if line.strip().startswith("- **제목**:"):
-                    title = line.strip().replace("- **제목**:", "").strip()
-                    break
+            # 본문 메타 우선 → 파일명 split fallback. 파일명 num 자리 한국어 라벨
+            # ('S-31_기념식_xxx') 박힘 영역 본문 골자번호: 001 영역 정합.
+            parsed = parse_md_meta(content, fname)
+            ot = parsed.get("outline_type", "")
+            on = parsed.get("outline_num", "")
+            speaker = parsed.get("speaker", "")
+            date = parsed.get("date", "")
+            title = parsed.get("outline_title", "")
             outline_key = on or "기타"
             if outline_key not in result:
                 result[outline_key] = {
