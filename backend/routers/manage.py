@@ -981,9 +981,8 @@ def list_transcripts():
                 })
         except Exception:
             continue
-    # 파일 원문 추가
+    # 파일 원문 추가 — 본문 메타 우선 (5h §3.2 SSOT 헬퍼 / commit 3 패턴 정합)
     if os.path.exists(SPEECHES_DIR):
-        import re as _re
         for fname in sorted(os.listdir(SPEECHES_DIR)):
             if not fname.endswith(".md") and not fname.endswith(".txt"):
                 continue
@@ -993,18 +992,14 @@ def list_transcripts():
                     content = f.read()
             except Exception:
                 continue
-            fn_clean = fname.replace("_원문수정본", "").replace("_원문", "").replace(".md", "").replace(".txt", "")
-            fn_parts = fn_clean.split("_")
-            ot = fn_parts[0] if fn_parts else ""
-            on = fn_parts[1] if len(fn_parts) > 1 else ""
-            speaker = fn_parts[2] if len(fn_parts) > 2 else ""
-            date = fn_parts[3] if len(fn_parts) > 3 else ""
-            # md 파일 내용에서 제목 추출
-            title = ""
-            for line in content.split("\n"):
-                if line.strip().startswith("- **제목**:"):
-                    title = line.strip().replace("- **제목**:", "").strip()
-                    break
+            # 본문 메타 우선 → 파일명 split fallback. 파일명 num 자리 한국어 라벨
+            # ('S-31_기념식_xxx') 박힘 영역 본문 골자번호: 001 영역 정합.
+            parsed = parse_md_meta(content, fname)
+            ot = parsed.get("outline_type", "")
+            on = parsed.get("outline_num", "")
+            speaker = parsed.get("speaker", "")
+            date = parsed.get("date", "")
+            title = parsed.get("outline_title", "")
             key = on or "기타"
             if key not in result:
                 result[key] = {"outline_num": on, "outline_title": title, "outline_type": ot, "source": "원문", "speakers": []}
