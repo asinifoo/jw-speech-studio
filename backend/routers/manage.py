@@ -468,12 +468,12 @@ def db_delete(req: DbDeleteRequest):
             if meta and meta.get("source") == "outline":
                 gn = meta.get("outline_num", "")
                 gt = meta.get("outline_type", "")
-                ver = meta.get("version", "")
+                ver = meta.get("outline_version", "")
                 if gn:
                     # 같은 골자+버전의 다른 항목이 있는지 확인
                     where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}]}
                     if ver:
-                        where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}, {"version": ver}]}
+                        where_cond = {"$and": [{"outline_num": gn}, {"source": "outline"}, {"outline_version": ver}]}
                     others = col.get(where=where_cond)
                     remaining = [i for i in (others.get("ids") or []) if i != req.doc_id]
                     if not remaining:
@@ -511,8 +511,8 @@ def outline_list():
                     "outline_type": data.get("outline_type", ""),
                     "outline_type_name": data.get("outline_type_name", ""),
                     "outline_num": data.get("outline_num", ""),
-                    "title": data.get("title", ""),
-                    "version": data.get("version", ""),
+                    "outline_title": data.get("outline_title", "") or data.get("title", ""),
+                    "outline_version": data.get("outline_version", "") or data.get("version", ""),
                     "subtopics": len(data.get("subtopics", [])),
                     "saved_at": data.get("saved_at", ""),
                 })
@@ -559,7 +559,7 @@ def outline_detail(outline_id: str, outline_type: str = "", version: str = ""):
             if outline_type not in (meta_ot, meta_otn):
                 continue
         # version 필터: 명시된 경우 정확히 일치만 (빈 문자열끼리도 매치)
-        if version is not None and version != "" and m_i.get("version", "") != version:
+        if version is not None and version != "" and m_i.get("outline_version", "") != version:
             continue
         meta = m_i
         st = meta.get("sub_topic", "기타")
@@ -1185,7 +1185,7 @@ def batch_delete(req: BatchDeleteRequest):
                     if meta and meta.get("source") == "outline":
                         gn = meta.get("outline_num", "")
                         gt = meta.get("outline_type", "")
-                        ver = meta.get("version", "")
+                        ver = meta.get("outline_version", "")
                         if gn:
                             outline_deleted.add((gt, gn, ver))
             except Exception:

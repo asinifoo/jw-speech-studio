@@ -151,15 +151,15 @@ async def parse_md_files(files: list[UploadFile] = File(...)):
         filename = file.filename or ""
 
         # ── 본문 메타 우선 → 파일명 split fallback (5h §3.2 SSOT 헬퍼) ──
-        # 기존 schema 호환: outline_version → version, outline_title → title.
-        # memo 영영 사용자 카드 메모 영역 (FreeSearchPage 입력 UI) — 본문 비고
-        # 영영 별 영역. 빈 값 영영 초기화 (5i §3.x-schema-unify commit 1).
+        # SSOT 키 정합: outline_version / outline_title 영영 그대로 (5i §3.x-schema-unify commit 2).
+        # 기존 schema 호환 (frontend Gather.jsx L2080-2081): title 키 영영 보존.
+        # memo 영영 사용자 카드 메모 영역 (FreeSearchPage 입력 UI) — 빈 값 초기화.
         parsed = parse_md_meta(content, filename)
         meta = {
             "outline_type": parsed["outline_type"],
             "outline_num": parsed["outline_num"],
             "title": parsed["outline_title"],
-            "version": parsed["outline_version"],
+            "outline_version": parsed["outline_version"],
             "time": parsed["time"],
             "note": parsed["note"],
             "speaker": parsed["speaker"],
@@ -529,7 +529,7 @@ def save_outline(req: dict):
         on = meta.get("outline_num", "")
         ot_name = meta.get("outline_type_name", "") or _TYPE_NAMES.get(ot, ot)
         title = meta.get("title", "")
-        version = meta.get("version", "")
+        version = meta.get("outline_version", "")
         vs = _ver_safe(version)
 
         if not on:
@@ -551,7 +551,7 @@ def save_outline(req: dict):
                     {"outline_type": ot},
                     {"outline_num": on},
                     {"source": "outline"},
-                    {"version": version or ""},
+                    {"outline_version": version or ""},
                 ]}
                 ex = col.get(where=wc)
                 target_ids = list(ex.get("ids", []) or [])
@@ -600,7 +600,7 @@ def save_outline(req: dict):
 
                 doc_meta = {
                     "outline_type": ot, "outline_type_name": ot_name, "outline_num": on, "outline_title": title,
-                    "version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
+                    "outline_version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
                     "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "", "sub_topic_num": sub_num, "sub_topic_time": sub_time,
                     "point_num": pt_num, "level": pt_level, "point_content": pt_text,
                     "scriptures": scriptures, "scripture_usage": scripture_usage, "publications": pubs,
@@ -621,10 +621,10 @@ def save_outline(req: dict):
 
             saved_subtopics.append({"num": sub_num, "title": sub_title, "time": sub_time, "point_count": len(saved_pts), "points": saved_pts})
 
-        # JSON 저장
+        # JSON 저장 — SSOT 키 (outline_title / outline_version) 통일 (5i §3.x-schema-unify commit 2)
         outline_data = {
             "outline_type": ot, "outline_type_name": ot_name, "outline_num": on,
-            "title": title, "version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
+            "outline_title": title, "outline_version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
             "subtopics": saved_subtopics,
             "saved_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
@@ -657,7 +657,7 @@ def save_speech(req: dict):
         ot_name = meta.get("outline_type_name", "") or _TYPE_NAMES.get(ot, ot)
         on = meta.get("outline_num", "")
         title = meta.get("title", "")
-        version = meta.get("version", "")
+        version = meta.get("outline_version", "")
         vs = _ver_safe(version)
         speaker = meta.get("speaker", "")
         date = meta.get("date", "")
@@ -686,11 +686,11 @@ def save_speech(req: dict):
                 pass
             existing_ids = set()
 
-        # 공통 메타 빌더
+        # 공통 메타 빌더 — SSOT 키 (outline_version) 통일 (5i §3.x-schema-unify commit 2)
         def _base_meta():
             return {
                 "outline_type": ot, "outline_type_name": ot_name, "outline_num": on, "outline_title": title,
-                "version": version, "rating": 0, "rating_note": "", "favorite": "false", "used_count": 0, "last_used": "",
+                "outline_version": version, "rating": 0, "rating_note": "", "favorite": "false", "used_count": 0, "last_used": "",
             }
 
         for sub in subtopics:
@@ -872,7 +872,7 @@ def save_publication(body: dict):
         meta = f.get("meta", {})
         ot = normalize_outline_type(meta.get("outline_type", ""))
         on = meta.get("outline_num", "")
-        ver = meta.get("version", "")
+        ver = meta.get("outline_version", "")
         outline_title = meta.get("title", "")
 
         for pub in f.get("publications", []):
@@ -972,7 +972,7 @@ def preprocess_check_duplicates(req: dict):
     for item in req.get("files", []):
         meta = item.get("meta", {})
         on = meta.get("outline_num", "")
-        version = meta.get("version", "")
+        version = meta.get("outline_version", "")
         speaker = meta.get("speaker", "")
         date = meta.get("date", "")
         fmt = item.get("file_format", "")
@@ -994,13 +994,13 @@ def preprocess_check_duplicates(req: dict):
                     {"outline_type": ot},
                     {"outline_num": on},
                     {"source": "outline"},
-                    {"version": version or ""},
+                    {"outline_version": version or ""},
                 ]}
                 ex = sp_col.get(where=wc)
                 matched = len(ex.get("ids", []) or [])
                 if matched > 0:
                     ver_disp = f"v{version}" if version else "버전 미지정"
-                    duplicates.append({"type": "outline", "outline_num": on, "version": version, "count": matched, "message": f"골자 {on}번 ({ver_disp})이 이미 등록되어 있습니다. 덮어쓰시겠습니까?"})
+                    duplicates.append({"type": "outline", "outline_num": on, "outline_version": version, "count": matched, "message": f"골자 {on}번 ({ver_disp})이 이미 등록되어 있습니다. 덮어쓰시겠습니까?"})
             except Exception:
                 pass
 
