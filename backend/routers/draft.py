@@ -82,6 +82,8 @@ def save_draft_internal(req: dict) -> dict:
         "free_topic": req.get("free_topic", ""),
         "free_subtopics": req.get("free_subtopics", []),
         "free_mode": req.get("free_mode", "subtopic"),
+        "free_type": req.get("free_type", ""),
+        "free_sub_type": req.get("free_sub_type", ""),
         "no_outline": bool(req.get("no_outline", False)),
         # 빠른 입력 모드 (Phase 5-1)
         "quick_type": req.get("quick_type", ""),

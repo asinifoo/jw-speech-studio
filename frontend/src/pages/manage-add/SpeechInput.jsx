@@ -232,38 +232,81 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
   // draftCheck 가 in-flight 인 상태로 transfer 가 siOutline 을 바꾸면, stale 응답이
   // 새 outline 의 siDraftInfo 를 덮어쓰던 race 차단.
   useEffect(() => {
-    if (!siOutline || !siSpeaker.trim() || !siDate.trim()) { setSiDraftInfo(null); setSiNoteInfo(null); return; }
+    if (!siSpeaker.trim() || !siDate.trim()) {
+      setSiDraftInfo(null); setSiNoteInfo(null); return;
+    }
+    // 골자 모드 = siOutline 필수 / 자유 입력 모드 = siNoOutline 진입
+    if (!siNoOutline && !siOutline) {
+      setSiDraftInfo(null); setSiNoteInfo(null); return;
+    }
     let cancelled = false;
     // transfer로 draft를 이미 로드한 경우 draftCheck 스킵 (한 번만)
     if (siDraftLoadedRef.current) {
       siDraftLoadedRef.current = false;
       setSiDraftInfo(null);
     } else {
-      draftCheck({ outline_num: siOutline.outline_num, speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline.outline_type || 'ETC' })
-        .then(r => { if (!cancelled) setSiDraftInfo(r.exists ? r : null); })
-        .catch(() => { if (!cancelled) setSiDraftInfo(null); });
+      let checkBody = null;
+      if (siNoOutline) {
+        const code = freeTypeToOutlineCode(siFreeType, siFreeSubType);
+        if (!code) {
+          setSiDraftInfo(null);
+        } else {
+          checkBody = { outline_num: '', speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: code };
+        }
+      } else {
+        checkBody = { outline_num: siOutline.outline_num, speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline.outline_type || 'ETC' };
+      }
+      if (checkBody) {
+        draftCheck(checkBody)
+          .then(r => { if (!cancelled) setSiDraftInfo(r.exists ? r : null); })
+          .catch(() => { if (!cancelled) setSiDraftInfo(null); });
+      }
     }
-    listBySource('note', 10, '').then(r => {
-      if (cancelled) return;
-      const match = (r.entries || []).find(e => e.metadata?.outline_num === siOutline.outline_num && e.metadata?.speaker === siSpeaker.trim() && e.metadata?.date === siDate.trim());
-      setSiNoteInfo(match || null);
-    }).catch(() => { if (!cancelled) setSiNoteInfo(null); });
+    // listBySource note — 자유 입력 모드 영영 호출 X (siOutline 의존)
+    if (!siNoOutline && siOutline) {
+      listBySource('note', 10, '').then(r => {
+        if (cancelled) return;
+        const match = (r.entries || []).find(e => e.metadata?.outline_num === siOutline.outline_num && e.metadata?.speaker === siSpeaker.trim() && e.metadata?.date === siDate.trim());
+        setSiNoteInfo(match || null);
+      }).catch(() => { if (!cancelled) setSiNoteInfo(null); });
+    } else {
+      setSiNoteInfo(null);
+    }
     return () => { cancelled = true; };
-  }, [siOutline?.outline_num, siSpeaker, siDate]);
+  }, [siOutline?.outline_num, siOutline?.outline_type, siSpeaker, siDate, siNoOutline, siFreeType, siFreeSubType]);
 
   // ── 핸들러 (JSX 인라인 추출) ──
   const handleLoadDraft = async () => {
-    const r = await draftLoad({ outline_num: siOutline?.outline_num || '', speaker: siSpeaker.trim(), date: siDate.trim(), outline_type: siOutline?.outline_type || '' });
+    const isFree = siNoOutline;
+    const code = isFree
+      ? (freeTypeToOutlineCode(siFreeType, siFreeSubType) || 'ETC')
+      : (siOutline?.outline_type || '');
+    const r = await draftLoad({
+      outline_num: isFree ? '' : (siOutline?.outline_num || ''),
+      speaker: siSpeaker.trim(),
+      date: siDate.trim(),
+      outline_type: code,
+    });
     if (r.exists) {
-      if (r.notes) setSiNotes(r.notes);
-      if (r.details) setSiDetails(r.details);
-      if (r.mode) setSiMode(r.mode);
-      const exp = {};
-      Object.entries(siSubtopics).forEach(([stKey, pts]) => {
-        if ((r.notes?.[stKey] || '').trim()) { exp[stKey] = true; return; }
-        if ((pts || []).some(pt => { const d = r.details?.[`${(stKey || '0').split('.')[0]}_${pt.point_num}`]; return d && ((d.text || '').trim() || (d.tags || '').trim()); })) exp[stKey] = true;
-      });
-      setSiExpanded(exp);
+      if (isFree) {
+        // 자유 입력 모드 free_* 6 항목 복원
+        if (r.free_text != null) setSiFreeText(r.free_text);
+        if (r.free_topic != null) setSiFreeTopic(r.free_topic);
+        if (r.free_subtopics != null) setSiFreeSubtopics(r.free_subtopics);
+        if (r.free_type) setSiFreeType(r.free_type);
+        if (r.free_sub_type != null) setSiFreeSubType(r.free_sub_type);
+        if (r.free_mode) setSiFreeMode(r.free_mode);
+      } else {
+        if (r.notes) setSiNotes(r.notes);
+        if (r.details) setSiDetails(r.details);
+        if (r.mode) setSiMode(r.mode);
+        const exp = {};
+        Object.entries(siSubtopics).forEach(([stKey, pts]) => {
+          if ((r.notes?.[stKey] || '').trim()) { exp[stKey] = true; return; }
+          if ((pts || []).some(pt => { const d = r.details?.[`${(stKey || '0').split('.')[0]}_${pt.point_num}`]; return d && ((d.text || '').trim() || (d.tags || '').trim()); })) exp[stKey] = true;
+        });
+        setSiExpanded(exp);
+      }
       setSiDraftInfo(null);
       setSiSaveMsg(MSG.success.loadDraft);
     }
