@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft-07/schema",
   "title": "JW Speech Studio v2 — ID System Table",
   "description": "분류 체계 SSOT 정리 자료. 5i 세션 §3.5 종결 시점 동기화.",
-  "version": "1.3.0",
-  "session": "5j",
-  "tracking_item": "5j 5 commit 종결 + P-1.1 정책 명문화",
+  "version": "1.4.0",
+  "session": "5k",
+  "tracking_item": "5k §3.x-publication-schema 종결 (2 commit + 재주입 2회)",
   "last_updated": "2026-04-28",
   "sources": [
     "frontend/src/utils/outlineCategory.js",
@@ -484,7 +484,7 @@
           ],
           "speech_points": "outline_version 사용 (legacy 'version' 폐기)",
           "speech_expressions": "outline_version 사용 (legacy 'version' 폐기)",
-          "publications": "publications metadata 영영 outline_title ✅. reference_info 영영 'version' 잔존 (별 트랙 §3.x-publication-schema)"
+          "publications": "publications metadata 영영 outline_title ✅. reference_info 영영 outline_version SSOT 단독 정착 (5k §3.x-publication-schema 종결, commit 4cb3672 — 재주입 후 ideal state 검증 통과)"
         },
         "deprecated_collections": {
           "references": "5j §3.x-references-schema 종결 — 폐기. 활성 코드 lookup 0 + doc 본문 100% substring으로 speech_expressions(source=speaker_memo)에 superset 보존 + 연사 명단 100% 이주 (44/44) → 정보 손실 0 확인 후 사용자 직접 delete_collection (P-4 정책 정합)"
@@ -592,7 +592,7 @@
     "items": [
       { "id": "§3.x-card-version-display", "description": "카드 영영 outline_version 표시 정합 (사용자 발견 시)", "status": "5j 종결 ✅ (commit 67bb123, 원문/연사메모 카드 헤더 v뱃지)" },
       { "id": "§3.x-docx-parser-schema", "description": "DOCX 파서 (outline_parser.py L861) parsed.version → parsed.outline_version 통일", "status": "5j 종결 ✅ (commit 180e24c, 3 함수 SSOT 통일 + pytest 신규 4)" },
-      { "id": "§3.x-publication-schema", "description": "publication reference_info 'version' / 'pub_title' / 'pub_code' 영영 SSOT 통일 + _REF_KEY_FIELDS 정합" },
+      { "id": "§3.x-publication-schema", "description": "publication reference_info 'version' / 'pub_title' / 'pub_code' 영영 SSOT 통일 + _REF_KEY_FIELDS 정합", "status": "5k 종결 ✅ (2 commit 5adbcca + 4cb3672, 재주입 2회, ideal state 검증 통과)" },
       { "id": "§3.x-draft-stt-schema", "description": "draft.py / stt.py 영영 별 schema (version / title 키 영영 사용)" },
       { "id": "§3.x-references-schema", "description": "ChromaDB references 컬렉션 (54건) golza_num/golza_type/golza_version legacy 키 → outline_* 통일", "status": "5j 종결 ✅ (컬렉션 폐기, P-4 정책)" }
     ]
@@ -661,6 +661,64 @@
         "pattern": "STEP 0 진단 빈틈 → STEP 1 진행 중 추가 발견 → atomic 1 commit 안 흡수",
         "incident": "f0c9878 STEP 1 진행 중 split('_') 충돌 발견 — spec 정규식 정정만으로 사용자 케이스 (v11_11) 작동 X. base 사전 변환 (re.sub) 영역 추가 필요. CC 정직 보고 + atomic 1 commit 안 흡수.",
         "policy": "5i §5.17 'STEP 0 0 보장 불가 솔직 정책' + '사용자 운영 hotfix 사이클 인정' 영역 5j 영역 재현. 별 commit 분리 X — 본의 정합 우선."
+      }
+    ]
+  },
+
+  "session_5k_summary": {
+    "description": "5k 세션 종결 트랙 요약 (2 commit + 재주입 2회, HEAD: 4cb3672)",
+    "tracks_closed": [
+      {
+        "id": "§3.x-publication-schema",
+        "commits": [
+          { "hash": "5adbcca", "type": "feat", "scope": "publication", "summary": "ref outline_version 키 dual-write 호환 모드 (5k commit 1/2)" },
+          { "hash": "4cb3672", "type": "refactor", "scope": "publication", "summary": "ref outline_version 키 SSOT 단독 정착 (5k commit 2/2)" }
+        ],
+        "data_migration": {
+          "collection": "publications",
+          "redo_count": 2,
+          "first_redo": "commit 1 후 — dual-write 정합 검증 (186 doc / 189 ref 양쪽 키 박힘)",
+          "second_redo": "commit 2 후 — SSOT 단독 정착 검증 (186 doc / 189 ref outline_version 단독, version 잔존 0)"
+        },
+        "ideal_state_verified": true,
+        "test_baseline": "176 → 179 (commit 1, 신규 3) → 177 (commit 2, fallback 케이스 2 삭제)",
+        "policy_applied": ["P-1.1", "P-4"],
+        "description": "publication referenced_by_json 안 ref 항목 schema 'version' → 'outline_version' SSOT 통일. backend dual-write → 재주입 검증 → SSOT 단독 정착 → 재주입 검증 패턴 정합. 운영 무중단 + ideal state 양쪽 통과."
+      }
+    ]
+  },
+
+  "session_5k_learning_assets": {
+    "description": "5k 세션 학습 자산 (3 신규 패턴)",
+    "items": [
+      {
+        "id": "§5.22-dual-write-ssot-pattern",
+        "name": "dual-write → SSOT 단독 정착 패턴",
+        "established": "5k §3.x-publication-schema",
+        "pattern": "commit 1 (backend dual-write) → 1차 재주입 (양쪽 키 박힘 검증) → commit 2 (atomic frontend rename + backend SSOT 단독 + 헬퍼 제거) → 2차 재주입 (SSOT 단독 검증) → 종결 commit (docs sync)",
+        "key_insight": "데이터 마이그레이션 시점이 commit 분할 사이 박힘 — 운영 무중단 확보. commit 1 미재주입 시점에도 운영 깨짐 0.",
+        "future_application": ["§3.x-draft-stt-schema (5i 잔존)"]
+      },
+      {
+        "id": "§5.23-cc-self-diagnosis-gap-fill",
+        "name": "CC 사전 검증 자체 빈틈 정합 (5h §5.14 / 5j §5.17 진화)",
+        "established": "5k STEP 1.0 commit 1 사전 검증",
+        "pattern": "사용자 직관 X — CC 자체 grep으로 명세 외 spot 발견 (SearchCard.jsx:258 영역) → 명세 보강 → atomic 흡수",
+        "key_insight": "STEP 1.0 사전 검증 단계에서 명세 spot 외 영역 자체 grep 필수 — 5h 사용자 발견 → 5j 진행 중 발견 → 5k CC 자체 발견 진화",
+        "policy": "사전 검증 단계 grep 영역 명세 spot 외 영역 자체 검증 + 발견 시 정직 보고 + 사용자 confirmation + atomic 흡수"
+      },
+      {
+        "id": "§5.24-chromadb-redo-2x-pattern",
+        "name": "ChromaDB 재주입 2회 패턴 (5j 단순 폐기 vs 5k schema rename)",
+        "comparison": {
+          "5j_references_pattern": "단순 폐기 — 활성 사용 X + doc substring 100% 보존 검증 → delete_collection (재주입 X)",
+          "5k_publications_pattern": "schema rename — 활성 사용 O + 데이터 가치 O → dual-write commit + 재주입 1차 + SSOT commit + 재주입 2차"
+        },
+        "selection_criteria": {
+          "simple_delete (5j)": "활성 사용 X + 데이터 가치 X",
+          "schema_rename (5k)": "활성 사용 O + 데이터 가치 O",
+          "migration_script (미채택)": "사용자 재주입 부담 회피 시 검토 가능 — 5k 영역 사용자 재주입 가능 영영 미채택"
+        }
       }
     ]
   }

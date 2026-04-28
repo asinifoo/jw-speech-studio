@@ -139,6 +139,51 @@
 - **자유 텍스트 키 (title)** 영역은 본문 부재 시 빈값 — 파일명 placeholder (예: `S-34_044_제목입니다_v11_11.docx`의 "제목입니다") 신뢰 X
 - 적용: `outline_parser._extract_meta_from_docx` (L862 위 주석) + `parse_outline_filename` (docstring)
 
+### 5k 종결 트랙 (2 commit + 재주입 2회, HEAD: 4cb3672)
+- `5adbcca` feat(publication): ref outline_version 키 dual-write 호환 모드 (commit 1/2)
+- `4cb3672` refactor(publication): ref outline_version 키 SSOT 단독 정착 (commit 2/2)
+- 1차 재주입 (commit 1 후): 186 doc / 189 ref 양쪽 키 박힘 ideal state ✅
+- 2차 재주입 (commit 2 후): 186 doc / 189 ref outline_version 단독, version 잔존 0 ideal state ✅
+- 백로그 §3.x-publication-schema 종결 (5i 잔존 영역)
+
+### 5k 학습 자산 (§5.22~§5.24 신규)
+
+**§5.22 dual-write → SSOT 단독 정착 패턴**
+```
+commit 1 (backend dual-write 호환 모드)
+  ↓ frontend 변경 0 — 옛 데이터/새 데이터 양쪽 정합
+1차 재주입 (사용자) — ideal state 검증 (양쪽 키 박힘)
+  ↓
+commit 2 (atomic — frontend rename + backend SSOT 단독 + dual-write 제거 + 헬퍼 제거)
+  ↓
+2차 재주입 (사용자) — ideal state 검증 (outline_version 단독 + version 잔존 0)
+  ↓
+종결 commit (docs sync)
+```
+- 데이터 마이그레이션 시점이 commit 분할 사이 박힘 — 운영 무중단 확보
+- commit 1 dual-write — 재주입 미실행 시점 영영 운영 깨짐 0
+- 미래 적용: §3.x-draft-stt-schema (5i 잔존), 데이터 마이그레이션 부담 영영 사용자 재주입 부담 검토 후 진입
+
+**§5.23 CC 사전 검증 자체 빈틈 정합 (5h §5.14 / 5j §5.17 진화)**
+- 5h: 사용자 직관 → cc 정정 트리거
+- 5j: STEP 0 진단 빈틈 → STEP 1 진행 중 발견 → atomic 흡수
+- **5k 진화**: STEP 1 명세 작성 시점 누락된 spot (SearchCard.jsx:258)을 CC가 STEP 1.0 사전 검증 (V-2) grep 영영 자체 발견 → 명세 보강 → atomic 흡수
+- 정책: 사전 검증 단계 grep 영역 명세 spot 외 영역 자체 검증 + 발견 시 정직 보고 + 사용자 confirmation + atomic 흡수
+
+**§5.24 ChromaDB 재주입 2회 패턴 (5j 단순 폐기 vs 5k schema rename)**
+| 항목 | 5j references (단순 폐기) | 5k publications (schema rename) |
+|---|---|---|
+| 활성 사용 | X | O |
+| 데이터 가치 | X (substring 보존) | O |
+| commit 수 | 1 (폐기 sync) | 2 (dual-write + SSOT) |
+| 사용자 재주입 | 0회 | 2회 |
+| 종결 패턴 | 단순 delete_collection | dual-write → 재주입 → SSOT → 재주입 |
+
+**선택 기준**:
+- 활성 사용 X + 데이터 가치 X → 5j 패턴 (단순 폐기)
+- 활성 사용 O + 데이터 가치 O → 5k 패턴 (dual-write + 재주입 2회)
+- 마이그레이션 스크립트 — 사용자 재주입 부담 회피 시 검토 (5k 영역 미채택)
+
 ### speech_points 저장 규칙 (version 단독 식별)
 
 - **document ID 패턴**: `{type}_{num}_v{version-safe}_{point_num}`
