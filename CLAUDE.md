@@ -184,6 +184,59 @@ commit 2 (atomic — frontend rename + backend SSOT 단독 + dual-write 제거 +
 - 활성 사용 O + 데이터 가치 O → 5k 패턴 (dual-write + 재주입 2회)
 - 마이그레이션 스크립트 — 사용자 재주입 부담 회피 시 검토 (5k 영역 미채택)
 
+### 5l 종결 트랙 (1 commit, HEAD: dfeb087)
+- `dfeb087` refactor(draft, stt): legacy 키 → outline_version/outline_title SSOT 정합
+- 데이터 마이그레이션 X (ChromaDB 영영 이미 SSOT 정합)
+- 운영 영향 0 (잠재 mismatch 운영 발현 0건 검증 통과)
+- 백로그 §3.x-draft-stt-schema 종결 (5i 잔존 영역)
+
+### 5l 학습 자산 (§5.25~§5.26 신규)
+
+**§5.25 데이터 마이그레이션 부담 사전 검증 패턴**
+```
+STEP 0 진단 — schema 사용 spot 분포
+  ↓
+STEP 0.5 추가 진단 — schema 호출 흐름 정합 (frontend ↔ backend ↔ ChromaDB)
+  ↓
+STEP 0.7 잠재 버그 검증 — ChromaDB 영영 데이터 손실 발현 여부
+  ↓
+판단 분기:
+  - 데이터 마이그레이션 부담 0 + 운영 영향 0 → 단순 atomic 1 commit
+  - 데이터 마이그레이션 부담 큼 OR 운영 영향 있음 → 5k dual-write 패턴 적용
+```
+- 5l 적용: ChromaDB 3119건 outline_title 빈값 0 + frontend mismatch 운영 발현 0 → 단순 atomic 1 commit
+- 미래 적용: §3.x-point-schema (5m 후보) — ChromaDB 데이터 활성 사용 → 5k dual-write 패턴 적용 후보
+
+**5k vs 5l 비교**:
+| 항목 | 5k publications | 5l draft/stt |
+|---|---|---|
+| 데이터 위치 | ChromaDB 186건 | 파일 시스템 6건 |
+| 활성 사용 | 활성 + 가치 큼 | 활성 + 가치 작음 |
+| schema mismatch 운영 발현 | (publication ref 정합) | 0건 (frontend mismatch 미발현) |
+| 적용 패턴 | 5k dual-write | 단순 atomic |
+
+**§5.26 미완료 마이그레이션 흔적 영역 발견 패턴**
+- 5l STEP 0.8 발견: frontend `pt.title` (UI) vs backend `pt.get("text")` (save_speech) vs ChromaDB `point_content` (메타) 영역 세 영역 키 다름
+- 변환 마찰 spot: SpeechInput.jsx L406 `text: pt.title` 영영 frontend → backend 변환
+- Hotfix 4 (L132~146): 구 draft `pt.text` → 신 draft `pt.title` 마이그레이션 박힘 — 미완료 schema rename 신호
+- **핵심 통찰**: schema rename 시점 영영 frontend ↔ backend ↔ ChromaDB 동시 정합 필수. 한 영역만 정합 시 변환 마찰 spot 영영 미래 회귀 차단 어려움 영영
+- **5m A+안 정착 방향**: frontend `pt.title` → `pt.text` + ChromaDB `point_content` → `point_text` + L406 변환 + Hotfix 4 코드 제거 (5k dual-write 패턴 적용)
+
+### §3.x-point-schema 신규 백로그 (5l 발견, 5m 후보)
+- **A+안**: frontend `pt.title` → `pt.text` + ChromaDB `point_content` → `point_text`
+- 영향: frontend 10+ spot + backend 5+ spot + 데이터 3119 재주입
+- 패턴: 5k dual-write 패턴 적용
+- 우선순위: 중간 (운영 무영향 단 정합 가치 있음)
+
+### §4.15 ★ 신규 (5l) ★ — draft/stt schema SSOT (outline_version/outline_title)
+- **위치**: backend `draft.py:73/L205/L267` + `stt.py:966` / frontend `SpeechInput.jsx:343/440~441/468`
+- **종결 grep**:
+  ```bash
+  grep -n "['\"]version['\"]\|['\"]title['\"]" backend/routers/draft.py backend/routers/stt.py
+  grep -n "version:\|title:" frontend/src/pages/manage-add/SpeechInput.jsx | grep -v "outline_"
+  ```
+- **과거 hotfix**: 5l commit (`dfeb087`) — atomic 1 commit
+
 ### speech_points 저장 규칙 (version 단독 식별)
 
 - **document ID 패턴**: `{type}_{num}_v{version-safe}_{point_num}`

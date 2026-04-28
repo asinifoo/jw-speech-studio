@@ -2,9 +2,9 @@
   "$schema": "https://json-schema.org/draft-07/schema",
   "title": "JW Speech Studio v2 — ID System Table",
   "description": "분류 체계 SSOT 정리 자료. 5i 세션 §3.5 종결 시점 동기화.",
-  "version": "1.4.0",
-  "session": "5k",
-  "tracking_item": "5k §3.x-publication-schema 종결 (2 commit + 재주입 2회)",
+  "version": "1.5.0",
+  "session": "5l",
+  "tracking_item": "5l §3.x-draft-stt-schema 종결 (1 commit, 데이터 마이그레이션 X)",
   "last_updated": "2026-04-28",
   "sources": [
     "frontend/src/utils/outlineCategory.js",
@@ -593,7 +593,7 @@
       { "id": "§3.x-card-version-display", "description": "카드 영영 outline_version 표시 정합 (사용자 발견 시)", "status": "5j 종결 ✅ (commit 67bb123, 원문/연사메모 카드 헤더 v뱃지)" },
       { "id": "§3.x-docx-parser-schema", "description": "DOCX 파서 (outline_parser.py L861) parsed.version → parsed.outline_version 통일", "status": "5j 종결 ✅ (commit 180e24c, 3 함수 SSOT 통일 + pytest 신규 4)" },
       { "id": "§3.x-publication-schema", "description": "publication reference_info 'version' / 'pub_title' / 'pub_code' 영영 SSOT 통일 + _REF_KEY_FIELDS 정합", "status": "5k 종결 ✅ (2 commit 5adbcca + 4cb3672, 재주입 2회, ideal state 검증 통과)" },
-      { "id": "§3.x-draft-stt-schema", "description": "draft.py / stt.py 영영 별 schema (version / title 키 영영 사용)" },
+      { "id": "§3.x-draft-stt-schema", "description": "draft.py / stt.py 영영 별 schema (version / title 키 영영 사용)", "status": "5l 종결 ✅ (commit dfeb087, backend 4 spot + frontend 3 spot, 데이터 마이그레이션 X)" },
       { "id": "§3.x-references-schema", "description": "ChromaDB references 컬렉션 (54건) golza_num/golza_type/golza_version legacy 키 → outline_* 통일", "status": "5j 종결 ✅ (컬렉션 폐기, P-4 정책)" }
     ]
   },
@@ -719,6 +719,84 @@
           "schema_rename (5k)": "활성 사용 O + 데이터 가치 O",
           "migration_script (미채택)": "사용자 재주입 부담 회피 시 검토 가능 — 5k 영역 사용자 재주입 가능 영영 미채택"
         }
+      }
+    ]
+  },
+
+  "session_5l_summary": {
+    "description": "5l 세션 종결 트랙 요약 (1 commit, HEAD: dfeb087)",
+    "tracks_closed": [
+      {
+        "id": "§3.x-draft-stt-schema",
+        "commits": [
+          { "hash": "dfeb087", "type": "refactor", "scope": "draft, stt", "summary": "legacy 키 → outline_version/outline_title SSOT 정합 (5l)" }
+        ],
+        "data_migration": {
+          "needed": false,
+          "reason": "ChromaDB speech_expressions 2260 + speech_points 859 = 3119 영역 이미 SSOT 정합 + draft 파일 6건 영영 사용자 직접 갱신 영영 자연 정합"
+        },
+        "verification": {
+          "chromadb": "outline_title 빈값 0 (전수 3119 검증)",
+          "잠재버그": "frontend SpeechInput.jsx mismatch spot (L441 title/L441 version) 영영 운영 발현 0건 (검증 통과)"
+        },
+        "test_baseline": "177 passed (변경 X)",
+        "policy_applied": ["P-1.1"],
+        "5k_pattern_미적용_결정": "데이터 마이그레이션 부담 0 + 운영 영향 0 영역 단순 atomic 1 commit",
+        "변경_영역": {
+          "backend": "draft.py L73/L205/L267 + stt.py L966 (4 spot)",
+          "frontend": "SpeechInput.jsx L343/L440~441/L468 (3 spot)"
+        }
+      }
+    ]
+  },
+
+  "session_5l_learning_assets": {
+    "description": "5l 세션 학습 자산 (2 신규 패턴)",
+    "items": [
+      {
+        "id": "§5.25-data-migration-cost-pre-check",
+        "name": "데이터 마이그레이션 부담 사전 검증 패턴",
+        "established": "5l §3.x-draft-stt-schema",
+        "pattern": "STEP 0 진단 → STEP 0.5 호출 흐름 정합 → STEP 0.7 잠재 버그 검증 → 판단 분기 (단순 atomic vs 5k dual-write)",
+        "branches": {
+          "simple_atomic": "데이터 마이그레이션 부담 0 + 운영 영향 0",
+          "dual_write_5k": "데이터 마이그레이션 부담 큼 OR 운영 영향 있음"
+        },
+        "5l_application": "ChromaDB 3119건 outline_title 빈값 0 + frontend mismatch 운영 발현 0 → 단순 atomic 1 commit",
+        "future_application": "신규 schema rename 트랙 진입 시 STEP 0.7 잠재 버그 검증 사전 정합 필수"
+      },
+      {
+        "id": "§5.26-incomplete-migration-trace",
+        "name": "미완료 마이그레이션 흔적 영역 발견 패턴",
+        "established": "5l STEP 0.8 보충 진단",
+        "pattern": "frontend ↔ backend ↔ ChromaDB 영역 변환 마찰 spot 박힘 + Hotfix 마이그레이션 코드 박힘 → 미완료 schema rename 신호",
+        "5l_discovery": {
+          "frontend_pt_title": "SpeechInput.jsx L132~146 Hotfix 4 마이그레이션 (pt.text → pt.title) + L406 변환 (text: pt.title)",
+          "backend_pt_text": "preprocess.py save_speech 영영 pt.get('text') 영영 영영 영영 읽음",
+          "chromadb_point_content": "ChromaDB 메타 키 영영 point_content 영영 박힘"
+        },
+        "key_insight": "schema rename 시점 영영 frontend ↔ backend ↔ ChromaDB 동시 정합 필수. 한 영역만 정합 시 변환 마찰 spot 영영 영영 미래 회귀 차단 어려움 영영",
+        "5m_a_plus_direction": "frontend pt.title → pt.text + ChromaDB point_content → point_text + L406 변환 + Hotfix 4 코드 제거 (5k dual-write 패턴 적용)"
+      }
+    ]
+  },
+
+  "session_5m_backlog_candidates": {
+    "description": "5m 진입 시점 우선 트랙 후보 (5l 발견 신규)",
+    "items": [
+      {
+        "id": "§3.x-point-schema",
+        "direction": "A+안 — frontend pt.title → pt.text + ChromaDB point_content → point_text 통일",
+        "discovered_in": "5l STEP 0.8 보충 진단",
+        "impact": {
+          "frontend": "10+ spot (SpeechInput.jsx + FreeStructureEditor.jsx)",
+          "backend": "5+ spot (preprocess.py save_speech)",
+          "data": "speech_expressions 2260 + speech_points 859 = 3119 재주입"
+        },
+        "pattern": "5k dual-write 패턴 적용",
+        "rationale": "Hotfix 4 마이그레이션 코드 + 변환 함수 L406 제거 — 역사적 흔적 정리",
+        "priority": "중간 — 운영 무영향 단 정합 가치 있음 (frontend/backend/ChromaDB 완전 통일)",
+        "entry_timing": "5l 종결 직후 5m 진입 시"
       }
     ]
   }
