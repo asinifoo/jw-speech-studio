@@ -43,14 +43,14 @@ def _fake_pub_list():
         {
             "pub_code": "「파09」 5/15",
             "refs": [
-                {"point_text": "여호와께서는 자신의 종들을 가르치신다", "outline_num": "001"},
-                {"point_text": "다른 본문 텍스트", "outline_num": "002"},
+                {"point_title": "여호와께서는 자신의 종들을 가르치신다", "outline_num": "001"},
+                {"point_title": "다른 본문 텍스트", "outline_num": "002"},
             ],
         },
         {
             "pub_code": "「깨」 5/15",
             "refs": [
-                {"point_text": "다른 본문", "outline_num": "003"},
+                {"point_title": "다른 본문", "outline_num": "003"},
             ],
         },
     ]

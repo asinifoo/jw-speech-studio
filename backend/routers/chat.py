@@ -223,7 +223,7 @@ def search_points(req: SearchRequest):
                 continue
             meta = safe_meta(item)
             # point_num + speaker + date 조합으로 중복 체크
-            mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), (meta.get("point_title", "") or meta.get("point_content", ""))[:50])
+            mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), meta.get("point_title", "")[:50])
             if mk[0] and mk in seen_meta:
                 continue
             body = _dedup_body(item.get("text", ""))
@@ -279,7 +279,7 @@ def free_search(req: FreeSearchRequest):
         if doc_id and doc_id in seen_ids:
             continue
         meta = safe_meta(item)
-        mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), (meta.get("point_title", "") or meta.get("point_content", ""))[:50])
+        mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), meta.get("point_title", "")[:50])
         if mk[0] and mk in seen_meta:
             continue
         body = _dedup_body(item.get("text", ""))
@@ -335,7 +335,7 @@ def chat_stream(req: ChatRequest):
                 if doc_id and doc_id in seen_ids:
                     continue
                 meta = safe_meta(item)
-                mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), (meta.get("point_title", "") or meta.get("point_content", ""))[:50])
+                mk = (meta.get("point_num", ""), meta.get("speaker", ""), meta.get("date", ""), meta.get("point_title", "")[:50])
                 if mk[0] and mk in seen_meta:
                     continue
                 body = _dedup_body(item.get("text", ""))
@@ -435,7 +435,7 @@ def chat_stream(req: ChatRequest):
             sub_source = meta.get("sub_source", "")
             if sub_source:
                 header += f" 소제목:{sub_source}"
-            point_content = meta.get("point_title", "") or meta.get("point_content", "")  # 5m commit 1: read fallback
+            point_content = meta.get("point_title", "")
             if point_content:
                 header += f" 요점:{point_content}"
             if speaker:

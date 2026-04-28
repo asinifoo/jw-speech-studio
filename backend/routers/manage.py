@@ -206,7 +206,7 @@ def match_publication_points(req: dict):
                 if tok_norm == code_norm or tok_norm in code_norm or code_norm in tok_norm:
                     refs = pub.get("refs", [])
                     for r in refs:
-                        pt = _norm_text(r.get("point_text", ""))
+                        pt = _norm_text(r.get("point_title", ""))
                         if pt and pt == cur_text_norm:
                             matched.add(f"{cur_text_norm}__{tok_norm}")
                             break
@@ -562,11 +562,10 @@ def outline_detail(outline_id: str, outline_type: str = "", version: str = ""):
         if version is not None and version != "" and m_i.get("outline_version", "") != version:
             continue
         meta = m_i
-        # 5m commit 1: read fallback (subtopic_title 우선 + sub_topic 호환)
-        st = meta.get("subtopic_title", "") or meta.get("sub_topic", "기타")
+        st = meta.get("subtopic_title", "기타")
         if st not in subtopics:
             subtopics[st] = []
-        subtopics[st].append({"id": doc_id, "point_num": meta.get("point_num", ""), "level": meta.get("level", ""), "content": meta.get("point_content", ""), "scriptures": meta.get("scriptures", ""), "scripture_usage": meta.get("scripture_usage", "")})
+        subtopics[st].append({"id": doc_id, "point_num": meta.get("point_num", ""), "level": meta.get("level", ""), "content": meta.get("point_title", ""), "scriptures": meta.get("scriptures", ""), "scripture_usage": meta.get("scripture_usage", "")})
 
     # 정렬
     def sort_key(st):
@@ -671,9 +670,7 @@ def db_add(req: DbAddRequest):
                 "point_num": req.point_id,
                 "outline_title": req.outline_title or req.topic,
                 "subtopic_title": req.subtopic,
-                # 5m commit 1: dual-write 호환 모드. commit 2에 point_title 단독 정착.
-                "point_title": req.point_summary or "",  # SSOT 키 (5m 신규)
-                "point_text": req.point_summary or "",   # 호환 키 (commit 2 제거)
+                "point_title": req.point_summary or "",  # SSOT 단독 정착 (5m commit 2)
             },
         }
         res = _upsert_publication(col, pub_data)
@@ -750,7 +747,7 @@ def db_add(req: DbAddRequest):
             "outline_num": "",
             "outline_type": "",
             "speaker": req.speaker,
-            "point_content": "",
+            "point_title": "",
             "tag": "",
             "usage": "사용",
             "level": "L1",
@@ -780,7 +777,7 @@ def db_add(req: DbAddRequest):
             "subtopic": "",
             "speaker": req.speaker,
             "sub_source": "",
-            "point_content": "",
+            "point_title": "",
             "pub_code": "",
             "tag": "",
             "usage": "사용",
@@ -799,7 +796,7 @@ def db_add(req: DbAddRequest):
             "outline_title": req.outline_title or req.topic,
             "subtopic": req.subtopic,
             "point_id": "",
-            "point_content": req.point_summary or "",
+            "point_title": req.point_summary or "",
             "scriptures": req.scriptures,
             "publications": formatted_pub_code or "",
             "pub_code": formatted_pub_code or "",
@@ -1143,7 +1140,7 @@ def batch_list():
                     groups[key]["outline_type"] = gt
                 if not groups[key]["outline_title"] and title:
                     groups[key]["outline_title"] = title
-                item_info = {"pub": pc, "point": meta.get("point_content", ""), "scripture": meta.get("scriptures", ""), "type": meta.get("type", "")}
+                item_info = {"pub": pc, "point": meta.get("point_title", ""), "scripture": meta.get("scriptures", ""), "type": meta.get("type", "")}
                 groups[key]["items"].append(item_info)
                 kw = meta.get("keywords", "")
                 if kw:
@@ -1151,9 +1148,9 @@ def batch_list():
                         k = k.strip()
                         if k:
                             groups[key]["keywords"].add(k)
-                # 골자는 keywords가 없으므로 point_content를 수집
+                # 골자는 keywords가 없으므로 point_title을 수집
                 if not kw and src in ("outline", "골자"):
-                    pc = meta.get("point_content", "")
+                    pc = meta.get("point_title", "")
                     if pc and len(pc) <= 30:
                         groups[key]["keywords"].add(pc)
                 typ = meta.get("type", "unknown")

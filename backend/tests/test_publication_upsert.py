@@ -82,9 +82,9 @@ def test_ref_key_basic():
 def test_ref_arr_updated_when_full_5tuple_match():
     """세션 5f §3.x: 5-tuple (4-tuple + point_text) 모두 일치 → idempotent updated."""
     arr = [{"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
-            "point_num": "1.1", "point_text": "본문", "outline_title": "old"}]
+            "point_num": "1.1", "point_title": "본문", "outline_title": "old"}]
     new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
-               "point_num": "1.1", "point_text": "본문", "outline_title": "new"}
+               "point_num": "1.1", "point_title": "본문", "outline_title": "new"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "updated"
     assert len(out) == 1
@@ -94,9 +94,9 @@ def test_ref_arr_updated_when_full_5tuple_match():
 def test_ref_arr_appended_when_different_point():
     """다른 point_num → append (기존 동작)."""
     arr = [{"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
-            "point_num": "1.1", "point_text": "first"}]
+            "point_num": "1.1", "point_title": "first"}]
     new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
-               "point_num": "1.2", "point_text": "second"}
+               "point_num": "1.2", "point_title": "second"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
     assert len(out) == 2
@@ -105,9 +105,9 @@ def test_ref_arr_appended_when_different_point():
 def test_ref_arr_appended_when_same_4tuple_different_text():
     """세션 5f §3.x: 같은 4-tuple + 다른 point_text → append (기존엔 덮어쓰기)."""
     arr = [{"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
-            "point_num": "1.1", "point_text": "old text"}]
+            "point_num": "1.1", "point_title": "old text"}]
     new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
-               "point_num": "1.1", "point_text": "new text"}
+               "point_num": "1.1", "point_title": "new text"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
     assert len(out) == 2
@@ -116,9 +116,9 @@ def test_ref_arr_appended_when_same_4tuple_different_text():
 def test_ref_arr_appended_when_empty_4tuple_different_text():
     """세션 5f §3.x: 빈 4-tuple + 다른 point_text → append (사용자 시나리오)."""
     arr = [{"outline_type": "", "outline_num": "", "outline_version": "",
-            "point_num": "", "point_text": "여호와께서는 자신의 아들들을"}]
+            "point_num": "", "point_title": "여호와께서는 자신의 아들들을"}]
     new_ref = {"outline_type": "", "outline_num": "", "outline_version": "",
-               "point_num": "", "point_text": "여호와께서는 자신의"}
+               "point_num": "", "point_title": "여호와께서는 자신의"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
     assert len(out) == 2
@@ -134,7 +134,7 @@ def _ref_info(point_num="1.1.1", text="요점 본문"):
         "point_num": point_num,
         "outline_title": "제목",
         "subtopic_title": "소주제",
-        "point_text": text,
+        "point_title": text,
     }
 
 
@@ -174,7 +174,7 @@ def test_scenario_B_appended_when_same_4tuple_different_text():
     assert res2["action"] == "appended"
     refs = json.loads(col.store[res2["id"]]["meta"]["referenced_by_json"])
     assert len(refs) == 2
-    texts = sorted([r["point_text"] for r in refs])
+    texts = sorted([r["point_title"] for r in refs])
     assert texts == ["v1 텍스트", "v2 텍스트"]
 
 
@@ -186,7 +186,7 @@ def test_scenario_B_updated_when_full_5tuple_match():
     assert res2["action"] == "updated"
     refs = json.loads(col.store[res2["id"]]["meta"]["referenced_by_json"])
     assert len(refs) == 1
-    assert refs[0]["point_text"] == "v1 텍스트"
+    assert refs[0]["point_title"] == "v1 텍스트"
 
 
 def test_scenario_C_appended_different_point():
@@ -396,7 +396,7 @@ def test_empty_ref_info_new_record():
     payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
         "outline_version": "", "point_num": "",
-        "outline_title": "", "subtopic_title": "", "point_text": "",
+        "outline_title": "", "subtopic_title": "", "point_title": "",
     }
     res = _upsert_publication(col, payload)
     assert res["action"] == "created"
@@ -443,7 +443,7 @@ def test_meaningful_ref_by_title_only():
     payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
         "outline_version": "", "point_num": "",
-        "outline_title": "테스트 주제", "subtopic_title": "", "point_text": "",
+        "outline_title": "테스트 주제", "subtopic_title": "", "point_title": "",
     }
     res = _upsert_publication(col, payload)
     assert res["action"] == "created"
@@ -459,13 +459,13 @@ def test_meaningful_ref_by_point_text():
     payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
         "outline_version": "", "point_num": "",
-        "outline_title": "", "subtopic_title": "", "point_text": "요점 내용",
+        "outline_title": "", "subtopic_title": "", "point_title": "요점 내용",
     }
     res = _upsert_publication(col, payload)
     assert res["action"] == "created"
     refs = json.loads(col.store[res["id"]]["meta"]["referenced_by_json"])
     assert len(refs) == 1
-    assert refs[0]["point_text"] == "요점 내용"
+    assert refs[0]["point_title"] == "요점 내용"
 
 
 # ─── 5k §3.x-publication-schema commit 2 — outline_version SSOT 단독 정착 ──
@@ -478,7 +478,7 @@ def test_upsert_referenced_by_outline_version_key():
         "outline_num": "001",
         "outline_version": "8/19",
         "point_num": "3.4.1",
-        "point_text": "test point",
+        "point_title": "test point",
     }
     result, action = _upsert_referenced_by(existing, new_ref)
     assert len(result) == 1
@@ -508,28 +508,6 @@ def test_upsert_referenced_by_point_title_key():
 
     # 동일 키 재진입 → updated (dedup)
     result, action = _upsert_referenced_by(result, new_ref)
-    assert len(result) == 1
-    assert action == "updated"
-
-
-def test_upsert_referenced_by_point_text_point_title_fallback():
-    """5m: legacy 'point_text' 키 + 신규 'point_title' 키 fallback 매칭 → dedup."""
-    existing = [{
-        "outline_type": "S-31",
-        "outline_num": "001",
-        "outline_version": "8/19",
-        "point_num": "3.4.1",
-        "point_text": "test point",  # legacy 키
-    }]
-    new_ref = {
-        "outline_type": "S-31",
-        "outline_num": "001",
-        "outline_version": "8/19",
-        "point_num": "3.4.1",
-        "point_title": "test point",  # 신규 키
-    }
-    result, action = _upsert_referenced_by(existing, new_ref)
-    # fallback으로 동일 키 인식 → dedup (updated)
     assert len(result) == 1
     assert action == "updated"
 

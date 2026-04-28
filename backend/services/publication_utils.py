@@ -36,19 +36,6 @@ def _ref_key_str(ot: str, on: str, ver: str, pn: str) -> str:
 _REF_KEY_FIELDS = ("outline_type", "outline_num", "outline_version", "point_num", "point_title")
 
 
-def _get_field_compat(item: dict, field: str) -> str:
-    """referenced_by ref dict 키 fallback 헬퍼.
-
-    5m 트랙: 'point_text' → 'point_title' 정합 한시적 호환.
-    commit 2 시점에 fallback 제거 + point_title 단독 정착.
-
-    P-1.1 정합: 정형 패턴 키 (point_title) fallback OK.
-    """
-    if field == "point_title":
-        return item.get("point_title", "") or item.get("point_text", "")
-    return item.get(field, "")
-
-
 def _is_meaningful_ref(ref: dict) -> bool:
     """outline 참조 정보 중 하나라도 실제 값이 있어야 의미 있는 참조.
 
@@ -57,9 +44,8 @@ def _is_meaningful_ref(ref: dict) -> bool:
     """
     if not isinstance(ref, dict):
         return False
-    # 5m commit 1: point_title (SSOT) + point_text (legacy 호환) 양쪽 keys 박힘
     keys = ("outline_type", "outline_num", "point_num",
-            "outline_title", "subtopic_title", "point_title", "point_text")
+            "outline_title", "subtopic_title", "point_title")
     return any((ref.get(k) or "").strip() for k in keys)
 
 
@@ -68,12 +54,11 @@ def _upsert_referenced_by(existing: list, new_ref: dict):
 
     유일 키: outline_type + outline_num + version + point_num + point_title
     (세션 5f §3.x: 빈 4-tuple 끼리 덮어쓰기 회피 + 다른 본문은 별도 entry).
-    5m commit 1: point_text → point_title 정합 + fallback 헬퍼 영영 호환 모드.
     반환: (갱신된 배열, "updated"|"appended")
     """
-    new_key = tuple(_get_field_compat(new_ref, f) for f in _REF_KEY_FIELDS)
+    new_key = tuple(new_ref.get(f, "") for f in _REF_KEY_FIELDS)
     for i, item in enumerate(existing):
-        item_key = tuple(_get_field_compat(item, f) for f in _REF_KEY_FIELDS)
+        item_key = tuple(item.get(f, "") for f in _REF_KEY_FIELDS)
         if item_key == new_key:
             existing[i] = new_ref
             return existing, "updated"

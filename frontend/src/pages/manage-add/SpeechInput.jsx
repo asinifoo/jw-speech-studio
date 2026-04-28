@@ -129,7 +129,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
       setSiFreeTopic(t.free_topic || '');
       setSiFreeType(t.free_type || '생활과봉사');
       setSiFreeSubType(t.free_sub_type || '');
-      // Hotfix 4: 구 draft 구조 마이그레이션 (pt.text → pt.title, _mode 추론)
+      // 5m commit 2: Hotfix 4 마이그레이션 fallback 제거 (구 pt.text 영영 영영 영영 정합 종결)
       const rawSubs = t.free_subtopics || [];
       const migrated = rawSubs.map((st, si) => ({
         ...st,
@@ -137,7 +137,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           rawSubs.length === 1 && si === 0 && !((st.title || '').trim()) ? 'top' : 'subtopic'
         ),
         points: (st.points || []).map(pt => ({
-          title: pt.title || pt.text || '',
+          title: pt.title || '',
           content: pt.content || '',
           scriptures: pt.scriptures || '',
           publications: pt.publications || '',
@@ -403,7 +403,8 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
                   _globalPtNum += 1;
                   return {
                     num: String(_globalPtNum),
-                    text: pt.title || '',
+                    // 5m commit 2: 변환 함수 제거 — frontend pt.title 그대로 backend 영역 박음
+                    title: pt.title || '',
                     level: 'L1',
                     speech_text: pt.content || '',
                     scriptures: pt.scriptures || '',
@@ -417,7 +418,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
               } else {
                 _globalPtNum += 1;
                 const memo = st.memo || '';
-                points = [{ num: String(_globalPtNum), text: memo, level: 'L1', speech_text: memo, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
+                points = [{ num: String(_globalPtNum), title: memo, level: 'L1', speech_text: memo, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }];
               }
               return {
                 title: st.title || '',
@@ -428,7 +429,7 @@ export default function ManageSpeechInput({ siTransferTick, outlines }) {
           : [{
               title: siFreeTopic || '',
               num: 1,
-              points: [{ num: '1', text: siFreeText, level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
+              points: [{ num: '1', title: siFreeText, level: 'L1', speech_text: siFreeText, scriptures: '', scripture_usage: '', publications: '', keywords: '', tags: '', usage: '사용' }],
             }];
         const freeCode = freeTypeToOutlineCode(siFreeType, siFreeSubType);
         const res = await saveSpeech({
