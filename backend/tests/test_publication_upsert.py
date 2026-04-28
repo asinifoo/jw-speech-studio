@@ -466,3 +466,73 @@ def test_meaningful_ref_by_point_text():
     refs = json.loads(col.store[res["id"]]["meta"]["referenced_by_json"])
     assert len(refs) == 1
     assert refs[0]["point_text"] == "요점 내용"
+
+
+# ─── 5k §3.x-publication-schema commit 1 — outline_version dual-write 호환 모드 ──
+
+def test_upsert_referenced_by_outline_version_key():
+    """5k: 새 키 'outline_version'으로 dedup 정상."""
+    existing = []
+    new_ref = {
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "outline_version": "8/19",
+        "point_num": "3.4.1",
+        "point_text": "test point",
+    }
+    result, action = _upsert_referenced_by(existing, new_ref)
+    assert len(result) == 1
+    assert action == "appended"
+
+    # 동일 키 재진입 → updated (dedup)
+    result, action = _upsert_referenced_by(result, new_ref)
+    assert len(result) == 1
+    assert action == "updated"
+
+
+def test_upsert_referenced_by_version_outline_version_fallback():
+    """5k: 기존 'version' 키 + 신규 'outline_version' 키 fallback 매칭 → dedup."""
+    existing = [{
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "version": "8/19",  # legacy 키
+        "point_num": "3.4.1",
+        "point_text": "test point",
+    }]
+    new_ref = {
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "outline_version": "8/19",  # 신규 키
+        "point_num": "3.4.1",
+        "point_text": "test point",
+    }
+    result, action = _upsert_referenced_by(existing, new_ref)
+    # fallback으로 동일 키 인식 → dedup (updated)
+    assert len(result) == 1
+    assert action == "updated"
+
+
+def test_delete_reference_outline_version_fallback():
+    """5k: _delete_reference 영역 outline_version + version 양쪽 fallback."""
+    col = FakeCollection()
+    # legacy 'version' 키로 박힌 참조 사전 setup
+    payload = _pub_payload()
+    payload["reference_info"] = {
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "version": "8/19",  # legacy 키
+        "point_num": "3.4.1",
+        "outline_title": "제목",
+        "subtopic_title": "소주제",
+        "point_text": "요점",
+    }
+    res = _upsert_publication(col, payload)
+    pub_id = res["id"]
+
+    # _ref_key_str로 target_key 빌드 (outline_version 정합)
+    target_key = _ref_key_str("S-31", "001", "8/19", "3.4.1")
+
+    # _delete_reference 호출 — fallback으로 legacy 'version' 키 매칭 → 제거
+    del_res = _delete_reference(col, pub_id, target_key)
+    assert del_res["action"] == "record_deleted"  # 마지막 참조 → 레코드 삭제
+    assert del_res["remaining"] == 0
