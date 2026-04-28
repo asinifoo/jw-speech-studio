@@ -963,7 +963,7 @@ def stt_save(job_id: str, req: dict):
         "outline_type": "ETC",
         "outline_num": "",
         "outline_title": topic,
-        "version": "",
+        "outline_version": "",
         "speaker": speaker,
         "date": date,
         "mode": "quick",

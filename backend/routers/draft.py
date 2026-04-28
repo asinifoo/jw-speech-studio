@@ -70,7 +70,7 @@ def save_draft_internal(req: dict) -> dict:
         "outline_type": req.get("outline_type", ""),
         "outline_num": req.get("outline_num", ""),
         "outline_title": req.get("outline_title", ""),
-        "version": req.get("version", ""),
+        "outline_version": req.get("outline_version", ""),
         "speaker": req.get("speaker", ""),
         "date": req.get("date", ""),
         "mode": req.get("mode", "quick"),  # quick | detail
@@ -202,7 +202,7 @@ def complete_draft(req: dict):
     ot = req.get("outline_type", "")
     on = req.get("outline_num", "")
     title = req.get("outline_title", "")
-    version = req.get("version", "")
+    version = req.get("outline_version", "")
     speaker = req.get("speaker", "")
     date = req.get("date", "")
     mode = req.get("mode", "detail")
@@ -264,7 +264,7 @@ def complete_draft(req: dict):
 
     source = "note" if mode == "quick" else "speech"
     files = [{
-        "meta": {"outline_type": ot, "outline_num": on, "title": title, "version": version, "speaker": speaker, "date": date, "source": source},
+        "meta": {"outline_type": ot, "outline_num": on, "outline_title": title, "outline_version": version, "speaker": speaker, "date": date, "source": source},
         "subtopics": subtopics,
     }]
     result = save_speech({"files": files, "overwrite": True})
