@@ -253,7 +253,7 @@ export default function SearchCard({ item, checked, onToggle, editedText, onEdit
                   <div key={i} style={{ fontSize: rem(10), paddingBottom: i < meaningfulRefs.length - 1 ? 6 : 0, borderBottom: i < meaningfulRefs.length - 1 ? '1px solid var(--bd)' : 'none' }}>
                     <div style={{ fontWeight: 600, color: 'var(--c-text)', marginBottom: 2 }}>
                       {[r.outline_type, r.outline_num].filter(Boolean).join('_')}
-                      {r.version ? ` v${r.version}` : ''}
+                      {r.outline_version ? ` v${r.outline_version}` : ''}
                       {r.point_num ? ` 요점 ${r.point_num}` : ''}
                     </div>
                     {r.outline_title && <div style={{ color: 'var(--c-sub)', marginBottom: 1 }}>주제: {r.outline_title}</div>}

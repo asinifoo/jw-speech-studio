@@ -81,9 +81,9 @@ def test_ref_key_basic():
 
 def test_ref_arr_updated_when_full_5tuple_match():
     """세션 5f §3.x: 5-tuple (4-tuple + point_text) 모두 일치 → idempotent updated."""
-    arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+    arr = [{"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
             "point_num": "1.1", "point_text": "본문", "outline_title": "old"}]
-    new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+    new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
                "point_num": "1.1", "point_text": "본문", "outline_title": "new"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "updated"
@@ -93,9 +93,9 @@ def test_ref_arr_updated_when_full_5tuple_match():
 
 def test_ref_arr_appended_when_different_point():
     """다른 point_num → append (기존 동작)."""
-    arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+    arr = [{"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
             "point_num": "1.1", "point_text": "first"}]
-    new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+    new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
                "point_num": "1.2", "point_text": "second"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
@@ -104,9 +104,9 @@ def test_ref_arr_appended_when_different_point():
 
 def test_ref_arr_appended_when_same_4tuple_different_text():
     """세션 5f §3.x: 같은 4-tuple + 다른 point_text → append (기존엔 덮어쓰기)."""
-    arr = [{"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+    arr = [{"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
             "point_num": "1.1", "point_text": "old text"}]
-    new_ref = {"outline_type": "S-34", "outline_num": "001", "version": "9/15",
+    new_ref = {"outline_type": "S-34", "outline_num": "001", "outline_version": "9/15",
                "point_num": "1.1", "point_text": "new text"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
@@ -115,9 +115,9 @@ def test_ref_arr_appended_when_same_4tuple_different_text():
 
 def test_ref_arr_appended_when_empty_4tuple_different_text():
     """세션 5f §3.x: 빈 4-tuple + 다른 point_text → append (사용자 시나리오)."""
-    arr = [{"outline_type": "", "outline_num": "", "version": "",
+    arr = [{"outline_type": "", "outline_num": "", "outline_version": "",
             "point_num": "", "point_text": "여호와께서는 자신의 아들들을"}]
-    new_ref = {"outline_type": "", "outline_num": "", "version": "",
+    new_ref = {"outline_type": "", "outline_num": "", "outline_version": "",
                "point_num": "", "point_text": "여호와께서는 자신의"}
     out, action = _upsert_referenced_by(arr, new_ref)
     assert action == "appended"
@@ -130,7 +130,7 @@ def _ref_info(point_num="1.1.1", text="요점 본문"):
     return {
         "outline_type": "S-34",
         "outline_num": "001",
-        "version": "9/15",
+        "outline_version": "9/15",
         "point_num": point_num,
         "outline_title": "제목",
         "subtopic_title": "소주제",
@@ -395,7 +395,7 @@ def test_empty_ref_info_new_record():
     payload = _pub_payload()
     payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
-        "version": "", "point_num": "",
+        "outline_version": "", "point_num": "",
         "outline_title": "", "subtopic_title": "", "point_text": "",
     }
     res = _upsert_publication(col, payload)
@@ -413,7 +413,7 @@ def test_empty_ref_info_existing_record():
     empty_payload = _pub_payload()
     empty_payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
-        "version": "", "point_num": "",
+        "outline_version": "", "point_num": "",
     }
     r2 = _upsert_publication(col, empty_payload)
     assert r2["action"] == "no_ref_change"
@@ -442,7 +442,7 @@ def test_meaningful_ref_by_title_only():
     payload = _pub_payload()
     payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
-        "version": "", "point_num": "",
+        "outline_version": "", "point_num": "",
         "outline_title": "테스트 주제", "subtopic_title": "", "point_text": "",
     }
     res = _upsert_publication(col, payload)
@@ -458,7 +458,7 @@ def test_meaningful_ref_by_point_text():
     payload = _pub_payload()
     payload["reference_info"] = {
         "outline_type": "", "outline_num": "",
-        "version": "", "point_num": "",
+        "outline_version": "", "point_num": "",
         "outline_title": "", "subtopic_title": "", "point_text": "요점 내용",
     }
     res = _upsert_publication(col, payload)
@@ -468,10 +468,10 @@ def test_meaningful_ref_by_point_text():
     assert refs[0]["point_text"] == "요점 내용"
 
 
-# ─── 5k §3.x-publication-schema commit 1 — outline_version dual-write 호환 모드 ──
+# ─── 5k §3.x-publication-schema commit 2 — outline_version SSOT 단독 정착 ──
 
 def test_upsert_referenced_by_outline_version_key():
-    """5k: 새 키 'outline_version'으로 dedup 정상."""
+    """5k: outline_version 키 dedup 정상."""
     existing = []
     new_ref = {
         "outline_type": "S-31",
@@ -488,51 +488,3 @@ def test_upsert_referenced_by_outline_version_key():
     result, action = _upsert_referenced_by(result, new_ref)
     assert len(result) == 1
     assert action == "updated"
-
-
-def test_upsert_referenced_by_version_outline_version_fallback():
-    """5k: 기존 'version' 키 + 신규 'outline_version' 키 fallback 매칭 → dedup."""
-    existing = [{
-        "outline_type": "S-31",
-        "outline_num": "001",
-        "version": "8/19",  # legacy 키
-        "point_num": "3.4.1",
-        "point_text": "test point",
-    }]
-    new_ref = {
-        "outline_type": "S-31",
-        "outline_num": "001",
-        "outline_version": "8/19",  # 신규 키
-        "point_num": "3.4.1",
-        "point_text": "test point",
-    }
-    result, action = _upsert_referenced_by(existing, new_ref)
-    # fallback으로 동일 키 인식 → dedup (updated)
-    assert len(result) == 1
-    assert action == "updated"
-
-
-def test_delete_reference_outline_version_fallback():
-    """5k: _delete_reference 영역 outline_version + version 양쪽 fallback."""
-    col = FakeCollection()
-    # legacy 'version' 키로 박힌 참조 사전 setup
-    payload = _pub_payload()
-    payload["reference_info"] = {
-        "outline_type": "S-31",
-        "outline_num": "001",
-        "version": "8/19",  # legacy 키
-        "point_num": "3.4.1",
-        "outline_title": "제목",
-        "subtopic_title": "소주제",
-        "point_text": "요점",
-    }
-    res = _upsert_publication(col, payload)
-    pub_id = res["id"]
-
-    # _ref_key_str로 target_key 빌드 (outline_version 정합)
-    target_key = _ref_key_str("S-31", "001", "8/19", "3.4.1")
-
-    # _delete_reference 호출 — fallback으로 legacy 'version' 키 매칭 → 제거
-    del_res = _delete_reference(col, pub_id, target_key)
-    assert del_res["action"] == "record_deleted"  # 마지막 참조 → 레코드 삭제
-    assert del_res["remaining"] == 0

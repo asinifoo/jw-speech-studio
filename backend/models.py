@@ -119,7 +119,7 @@ class DbAddRequest(BaseModel):
     pub_title: str = ""
     pub_type: str = ""
     reference: str = ""
-    version: str = ""
+    outline_version: str = ""
     service_type: str = ""
     sub_source: str = ""
     situation: str = ""

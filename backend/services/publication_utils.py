@@ -36,19 +36,6 @@ def _ref_key_str(ot: str, on: str, ver: str, pn: str) -> str:
 _REF_KEY_FIELDS = ("outline_type", "outline_num", "outline_version", "point_num", "point_text")
 
 
-def _get_field_compat(item: dict, field: str) -> str:
-    """referenced_by ref dict 키 fallback 헬퍼.
-
-    5k 트랙: 'version' → 'outline_version' 정합 한시적 호환.
-    commit 3 시점에 fallback 제거 + outline_version 단독 정착.
-
-    P-1.1 정합: 정형 패턴 키 (outline_version) fallback OK.
-    """
-    if field == "outline_version":
-        return item.get("outline_version", "") or item.get("version", "")
-    return item.get(field, "")
-
-
 def _is_meaningful_ref(ref: dict) -> bool:
     """outline 참조 정보 중 하나라도 실제 값이 있어야 의미 있는 참조.
 
@@ -69,9 +56,9 @@ def _upsert_referenced_by(existing: list, new_ref: dict):
     (세션 5f §3.x: 빈 4-tuple 끼리 덮어쓰기 회피 + 다른 본문은 별도 entry).
     반환: (갱신된 배열, "updated"|"appended")
     """
-    new_key = tuple(_get_field_compat(new_ref, f) for f in _REF_KEY_FIELDS)
+    new_key = tuple(new_ref.get(f, "") for f in _REF_KEY_FIELDS)
     for i, item in enumerate(existing):
-        item_key = tuple(_get_field_compat(item, f) for f in _REF_KEY_FIELDS)
+        item_key = tuple(item.get(f, "") for f in _REF_KEY_FIELDS)
         if item_key == new_key:
             existing[i] = new_ref
             return existing, "updated"
@@ -203,7 +190,7 @@ def _delete_reference(col, pub_id: str, ref_key: str) -> dict:
             item_key = _ref_key_str(
                 item.get("outline_type", ""),
                 item.get("outline_num", ""),
-                _get_field_compat(item, "outline_version"),
+                item.get("outline_version", ""),
                 item.get("point_num", ""),
             )
             if item_key == ref_key:

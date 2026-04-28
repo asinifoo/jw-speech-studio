@@ -954,7 +954,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
       reference: '', pub_title: '', pub_type: '',
       outline_type: pendingPub.outline_type || '',
       outline_num: pendingPub.outline_num || '',
-      version: pendingPub.version || '',
+      outline_version: pendingPub.outline_version || '',
       point_id: pendingPub.pointNum || '',
     }));
     setSaveMsg('');
@@ -2691,7 +2691,7 @@ export default function ManageGather({ fontSize, pageType, pendingPub, clearPend
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '0.643rem', color: 'var(--c-dim)', marginBottom: 2 }}>버전</div>
-                            <input value={pubForm.version} onChange={e => setPubForm(p => ({ ...p, version: e.target.value }))} placeholder="10/24" style={{ ...S.inputField, width: '100%' }} />
+                            <input value={pubForm.outline_version} onChange={e => setPubForm(p => ({ ...p, outline_version: e.target.value }))} placeholder="10/24" style={{ ...S.inputField, width: '100%' }} />
                           </div>
                         </div>
                         <div style={{ marginBottom: 8 }}>

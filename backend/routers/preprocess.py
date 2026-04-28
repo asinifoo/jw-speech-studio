@@ -890,9 +890,7 @@ def save_publication(body: dict):
                     "reference_info": {
                         "outline_type": ot,
                         "outline_num": on,
-                        # 5k commit 1: dual-write 호환 모드. ver = meta.get("outline_version", "") (DOCX 파서 SSOT 입력).
-                        "outline_version": ver,  # SSOT 키
-                        "version": ver,          # 호환 키 (commit 3 제거)
+                        "outline_version": ver,  # SSOT 키 (5k commit 2 단독 정착)
                         "point_num": pn,
                         "outline_title": outline_title,
                         "subtopic_title": pub.get("subtopic_title", ""),

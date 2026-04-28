@@ -587,7 +587,7 @@ export default function ManageDbTab({ mode }) {
                             <div key={i} style={{ fontSize: '0.714rem', paddingBottom: i < refs.length - 1 ? 6 : 0, borderBottom: i < refs.length - 1 ? '1px solid var(--bd)' : 'none' }}>
                               <div style={{ fontWeight: 600, color: 'var(--c-text)', marginBottom: 2 }}>
                                 {[rf.outline_type, rf.outline_num].filter(Boolean).join('_')}
-                                {rf.version ? ` v${rf.version}` : ''}
+                                {rf.outline_version ? ` v${rf.outline_version}` : ''}
                                 {rf.point_num ? ` 요점 ${rf.point_num}` : ''}
                               </div>
                               {rf.outline_title && <div style={{ color: 'var(--c-sub)', marginBottom: 1 }}>주제: {rf.outline_title}</div>}

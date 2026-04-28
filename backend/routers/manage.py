@@ -666,9 +666,7 @@ def db_add(req: DbAddRequest):
             "reference_info": {
                 "outline_type": normalize_outline_type(req.outline_type),
                 "outline_num": req.outline_num,
-                # 5k commit 1: dual-write 호환 모드. commit 3에 outline_version 단독 정착.
-                "outline_version": req.version,  # SSOT 키
-                "version": req.version,          # 호환 키 (commit 3 제거)
+                "outline_version": req.outline_version,  # SSOT 키 (5k commit 2 단독 정착)
                 "point_num": req.point_id,
                 "outline_title": req.outline_title or req.topic,
                 "subtopic_title": req.subtopic,
