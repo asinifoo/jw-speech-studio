@@ -562,7 +562,8 @@ def outline_detail(outline_id: str, outline_type: str = "", version: str = ""):
         if version is not None and version != "" and m_i.get("outline_version", "") != version:
             continue
         meta = m_i
-        st = meta.get("sub_topic", "기타")
+        # 5m commit 1: read fallback (subtopic_title 우선 + sub_topic 호환)
+        st = meta.get("subtopic_title", "") or meta.get("sub_topic", "기타")
         if st not in subtopics:
             subtopics[st] = []
         subtopics[st].append({"id": doc_id, "point_num": meta.get("point_num", ""), "level": meta.get("level", ""), "content": meta.get("point_content", ""), "scriptures": meta.get("scriptures", ""), "scripture_usage": meta.get("scripture_usage", "")})
@@ -670,7 +671,9 @@ def db_add(req: DbAddRequest):
                 "point_num": req.point_id,
                 "outline_title": req.outline_title or req.topic,
                 "subtopic_title": req.subtopic,
-                "point_text": req.point_summary or "",
+                # 5m commit 1: dual-write 호환 모드. commit 2에 point_title 단독 정착.
+                "point_title": req.point_summary or "",  # SSOT 키 (5m 신규)
+                "point_text": req.point_summary or "",   # 호환 키 (commit 2 제거)
             },
         }
         res = _upsert_publication(col, pub_data)

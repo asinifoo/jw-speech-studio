@@ -488,3 +488,63 @@ def test_upsert_referenced_by_outline_version_key():
     result, action = _upsert_referenced_by(result, new_ref)
     assert len(result) == 1
     assert action == "updated"
+
+
+# ─── 5m §3.x-point-schema commit 1 — point_title dual-write 호환 모드 ──
+
+def test_upsert_referenced_by_point_title_key():
+    """5m: 새 키 'point_title'로 dedup 정상."""
+    existing = []
+    new_ref = {
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "outline_version": "8/19",
+        "point_num": "3.4.1",
+        "point_title": "test point",
+    }
+    result, action = _upsert_referenced_by(existing, new_ref)
+    assert len(result) == 1
+    assert action == "appended"
+
+    # 동일 키 재진입 → updated (dedup)
+    result, action = _upsert_referenced_by(result, new_ref)
+    assert len(result) == 1
+    assert action == "updated"
+
+
+def test_upsert_referenced_by_point_text_point_title_fallback():
+    """5m: legacy 'point_text' 키 + 신규 'point_title' 키 fallback 매칭 → dedup."""
+    existing = [{
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "outline_version": "8/19",
+        "point_num": "3.4.1",
+        "point_text": "test point",  # legacy 키
+    }]
+    new_ref = {
+        "outline_type": "S-31",
+        "outline_num": "001",
+        "outline_version": "8/19",
+        "point_num": "3.4.1",
+        "point_title": "test point",  # 신규 키
+    }
+    result, action = _upsert_referenced_by(existing, new_ref)
+    # fallback으로 동일 키 인식 → dedup (updated)
+    assert len(result) == 1
+    assert action == "updated"
+
+
+def test_meaningful_ref_by_point_title_key():
+    """5m: _is_meaningful_ref 영영 'point_title' 단독 박혀 있어도 유효."""
+    col = FakeCollection()
+    payload = _pub_payload()
+    payload["reference_info"] = {
+        "outline_type": "", "outline_num": "",
+        "outline_version": "", "point_num": "",
+        "outline_title": "", "subtopic_title": "", "point_title": "5m point title",
+    }
+    res = _upsert_publication(col, payload)
+    assert res["action"] == "created"
+    refs = json.loads(col.store[res["id"]]["meta"]["referenced_by_json"])
+    assert len(refs) == 1
+    assert refs[0]["point_title"] == "5m point title"

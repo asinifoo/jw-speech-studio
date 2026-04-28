@@ -600,8 +600,14 @@ def save_outline(req: dict):
                 doc_meta = {
                     "outline_type": ot, "outline_type_name": ot_name, "outline_num": on, "outline_title": title,
                     "outline_version": version, "time": meta.get("time", ""), "note": meta.get("note", ""),
-                    "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "", "sub_topic_num": sub_num, "sub_topic_time": sub_time,
-                    "point_num": pt_num, "level": pt_level, "point_content": pt_text,
+                    # 5m commit 1: dual-write — sub_topic 합침 형식 + subtopic_title 단독 양쪽 박음
+                    "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "",  # 호환 키 (commit 2 제거)
+                    "subtopic_title": sub_title,                                   # SSOT 키 (5m 신규)
+                    "sub_topic_num": sub_num, "sub_topic_time": sub_time,
+                    "point_num": pt_num, "level": pt_level,
+                    # 5m commit 1: dual-write — point_content + point_title 양쪽 박음
+                    "point_content": pt_text,  # 호환 키 (commit 2 제거)
+                    "point_title": pt_text,    # SSOT 키 (5m 신규)
                     "scriptures": scriptures, "scripture_usage": scripture_usage, "publications": pubs,
                     "source": "outline", "memo": "", "importance": 0,
                 }
@@ -728,8 +734,15 @@ def save_speech(req: dict):
                     doc_text = "\n".join(doc_parts)
 
                     doc_meta = {**_base_meta(),
-                        "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "", "point_num": pt_num,
-                        "level": pt_level, "point_content": pt_text,
+                        # 5m commit 1: dual-write — sub_topic + subtopic_title 양쪽 박음 + sub_topic_num 신규 박음
+                        "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "",  # 호환 키 (commit 2 제거)
+                        "subtopic_title": sub_title,                                   # SSOT 키 (5m 신규)
+                        "sub_topic_num": sub_num,                                      # 5m 신규 — speech_expressions 정합
+                        "point_num": pt_num,
+                        "level": pt_level,
+                        # 5m commit 1: dual-write — point_content + point_title 양쪽 박음
+                        "point_content": pt_text,  # 호환 키 (commit 2 제거)
+                        "point_title": pt_text,    # SSOT 키 (5m 신규)
                         "scriptures": scriptures, "scripture_usage": scripture_usage, "publications": pubs,
                         "source": "speech", "speaker": speaker, "date": date, "usage": usage,
                         "keywords": keywords, "tags": tags, "theme_scripture": theme_scripture,
@@ -760,8 +773,15 @@ def save_speech(req: dict):
                     ex_doc = "\n".join(ex_parts)
 
                     ex_meta = {**_base_meta(),
-                        "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "", "point_num": pt_num,
-                        "level": pt_level, "point_content": pt_text,
+                        # 5m commit 1: dual-write — sub_topic + subtopic_title 양쪽 박음 + sub_topic_num 신규 박음
+                        "sub_topic": f"{sub_num}. {sub_title}" if sub_title else "",  # 호환 키 (commit 2 제거)
+                        "subtopic_title": sub_title,                                   # SSOT 키 (5m 신규)
+                        "sub_topic_num": sub_num,                                      # 5m 신규 — speech_expressions 정합
+                        "point_num": pt_num,
+                        "level": pt_level,
+                        # 5m commit 1: dual-write — point_content + point_title 양쪽 박음
+                        "point_content": pt_text,  # 호환 키 (commit 2 제거)
+                        "point_title": pt_text,    # SSOT 키 (5m 신규)
                         "scriptures": scriptures, "scripture_usage": scripture_usage, "publications": pubs,
                         "source": "speech", "speaker": speaker, "date": date,
                         "keywords": keywords, "tags": tags, "theme_scripture": theme_scripture,
@@ -894,7 +914,9 @@ def save_publication(body: dict):
                         "point_num": pn,
                         "outline_title": outline_title,
                         "subtopic_title": pub.get("subtopic_title", ""),
-                        "point_text": pub.get("point_content", ""),
+                        # 5m commit 1: dual-write 호환 모드 (point_text → point_title 정합).
+                        "point_title": pub.get("point_content", ""),  # SSOT 키 (5m 신규)
+                        "point_text": pub.get("point_content", ""),   # 호환 키 (commit 2 제거)
                     },
                 }
 
